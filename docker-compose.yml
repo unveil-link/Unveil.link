@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: unveil
+      POSTGRES_PASSWORD: unveil
+      POSTGRES_DB: unveil
+    ports:
+      - "5432:5432"
+    volumes:
+      - unveil_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unveil -d unveil"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  unveil_pg:

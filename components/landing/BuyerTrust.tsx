@@ -1,0 +1,38 @@
+import { Container, Section, SectionHeading } from "@/components/ui";
+import { CardIcon, DownloadIcon, LinkIcon, ShieldCheckIcon, UserOffIcon } from "./Icons";
+
+const points = [
+  { icon: CardIcon, title: "Secure card checkout", body: "Payments are processed by a trusted payment provider. We never see or store your card number." },
+  { icon: UserOffIcon, title: "No account needed", body: "Pay with a card and go. No sign-up, no passwords, no app to install." },
+  { icon: DownloadIcon, title: "Instant download", body: "Your files are ready the moment your payment goes through." },
+  { icon: LinkIcon, title: "Private signed links", body: "Every download link is unique to your purchase and expires automatically." },
+  { icon: ShieldCheckIcon, title: "Verified creators", body: "Sellers are identity- and age-verified before they can publish a link." },
+];
+
+export function BuyerTrust() {
+  return (
+    <Section id="buyers" tone="surface" aria-labelledby="buyers-title">
+      <Container>
+        <SectionHeading
+          id="buyers-title"
+          eyebrow="For buyers"
+          title="Checkout you can trust"
+          description="Buying from a creator should be quick and safe. Here is what you can expect every time."
+        />
+        <ul className="mt-10 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          {points.map((p) => (
+            <li key={p.title} className="flex gap-4">
+              <span className="grid size-11 shrink-0 place-items-center rounded-md bg-accent-soft text-[#0b5e55]">
+                <p.icon className="size-6" />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-text">{p.title}</h3>
+                <p className="mt-1 text-sm text-muted">{p.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Container>
+    </Section>
+  );
+}
