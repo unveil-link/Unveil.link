@@ -7,3 +7,4 @@ storage-data
 *.tsbuildinfo
 next-env.d.ts
 .e2e
+.next-e2e
