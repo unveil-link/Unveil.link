@@ -1,0 +1,66 @@
+### \dt
+              List of relations
+ Schema |       Name        | Type  | Owner  
+--------+-------------------+-------+--------
+ public | admins            | table | unveil
+ public | audit_log         | table | unveil
+ public | drop_files        | table | unveil
+ public | drops             | table | unveil
+ public | payouts           | table | unveil
+ public | platform_settings | table | unveil
+ public | reports           | table | unveil
+ public | schema_migrations | table | unveil
+ public | sellers           | table | unveil
+ public | transactions      | table | unveil
+(10 rows)
+
+### sellers (no secrets: password_hash shown as prefix only)
+-[ RECORD 1 ]--------+-------------------------------------
+id                   | fbecc16a-811d-4b2f-960f-bc758f862e50
+email                | seller+1790811392658@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | E2E Seller
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 19:36:33.057567-04
+-[ RECORD 2 ]--------+-------------------------------------
+id                   | 5b02f5d6-ab9d-4c6e-b1ac-b8fc72a84be7
+email                | mallory+1790811392658@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | Mallory
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 19:36:36.578392-04
+
+### drops
+                  id                  |              seller_id               | public_link_id |   title    | price_cents |  status   |                                            attestation                                            
+--------------------------------------+--------------------------------------+----------------+------------+-------------+-----------+---------------------------------------------------------------------------------------------------
+ b213933c-7383-4ab1-9b74-b9a9b26d6b15 | fbecc16a-811d-4b2f-960f-bc758f862e50 | y226WjwnXz02   | Sunset set |        1500 | published | {"at": "2026-09-30T23:36:40.233Z", "over18": true, "ownsRights": true, "consentOfSubjects": true}
+(1 row)
+
+### drop_files
+                  id                  |               drop_id                |                                       storage_key                                       |  filename  |    mime    | size_bytes |                                  blurred_preview_key                                   | sort_order 
+--------------------------------------+--------------------------------------+-----------------------------------------------------------------------------------------+------------+------------+------------+----------------------------------------------------------------------------------------+------------
+ ce600ea4-3c2b-4492-b64d-5751b1dafee9 | b213933c-7383-4ab1-9b74-b9a9b26d6b15 | originals/b213933c-7383-4ab1-9b74-b9a9b26d6b15/ce600ea4-3c2b-4492-b64d-5751b1dafee9.jpg | sunset.jpg | image/jpeg |     600078 | previews/b213933c-7383-4ab1-9b74-b9a9b26d6b15/ce600ea4-3c2b-4492-b64d-5751b1dafee9.jpg |          0
+(1 row)
+
+### platform_settings
+-[ RECORD 1 ]--------+----------------------------------
+id                   | 1
+fee_percent          | 10.00
+price_min_cents      | 100
+price_max_cents      | 50000
+max_image_size_bytes | 15728640
+max_video_size_bytes | 524288000
+max_files_per_drop   | 20
+allowed_image_mimes  | {image/jpeg,image/png,image/webp}
+updated_at           | 2026-09-30 19:36:18.111053-04
+
