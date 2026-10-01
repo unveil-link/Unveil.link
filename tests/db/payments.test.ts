@@ -548,15 +548,16 @@ describe.skipIf(!available)("reconciliation log", () => {
 // =====================================================================================================================
 // QA round 1 fixes
 // =====================================================================================================================
-const idemCo = (s: { dropId: string }, key?: string | null, email = "buyer@example.test") =>
-  m.co.createCheckout({ dropId: s.dropId, email, confirmOver18: true, idempotencyKey: key });
+const idemCo = (s: { dropId: string }, key?: string | null, email = "buyer@example.test", buyerToken?: string | null) =>
+  m.co.createCheckout({ dropId: s.dropId, email, confirmOver18: true, idempotencyKey: key, buyerToken });
+const TOKEN_A = "A".repeat(43), TOKEN_B = "B".repeat(43);
 const pendingCount = async (dropId: string) => Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) AS n FROM transactions WHERE drop_id=$1 AND status='pending'`, [dropId]))!.n);
 const setSetting = (col: string, v: number) => m.db.query(`UPDATE platform_settings SET ${col} = $1 WHERE id=1`, [v]);
 
 describe.skipIf(!available)("QA-1 checkout idempotency / double submit", () => {
-  it("concurrent identical requests (20, no key) -> exactly ONE pending transaction and one session", async () => {
+  it("concurrent identical requests from the SAME client (20, buyer token, no key) -> exactly ONE pending transaction and one session", async () => {
     const s = await seed();
-    const rs = await Promise.all(Array.from({ length: 20 }, () => idemCo(s)));
+    const rs = await Promise.all(Array.from({ length: 20 }, () => idemCo(s, null, "buyer@example.test", TOKEN_A)));
     expect(new Set(rs.map((r) => r.transactionId)).size).toBe(1);
     expect(new Set(rs.map((r) => r.checkoutUrl)).size).toBe(1);
     expect(rs.filter((r) => !r.reused)).toHaveLength(1);
@@ -595,12 +596,12 @@ describe.skipIf(!available)("QA-1 checkout idempotency / double submit", () => {
     expect(second.transactionId).not.toBe(first.transactionId);
     expect(second.reused).toBe(false);
   });
-  it("DB backstop: a second pending row for the same drop+buyer is refused by the unique index", async () => {
+  it("DB backstop: a second pending row for the same drop+buyer+client is refused by the unique index", async () => {
     const s = await seed();
-    const a = await idemCo(s);
+    const a = await idemCo(s, null, "buyer@example.test", TOKEN_A);
     await expect(m.db.query(
-      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, status, provider)
-       SELECT drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, 'pending', provider FROM transactions WHERE id=$1`, [a.transactionId],
+      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, status, provider, buyer_token_hash)
+       SELECT drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, 'pending', provider, buyer_token_hash FROM transactions WHERE id=$1`, [a.transactionId],
     )).rejects.toMatchObject({ code: "23505" });
   });
 });
@@ -939,5 +940,108 @@ describe.skipIf(!available)("QA-7 friendly failures and clean retry", () => {
     expect(r).toMatchObject({ approved: false });
     expect(r.message).toMatch(/expired/i);
     expect(await ledgerOf(c.transactionId)).toEqual([]);
+  });
+});
+
+// =====================================================================================================================
+// Follow-ups 1: buyer binding of pending checkouts (QA run 2 NEW-1) + stale price supersede (INFO-1)
+// =====================================================================================================================
+describe.skipIf(!available)("FU-1 pending checkouts are bound to the client that created them", () => {
+  it("another client (no cookie/key) with the same email + drop gets a DIFFERENT session and never the victim's URL/txn id", async () => {
+    const s = await seed();
+    const victim = await idemCo(s, null, "victim@example.test", TOKEN_A);
+    expect(victim.reused).toBe(false);
+    const attacker = await idemCo(s, null, "victim@example.test", null);
+    expect(attacker.reused).toBe(false);
+    expect(attacker.transactionId).not.toBe(victim.transactionId);
+    expect(attacker.checkoutUrl).not.toBe(victim.checkoutUrl);
+    expect(JSON.stringify({ ...attacker, setBuyerToken: undefined })).not.toContain(victim.checkoutUrl.split("/").pop()!);
+    expect(attacker.setBuyerToken).toMatch(/^[A-Za-z0-9_-]{43}$/); // the new client is given its own credential
+    const other = await idemCo(s, null, "victim@example.test", TOKEN_B); // a (well-formed) token we have never issued
+    expect(other.transactionId).not.toBe(victim.transactionId);
+    expect(await pendingCount(s.dropId)).toBe(3);
+    // the victim still gets exactly their own back
+    const again = await idemCo(s, null, "victim@example.test", TOKEN_A);
+    expect(again).toMatchObject({ transactionId: victim.transactionId, checkoutUrl: victim.checkoutUrl, reused: true, setBuyerToken: null });
+  });
+  it("the same client double-click (same cookie token, or same Idempotency-Key with no cookie yet) still yields ONE txn; concurrent too", async () => {
+    const s = await seed();
+    const first = await idemCo(s, null, "dbl@example.test", null);
+    const token = first.setBuyerToken!;
+    const rs = await Promise.all(Array.from({ length: 12 }, () => idemCo(s, null, "dbl@example.test", token)));
+    expect(new Set(rs.map((r) => r.transactionId))).toEqual(new Set([first.transactionId]));
+    expect(rs.every((r) => r.reused && r.setBuyerToken === null)).toBe(true);
+    // first-ever concurrent burst with a key and no cookie: one txn, exactly one response carries the new cookie
+    const s2 = await seed();
+    const burst = await Promise.all(Array.from({ length: 12 }, () => idemCo(s2, "burst-key-1", "dbl@example.test", null)));
+    expect(new Set(burst.map((r) => r.transactionId)).size).toBe(1);
+    expect(burst.filter((r) => r.setBuyerToken).length).toBe(1);
+    expect(await pendingCount(s2.dropId)).toBe(1);
+  });
+  it("the raw buyer token is never stored (only its SHA-256), and malformed tokens are treated as 'no token'", async () => {
+    const s = await seed();
+    const a = await idemCo(s, null, "h@example.test", TOKEN_A);
+    const row = await m.db.queryOne<{ buyer_token_hash: string }>(`SELECT buyer_token_hash FROM transactions WHERE id=$1`, [a.transactionId]);
+    expect(row!.buyer_token_hash).toBe(m.co.hashBuyerToken(TOKEN_A));
+    expect(row!.buyer_token_hash).not.toContain(TOKEN_A);
+    const bad = await idemCo(s, null, "h@example.test", "short");
+    expect(bad.transactionId).not.toBe(a.transactionId);
+    expect(bad.setBuyerToken).toBeTruthy();
+  });
+  it("legacy pending rows (no token, created before migration 008) keep the one-pending rule among themselves and are never returned to a client", async () => {
+    const s = await seed();
+    const a = await idemCo(s, null, "legacy@example.test", TOKEN_A);
+    await m.db.query(`UPDATE transactions SET buyer_token_hash = NULL WHERE id=$1`, [a.transactionId]);
+    const b = await idemCo(s, null, "legacy@example.test", TOKEN_A);
+    expect(b.transactionId).not.toBe(a.transactionId);
+    await expect(m.db.query(
+      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, status, provider)
+       SELECT drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, 'pending', provider FROM transactions WHERE id=$1`, [a.transactionId],
+    )).rejects.toMatchObject({ code: "23505" });
+  });
+  it("a PAID checkout of one client does not leak to another; a keyed replay by the owner returns the succeeded txn", async () => {
+    const s = await seed();
+    const a = await idemCo(s, "paid-key-1", "p@example.test", TOKEN_A);
+    await deliver(sale(a.transactionId, 2000));
+    const other = await idemCo(s, null, "p@example.test", null);
+    expect(other.transactionId).not.toBe(a.transactionId);
+    expect((await idemCo(s, "paid-key-1", "p@example.test", TOKEN_A)).transactionId).toBe(a.transactionId);
+  });
+});
+
+describe.skipIf(!available)("FU-1 price change supersedes a stale pending checkout (QA INFO-1)", () => {
+  it("reuse with a changed drop price -> old pending txn superseded, NEW txn at the current price (same client, no key)", async () => {
+    const s = await seed({ price: 2000 });
+    const a = await idemCo(s, null, "price@example.test", TOKEN_A);
+    expect(a.amountCents).toBe(2000);
+    await m.db.query(`UPDATE drops SET price_cents = 9000 WHERE id=$1`, [s.dropId]);
+    const b = await idemCo(s, null, "price@example.test", TOKEN_A);
+    expect(b).toMatchObject({ amountCents: 9000, reused: false });
+    expect(b.transactionId).not.toBe(a.transactionId);
+    expect(await txRow(a.transactionId)).toMatchObject({ status: "failed", failure_code: "superseded" });
+    expect(await txRow(b.transactionId)).toMatchObject({ status: "pending", amount_cents: 9000, platform_fee_cents: 900, processing_fee_cents: 1080, seller_net_cents: 7020 });
+    expect(await pendingCount(s.dropId)).toBe(1);
+    // unchanged price -> reuse again
+    expect((await idemCo(s, null, "price@example.test", TOKEN_A)).transactionId).toBe(b.transactionId);
+  });
+  it("same with an Idempotency-Key: the stale keyed txn is superseded and the key moves to the new one", async () => {
+    const s = await seed({ price: 2000 });
+    const a = await idemCo(s, "price-key-1", "pk@example.test", TOKEN_A);
+    await m.db.query(`UPDATE drops SET price_cents = 1000 WHERE id=$1`, [s.dropId]);
+    const b = await idemCo(s, "price-key-1", "pk@example.test", TOKEN_A);
+    expect(b).toMatchObject({ amountCents: 1000, reused: false });
+    expect((await txRow(a.transactionId))!.failure_code).toBe("superseded");
+    expect((await idemCo(s, "price-key-1", "pk@example.test", TOKEN_A)).transactionId).toBe(b.transactionId);
+  });
+  it("a processor-confirmed payment for the superseded txn (buyer paid the OLD price in another tab) is still booked at the price actually charged: money was captured", async () => {
+    const s = await seed({ price: 2000 });
+    const a = await idemCo(s, null, "late@example.test", TOKEN_A);
+    await m.db.query(`UPDATE drops SET price_cents = 3000 WHERE id=$1`, [s.dropId]);
+    await idemCo(s, null, "late@example.test", TOKEN_A);
+    const r = await deliver(sale(a.transactionId, 2000));
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ outcome: "processed" });
+    expect(await sum(a.transactionId)).toBe(1560); // 2000 - 200 - 240: the snapshot the buyer was actually charged
+    expect((await txRow(a.transactionId))!.status).toBe("succeeded");
   });
 });
