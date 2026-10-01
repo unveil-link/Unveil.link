@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { config } from "@/server/config";
 import { queryOne } from "@/server/db";
+import { hasBadText } from "@/server/input";
 import AppShell from "../../../components/AppShell";
 import MockCheckoutForm from "./MockCheckoutForm";
 import { SALES_FINAL_TEXT } from "../../../../../lib/purchase-copy";
@@ -12,6 +13,7 @@ export const metadata = { title: "Mock checkout", robots: { index: false, follow
 export default async function MockCheckout({ params }: { params: Promise<{ sessionId: string }> }) {
   if (!config.mockPaymentsAllowed) notFound();
   const { sessionId } = await params;
+  if (hasBadText(sessionId) || sessionId.length > 100) notFound();
   const tx = await queryOne<{ amount_cents: number; status: string; link: string; title: string }>(
     `SELECT t.amount_cents, t.status, d.public_link_id AS link, d.title
        FROM transactions t JOIN drops d ON d.id = t.drop_id WHERE t.provider = 'mock' AND t.provider_session_id = $1`, [sessionId]);
