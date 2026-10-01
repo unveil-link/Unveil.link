@@ -1647,7 +1647,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     // other text inputs: signup displayName NUL, checkout NUL, dev pay NUL session
     eq((await post("/api/auth/signup", '{"email":"nul' + stamp + '@example.test","password":"Correct-horse-battery-9","displayName":"a\\u0000b"}', new Client_())).status, 400, "signup NUL displayName");
     eq((await post("/api/dev/payments/pay", '{"sessionId":"a\\u0000b","card":"4242424242424242"}', new Client_())).status, 400, "dev pay NUL session -> 400 (jsonBody guard)");
-    eq((await post("/api/dev/payments/pay", JSON.stringify({ sessionId: "s".repeat(101), card: "4242424242424242" }), new Client_())).status, 404, "dev pay oversize session -> 404");
+    eq((await post("/api/dev/payments/pay", JSON.stringify({ sessionId: "s".repeat(101), card: "4242424242424242" }), new Client_())).status, 400, "dev pay oversize session -> 400 (schema max length)");
     eq((await new Client_().req("GET", "/pay/mock/" + encodeURIComponent("a\u0000b"))).status, 404, "mock hosted page NUL session -> 404");
     // create-admin CLI: garbage / oversize input fails cleanly (exit 1, readable message, no stack, no row)
     for (const bad of ["not an email", `${"a".repeat(300)}@example.test`]) {
