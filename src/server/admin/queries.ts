@@ -1,6 +1,7 @@
 import { query, queryOne, withTx } from "../db";
 import { HttpError } from "../errors";
 import { isUuid } from "../input";
+import { writeAudit } from "./audit";
 
 export interface FlaggedSeller {
   id: string; displayName: string; email: string; verificationStatus: string;
@@ -82,8 +83,7 @@ export async function clearSellerFlag(adminId: string, sellerId: string, note: s
     const up = await c.query<{ risk_reviewed_at: string }>(
       `UPDATE sellers SET risk_flagged_at = NULL, risk_flag_reason = NULL, risk_reviewed_at = now(), risk_reviewed_by = $2, risk_review_note = $3
         WHERE id = $1 RETURNING risk_reviewed_at`, [sellerId, adminId, n]);
-    await c.query(`INSERT INTO audit_log (admin_id, action, target) VALUES ($1, 'seller_flag_cleared', $2)`,
-      [adminId, `seller:${sellerId} previous_reason: ${s.rows[0].risk_flag_reason ?? "-"} | note: ${n}`]);
+    await writeAudit(c, { adminId, action: "seller_flag_cleared", target: `seller:${sellerId} previous_reason: ${s.rows[0].risk_flag_reason ?? "-"} | note: ${n}` });
     return { sellerId, reviewedAt: up.rows[0].risk_reviewed_at };
   });
 }

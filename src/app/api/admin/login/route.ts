@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { api, jsonBody } from "@/server/http";
 import { HttpError } from "@/server/errors";
-import { enforceIpLimit } from "@/server/ratelimit";
+import { enforceIpLimit, clientIp } from "@/server/ratelimit";
 import { admitLoginAttempt, resetLoginThrottle } from "@/server/ratelimit/login-throttle";
 import { config } from "@/server/config";
+import { auditFailedAdminLogin } from "@/server/admin/audit";
 import { loginAdmin, setAdminCookie, requestUserAgent } from "@/server/admin/auth";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +19,11 @@ export const POST = api(async (req) => {
   if (config.rateLimitEnabled) {
     const a = await admitLoginAttempt(throttleId);
     if (!a.admitted) {
+      await auditFailedAdminLogin(body.email, "throttled", clientIp(req)); // bounded (coalesced per ip+email, global hourly cap)
       throw new HttpError(429, `Too many failed sign-in attempts. Please wait ${a.retryAfterSec} second${a.retryAfterSec === 1 ? "" : "s"} and try again.`, "login_delayed", { "Retry-After": String(a.retryAfterSec) });
     }
   }
-  const r = await loginAdmin(body.email, body.password, await requestUserAgent());
+  const r = await loginAdmin(body.email, body.password, await requestUserAgent(), clientIp(req));
   if (!r) throw new HttpError(401, "Invalid email or password", "invalid_credentials");
   await resetLoginThrottle(throttleId);
   await setAdminCookie(r.token);

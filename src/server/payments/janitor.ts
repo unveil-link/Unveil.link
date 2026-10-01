@@ -3,6 +3,7 @@ import { getSettings } from "../services/settings";
 import { expirePendingCheckouts } from "./checkout";
 import { retryVoidRefunds, type VoidRetryResult } from "./refunds";
 import { retryParkedEvents } from "./webhooks";
+import { writeAudit } from "../admin/audit";
 
 /**
  * Payments janitor: the one scheduled-cleanup entry point (HTTP cron route, CLI script, tests). Idempotent: every step only touches rows
@@ -67,8 +68,7 @@ export async function runPaymentsJanitor(): Promise<JanitorResult> {
     await lock.query(
       `UPDATE payments_janitor_state SET last_run_at = now(), last_counts = $1::jsonb, runs = runs + 1 WHERE id = 1`, [JSON.stringify({ ...counts, errors })]);
     if (didSomething) {
-      await lock.query(`INSERT INTO audit_log (admin_id, action, target) VALUES (NULL, 'payments_janitor_run', $1)`,
-        [`counts ${JSON.stringify(counts)}${errors.length ? ` errors ${JSON.stringify(errors)}` : ""}`.slice(0, 1000)]);
+      await writeAudit(lock, { action: "payments_janitor_run", target: `counts ${JSON.stringify(counts)}${errors.length ? ` errors ${JSON.stringify(errors)}` : ""}` });
     }
     return { skipped: false, counts, errors, durationMs };
   } finally {
