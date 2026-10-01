@@ -1,0 +1,78 @@
+[M1-01] signup=201 body={"seller":{"id":"3d464b08-892b-4d73-ae0a-1649d3505999","email":"qa-one-44ed88c7@example.com","display_name":"QA One","avatar":null,"bio":null,"verification_status":"pending","created_at":"2026-10-01T02:25:54.319Z"}} cookie=unveil_session=<jwt>; Path=/; Expires=Thu, 08 Oct 2026 02:25:54 GMT; Max-Age=604800; Secure; HttpOnly; SameSite=lax me=200 dashboard=200 dbrow={"email":"qa-one-44ed88c7@example.com","verification_status":"pending","h":"$2b$"} email stored lowercase=true
+[M1-01] dashboard html contains 'Pending': true
+[M1-03] first=201 dup=409 {"error":"An account with that email already exists","code":"email_taken"} | dup-upcase=409 | dup-padded=400 | weak('short')=400 {"error":"Password must be at least 10 characters.","code":"weak_password"} | 'password'=400 | '12345678'=400 | notanemail=400 {"error":"email: Invalid email address","code":"invalid_input"} | a@b=400 | blank name=400 | badjson=400 {"error":"Invalid JSON body","code":"invalid_json"} | rows for email=1
+[M1-04] logout=200 me-after-logout(same client)=401 | REPLAY of pre-logout cookie => /api/auth/me 401 | relogin=200 login-uppercase-email=200 wrong-pw=401 unknown-user=401 | reset endpoints: reset-password=400 forgot-password=200
+[M1-04] 15 rapid wrong logins -> 401 (no 429 = no throttle)
+[M1-05] jpeg=201 {"id":"b97c8bad-0ce1-4a6f-89cb-47b913e5abcc","filename":"p.jpg","mime":"image/jpeg","sizeBytes":70179} | png=201 {"id":"336b2691-468f-424c-8ba4-5438e0ef09a9","filename":"p.png","mime":"image/png","sizeBytes":1034509} | webp=201 {"id":"113f02ab-dbd4-4f7f-bbb1-7a91100f1152","filename":"p.webp","mime":"image/webp","sizeBytes":55362} | list=image/jpeg,image/png,image/webp
+[M1-07] a.gif(image/gif)=415 unsupported_type | a.pdf(application/pdf)=415 invalid_image | a.exe(application/octet-stream)=415 invalid_image | renamed.jpg(image/jpeg)=415 invalid_image | renamed2.jpg(image/jpeg)=415 invalid_image | x.jpg(image/jpeg)=415 unsupported_type | a.tiff(image/jpeg)=415 unsupported_type | a.avif(image/jpeg)=415 unsupported_type | png-as-jpg.jpg(image/jpeg)=201  | empty.jpg(image/jpeg)=400 empty_file | jpeg+trailing PHP payload=201 (valid JPEG with appended bytes; accepted=true; stored byte-for-byte as original; only reachable via signed URL w/ content-disposition attachment)
+[M1-07] missing file field=400 missing_file | non-multipart=400 bad_form
+[M1-07] hostile filename upload=201 stored filename=".._.._etc_script_x.jpg"
+[M1-08] 16MiB upload -> 413 {"error":"File exceeds limit of 15728640 bytes","code":"file_too_large"}
+[M1-08] platform_settings = {"max_image_size_bytes":"15728640","max_video_size_bytes":"524288000","max_files_per_drop":10} (spec: 500MB/file, 2GB/drop, 10 files)
+[M1-08] files accepted in one drop=10; first rejection #11: 400 {"error":"A drop can have at most 10 files","code":"too_many_files"}; 11th file accepted? false
+[M1-08] no per-drop total size limit exists in code/schema (grep: none). drop total bytes=9070
+[M1-10] preview=200 image/jpeg 1418B (original 65652B) dims=320x213 exif=false icc=false xmp=false horiz-gradient ratio preview/original(upscaled)=0.037 MAD=28.2
+[M1-10] preview contains original bytes? false
+[M1-10] owner draft preview cache-control=private, no-store
+[M1-10] draft preview anon=404 other-seller=404
+[M1-10] EXIF test: input has exif=true; preview exif=false, contains 'SECRET-QA'=false
+[M1-12] /originals/aed23fa4-bf0b-4840-9f27-507a411376b3/4ddee431-bd2a-4b6a-876 -> 404
+         /storage-data/originals/aed23fa4-bf0b-4840-9f27-507a411376b3/4ddee431- -> 404
+         /storage/originals/aed23fa4-bf0b-4840-9f27-507a411376b3/4ddee431-bd2a- -> 404
+         /public/originals/aed23fa4-bf0b-4840-9f27-507a411376b3/4ddee431-bd2a-4 -> 404
+         /_next/static/originals/aed23fa4-bf0b-4840-9f27-507a411376b3/4ddee431- -> 404
+         /api/files/4ddee431-bd2a-4b6a-876b-26050da70cab/original -> 403
+         /api/files/4ddee431-bd2a-4b6a-876b-26050da70cab/original?exp=999999999 -> 403
+         /api/files/4ddee431-bd2a-4b6a-876b-26050da70cab/original?exp=1&sig=gnS -> 403
+         /previews/aed23fa4-bf0b-4840-9f27-507a411376b3/4ddee431-bd2a-4b6a-876b -> 404
+         /api/files/4ddee431-bd2a-4b6a-876b-26050da70cab -> 404
+         /api/files/4ddee431-bd2a-4b6a-876b-26050da70cab/../4ddee431-bd2a-4b6a- -> 403
+         /api/files/4ddee431-bd2a-4b6a-876b-26050da70cab/original/ -> 308
+         //originals/aed23fa4-bf0b-4840-9f27-507a411376b3/4ddee431-bd2a-4b6a-87 -> 308
+         /..%2f..%2fstorage-data/originals/aed23fa4-bf0b-4840-9f27-507a411376b3 -> 404
+[M1-12] disk: /workspace/qa-run3/storage/originals/aed23fa4-bf0b-4840-9f27-507a411376b3/4ddee431-bd2a-4b6a-876b-26050da70cab.jpg mode=600; inside public/? no (public/ has only icons)
+[M1-12] owner mints signed URL=200 /api/files/4ddee431-bd2a-4b6a-876b-26050da70cab/original?exp=1790907964&sig=<sig> ttl=86399s; anon GET signed=200 bytes-identical=true cache-control=private, no-store content-disposition=attachment; filename="text.jpg" nosniff=nosniff
+[M1-12] sig for file1 reused on file2=403; exp extended with same sig=403
+[M1-12] signed URL re-use (no single-use) = 200
+[M1-13] B GET /api/drops/A-drop=404 | B POST files to A-drop=404 | B publish A-drop=404 | B unpublish A-drop=404 | B mint signed-url A-file=404 | B preview A-draft-file=404 | anon GET A-drop=401 | anon mint signed-url=401 | B list drops leaks A? false | nonexistent uuid=404 | non-uuid id=404 | sqli id=404
+[M1-13] A-drop vs nonexistent response identical for B: true ({"error":"Drop not found"})
+[M2-01] create=201 {"id":"850faa67-2385-43d2-a670-fd953fdf63fe","seller_id":"a0076261-f490-4615-bda3-0e854097235c","public_link_id":"lVo_2TyantAO","title":"Sunset set","description":"desc","price_cents":2000,"cover_url":null,"status":"draft","created_at":"2026-10-01T02:26:04.895Z"}
+[M2-01] list includes draft=true; cover_url settable via API? create ignores 'coverUrl' (schema has no field); no endpoint for cover image
+[M2-01] create with coverUrl field=201 cover_url stored=null
+[M2-02] $0.99(99)=400 price_out_of_range | $1(100)=201 | $500(50000)=201 | $500.01(50001)=400 price_out_of_range | negative(-500)=400 price_out_of_range | zero(0)=400 price_out_of_range | float 1000.5(1000.5)=400 invalid_input | string '2000'("2000")=400 invalid_input | null(null)=400 invalid_input | 1e9(1000000000)=400 price_out_of_range | MAX_SAFE(9007199254740991)=400 price_out_of_range | NaN-string("abc")=400 invalid_input | missing price=400 | blank title=400 | 121-char title=400 | html title stored raw=201
+[M2-02] settings narrowed 500..10000 live (no restart): 100c=400, 20000c=400, 500c=201
+[M2-03] publish as unverified -> {"pending":"403 verification_required","failed":"403 verification_required","manual_review":"403 verification_required"}; drop status after=draft; public page=404
+[M2-03] mass-assignment create with status=published => draft, seller=self
+[M2-03] signup mass-assignment verification_status => pending
+[M2-05] 2/3 ticked=400 attestation_required | none ticked=400 | missing attestation=400 | string 'true'=400 | status after blocked attempts=draft attestation=null
+[M2-04] publish verified=200 body={"drop":{"id":"4c4a56bf-a8e3-4cb1-a3ac-71cfbbeee863","seller_id":"829df0f8-2eab-45e7-8c37-61a9fed1f490","public_link_id":"QZkFxu-t0bXh","title":"QA drop","description":"d","price_cents":2000,"cover_url":null,"status":"published","created_at":"2026-10-01T02:26:05.390Z"},"url":"/u/QZkFxu-t0bXh"}
+[M2-05] stored attestation={"at":"2026-10-01T02:26:05.839Z","over18":true,"ownsRights":true,"consentOfSubjects":true} published_at=2026-10-01T02:26:05.839Z
+[M2-04] publish drop with 0 files => 400 no_files
+[M2-05] re-publish already-published=200; attestation timestamp overwritten=false; no attestation history/IP/user-agent captured: keys=at,over18,ownsRights,consentOfSubjects
+[M2-06] generated=120 unique=120 all12charBase64url=true distinctChars=64/64 chi2=79.4 (df=63, p=.05 crit≈82.5) sortedAscending=false avg adjacent hamming=11.81/12 last char alphabet(only 4 values for 72-bit→ 12 chars: -012356789ABCDEFGHIJKLMNOPQRSTUVWXY_acdefijkmnopqrtuvwxz)  samples=wRpvtmGVD-R8,wrmMT47kg0SC,oRe_AyXsSihv,qE5rFb1kKIVr
+[M2-06] 300 random guesses non-404 hits=0; sequential guesses status=404,404,404,404; 300+ guesses never throttled (no rate limit)
+[M2-07] public API 200: {"drop":{"publicLinkId":"QZkFxu-t0bXh","url":"/u/QZkFxu-t0bXh","title":"QA drop","description":"d","priceCents":2000},"seller":{"displayName":"QA unv","display_name":"QA unv","avatar":null},"summary":{"fileCount":3,"imageCount":3,"videoCount":0,"otherCount":0,"label":"3 files: 3 images"},"previews":[{"id":"18cd6b75-9999-4a58-ae5b-a9dc82c426e7","url":"/api/files/18cd6b75-9999-4a58-ae5b-a9dc82c426e7/preview","kind":"image"},{"id":"f618f963-be3d-4270-9ecf-e6b40375fe1a","url":"/api/files/f618f963-be3d-4270-9ecf-e6b40375fe1a/preview","kind":"image"},{"id":"6334fe6d-daec-4e63-a309-5d3cf8558a10","url":"/api/files/6334fe6d-daec-4e63-a309-5d3cf8558a10/preview","kind":"image"}]}
+[M2-07] public page /d/<id> 200; contains title=true; price shown=true; seller display name shown=true; file count shown=true; file types shown=true; blurred <img> count=12
+[M2-04] spec link format unveil.link/u/<12>: GET /u/QZkFxu-t0bXh => 200; app returns url "/u/QZkFxu-t0bXh" (path /d/)
+[M2-08] scan of HTML+JSON for storage_key/'/original'/'originals/'/filename: none
+[M2-08] anonymous previews: 200 image/jpeg cc=public, max-age=300 | 200 image/jpeg cc=public, max-age=300 | 200 image/jpeg cc=public, max-age=300
+[M2-09] /d/<id> X-Robots-Tag=noindex, nofollow; <meta robots>=["<meta name=\"robots\" content=\"noindex, nofollow, nocache\"/>"]; api X-Robots-Tag=noindex, nofollow; preview X-Robots-Tag=noindex, nofollow; /robots.txt=200; /sitemap.xml=404; unknown link page=404
+[M2-09] directory/search/listing routes: /d=404 /api/public/drops=404 /explore=404 /browse=404
+[M2-09] landing / robots meta=[] (landing page indexable is OK)
+[M6-01(partial XSS)] title/desc rendered escaped on public page: raw '<script>alert(9)' present=false escaped present=true
+[M2-10] edit endpoints: PATCH /api/drops/:id=405, PUT /api/drops/:id=405 (only GET exists on /api/drops/:id)
+[M2-11] unpublish=200 status=unpublished; public API=404; page=404 (custom 'unavailable' text? false); anon preview=404; buy button n/a (payments not built)
+[M2-11] republish after unpublish=200 (works)
+[M2-13] DELETE /api/drops/:id => 405
+[PROBE] unimplemented route probes: {"/api/drops/:id/download":404,"/api/download":404,"/api/public/drops/:link/download":404,"/api/checkout":501,"/api/orders":404,"/api/receipts/x":404,"/api/webhooks/payments":404,"/api/reports":404,"/api/admin/drops":404,"/api/admin/sellers":404,"/api/seller":404,"/api/auth/reset-password":405}
+[M2-17] 200 rapid requests to /original (bad sig) => {"403":200} in 788ms (no 429)
+[M2-16] 50 downloads with the same valid signed URL => {"200":50} (no download-attempt counter; no 5-attempt cap)
+[M2-15] default TTL 300s (signing.ts DEFAULT_TTL_S) vs spec 24h; no buyer receipt flow; expiry itself verified by e2e check #19 (410 on expired)
+[M6-02(partial)] headers on /: strict-transport-security=max-age=63072000; includeSubDomains; preload; x-frame-options=DENY; x-content-type-options=nosniff; content-security-policy=default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; referrer-policy=strict-origin-when-cross-origin; permissions-policy=camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(); x-powered-by=∅
+[M6-01(partial)] /api/auth/me fields: id,email,display_name,avatar,bio,verification_status,created_at (no password_hash leakage: true)
+[M6-01(partial)] CSRF: cross-origin Origin=403; text/plain no Origin=201; Origin:null form=403
+[M6-01(partial)] 100KB password => 400
+[M6-01(partial)] tampered JWT=401; alg=none JWT=401
+[M6-02(partial)] session Set-Cookie (NODE_ENV=production): unveil_session=<jwt>; Path=/; Expires=Thu, 08 Oct 2026 02:26:10 GMT; Max-Age=604800; Secure; HttpOnly; SameSite=lax
+[M1-04] deleted seller's still-valid cookie => /api/auth/me 401
+[M2-07] public API leaks? keys=drop,seller,summary,previews seller={"displayName":"QA unv","display_name":"QA unv","avatar":null} (email/id not exposed: true)

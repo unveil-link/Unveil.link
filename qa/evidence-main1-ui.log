@@ -1,0 +1,15 @@
+[M1-01] signup form fields: [ 'displayName:text', 'email:email', 'password:password' ]
+[M1-01] after submit URL: http://localhost:3202/dashboard | status badge: Pending
+[M1-05] dashboard inputs: [
+  'BUTTON:Log out',
+  'INPUT:title',
+  'TEXTAREA:description',
+  'INPUT:price',
+  'BUTTON:Create draft'
+]
+[M6-02] CSP violations / page errors in headless Chrome: 0 []
+[M2-01] after create URL: http://localhost:3202/dashboard/drops/7bf46661-31e7-476c-a25b-7bb6e33e81f5
+[M1-05] body after upload shows file/preview imgs: 1 | progress element: 0
+[M2-03] UI page text excerpt: ← Dashboard | UI drop | $20.00 | draft | Upload image | Upload | JPG, PNG or WebP. Originals are stored privately; buyers only see a blurred preview until they pay. | Files — blurred previews (what buyers see) | ui.jpg | Publish | Your identity verification is pending. This stays a draft until you're verified. | Everyone depicted is 18 or older | I own all rights to this content | Everyone depicte
+[M6-02] CSP violations / page errors in headless Chrome: 0 []
+[M6-02] CSP violations / page errors in headless Chrome: 0 []

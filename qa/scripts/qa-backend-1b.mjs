@@ -49,7 +49,7 @@ const mp = (name, data, type) => { const f = new FormData(); f.append("file", ne
   const mk = async (w, h) => sharp({ create: { width: w, height: h, channels: 3, background: "#fff" } }).png({ compressionLevel: 9 }).toBuffer();
   for (const [w, h] of [[9900, 9900], [10100, 10000], [30000, 30000]]) {
     let buf; try { buf = await mk(w, h); } catch (e) { log("M6-01(bomb)", `${w}x${h}: could not generate (${e.message})`); continue; }
-    const t = Date.now(); const rss0 = Number(execSync("ps -o rss= -p $(cat /workspace/qa-run/pid | head -1) 2>/dev/null || true").toString() || 0);
+    const t = Date.now(); const rss0 = Number(execSync("ps -o rss= -p $(cat /workspace/qa-run3/pid | head -1) 2>/dev/null || true").toString() || 0);
     const r = await req("POST", `/api/drops/${d.id}/files`, { form: mp("b.png", buf, "image/png") });
     log("M6-01(bomb)", `${w}x${h} png (${(buf.length / 1024).toFixed(0)} KiB file) => ${r.status} ${r.json?.code ?? ""} in ${Date.now() - t}ms`);
   }
