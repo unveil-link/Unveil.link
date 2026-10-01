@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { DesignExtras } from "@/components/design/DesignExtras";
 import {
@@ -33,7 +34,11 @@ function Block({ id, title, children }: { id: string; title: string; children: R
   );
 }
 
+// Internal design-system page: not served in production unless ENABLE_DESIGN_PAGE=1 (checked per request, not at build).
+export const dynamic = "force-dynamic";
+
 export default function DesignPage() {
+  if (process.env.NODE_ENV === "production" && process.env.ENABLE_DESIGN_PAGE !== "1") notFound();
   return (
     <main className="flex-1 pb-20">
       <div className="border-b border-border bg-surface">
