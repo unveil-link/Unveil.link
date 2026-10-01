@@ -1,0 +1,98 @@
+[
+  {
+    "id": "M5-05 / REF-1",
+    "name": "full refund $20: status refunded, reversed 2000, ledger nets to 0, duplicate refund event idempotent",
+    "result": "PASS",
+    "evidence": "refunded; ledger 0; extra 1¢ → rejected/over_refund"
+  },
+  {
+    "id": "M5-06 / REF-2",
+    "name": "partial then partial then remainder: $5 + $7.50 + $7.50 on $20 → ledger nets exactly 0; amounts per step consistent with money.ts",
+    "result": "PASS",
+    "evidence": "500:succeeded/1170 750:succeeded/585 750:refunded/0"
+  },
+  {
+    "id": "REF-3",
+    "name": "full then partial: partial after full → rejected over_refund, ledger unchanged",
+    "result": "PASS",
+    "evidence": "rejected/over_refund"
+  },
+  {
+    "id": "REF-4",
+    "name": "partial then over-refund (1500 then 1000 on 2000): second rejected, reversed stays 1500, status stays succeeded",
+    "result": "PASS",
+    "evidence": "ledger remaining 390"
+  },
+  {
+    "id": "REF-5",
+    "name": "refund event with amount > gross (999999) and refund with null amount ('all that remains')",
+    "result": "PASS",
+    "evidence": "over → rejected; null → remaining 1500 refunded"
+  },
+  {
+    "id": "REF-6",
+    "name": "refund of never-succeeded txns: pending → parked (no ledger), failed → ignored, no state change",
+    "result": "PASS",
+    "evidence": "pending:parked/sale_not_seen_yet failed:ignored/reversal_of_failed_sale failed-cb:ignored"
+  },
+  {
+    "id": "REF-7",
+    "name": "refund then chargeback on same sale: chargeback only for remaining; total reversed ≤ gross; status charged_back",
+    "result": "PASS",
+    "evidence": "refund 800 + chargeback remaining 1200 = 2000, ledger 0; extra cb rejected"
+  },
+  {
+    "id": "REF-8",
+    "name": "chargeback then refund: refund after full chargeback rejected (no double reversal)",
+    "result": "PASS",
+    "evidence": "rejected/over_refund"
+  },
+  {
+    "id": "REF-9 concurrency",
+    "name": "10 concurrent distinct refund events of $5 each on a $20 sale: exactly 4 processed, 6 rejected, reversed=2000, ledger 0 (never over-refunds)",
+    "result": "PASS",
+    "evidence": "4 processed / 6 rejected; reversed 2000"
+  },
+  {
+    "id": "REF-10 concurrency",
+    "name": "10 concurrent refunds of $3 on $20: floor(20/3)=6 processed, reversed 1800, ledger sum = net - reversal(1800), all postings non-negative shares",
+    "result": "PASS",
+    "evidence": "6 processed; ledger 156"
+  },
+  {
+    "id": "REF-11 concurrency",
+    "name": "concurrent refund + chargeback + refund-duplicates storm (20 requests) → reversed ≤ gross and ledger equals recomputed expectation",
+    "result": "PASS",
+    "evidence": "reversed 2000, status charged_back, ledger 0"
+  },
+  {
+    "id": "M5-07 / REF-12",
+    "name": "refund after payout leaves NEGATIVE available balance (allowed), earnings API consistent, new sale nets against it",
+    "result": "PASS",
+    "evidence": "after refund available=-3900 (negative allowed); after new sale 0; payout while 0<available<min → nothing_available"
+  },
+  {
+    "id": "M5-08 / CB-1",
+    "name": "R2: 3 chargebacks (distinct txns) within 90 days flag the seller (risk_flagged_at, reason, audit_log); no auto-ban/verification change",
+    "result": "PASS",
+    "evidence": "details processed,processed,seller_flagged_for_review; reason=\"3 chargebacks within 90 days (threshold 3)\"; audit rows 1; still verified"
+  },
+  {
+    "id": "CB-2",
+    "name": "single chargeback: tx charged_back, ledger reversal posted, optional chargeback_fee honoured when set; fee posts immediate",
+    "result": "PASS",
+    "evidence": "ledger -1500 (chargeback fee), net reversal 0"
+  },
+  {
+    "id": "REF-13 API",
+    "name": "refund API surface: only dev simulator routes exist; /api/dev/payments/refund without auth works in non-prod only (documented); no admin refund route (M5-05 admin)",
+    "result": "PASS",
+    "evidence": "request refund 500→200, 5000→400 over_refund, pending→409 not_refundable"
+  },
+  {
+    "id": "REF-14 invariants",
+    "name": "global: every tx reversed_cents ≤ amount; Σ ledger per tx == seller_net − reversed-net share; no tx with status refunded where reversed<amount",
+    "result": "PASS",
+    "evidence": "37 settled txs checked (36 exact), no violations"
+  }
+]

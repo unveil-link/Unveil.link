@@ -1,0 +1,10 @@
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env
+NUL        500 {"error":"Internal error"} | flag still set: true | audit rows: 0 
+surrogate  200 {"sellerId":"d8b5a6c7-b795-42ab-abab-9ca402d1ba3c","reviewedAt":"2026- | flag still set: false | audit rows: 1 "in 90 days (threshold 3) | note: abc�def"
+emoji      200 {"sellerId":"b3a4ff37-320c-44cd-bf85-35a814905566","reviewedAt":"2026- | flag still set: false | audit rows: 1 "90 days (threshold 3) | note: ok 😀 note"
+html       200 {"sellerId":"5fd16673-b527-464d-a556-0a6184144c7c","reviewedAt":"2026- | flag still set: false | audit rows: 1 "old 3) | note: <script>alert(1)</script>"
+crlf       200 {"sellerId":"c42c2087-0a97-4f14-aa5c-3577dd4dfed9","reviewedAt":"2026- | flag still set: false | audit rows: 1 "eshold 3) | note: line1\r\nFAKE audit line"
+ansi       200 {"sellerId":"27815b0b-794c-4468-a293-77ad4041ead5","reviewedAt":"2026- | flag still set: false | audit rows: 1 " (threshold 3) | note: \u001b[31mred\u001b[0m note"
+sql        200 {"sellerId":"2aadfff2-74f1-408a-beb3-068241d6a9e9","reviewedAt":"2026- | flag still set: false | audit rows: 1 " 3) | note: '); DELETE FROM audit_log;--"
+500        200 {"sellerId":"84041228-2c13-41cf-83ad-0a0509bc69e8","reviewedAt":"2026- | flag still set: false | audit rows: 1 "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"

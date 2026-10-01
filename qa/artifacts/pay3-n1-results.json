@@ -1,0 +1,134 @@
+[
+  {
+    "id": "N1-1",
+    "name": "ORIGINAL NEW-1 REPRO: client A creates checkout for victim email; client B (different IP/cookies, only email+link id) must NOT get A's checkoutUrl/session/txn id",
+    "result": "PASS",
+    "evidence": "A=774b0904 B=a45733cb: B 201 reused:false, different txn/session/cookie; no A identifiers in B body"
+  },
+  {
+    "id": "N1-2",
+    "name": "same client (cookie) repeat → 200 reused:true same txn; no new Set-Cookie; second cookie client independent",
+    "result": "PASS",
+    "evidence": "200 reused:true; no Set-Cookie on reuse"
+  },
+  {
+    "id": "N1-3",
+    "name": "same Idempotency-Key + same email (no cookie) → same txn (200); same key, different email → independent txn (no leak); key without cookie issues cookie on first",
+    "result": "PASS",
+    "evidence": "same key+email → 200 same txn; same key + other email → 201 own txn; cookie issued"
+  },
+  {
+    "id": "N1-4",
+    "name": "KNOWN RESIDUAL: attacker who knows victim email AND the victim's Idempotency-Key (random UUID per page load) could replay it → document. Guessing keys not feasible; keyless attacker gets nothing",
+    "result": "PASS",
+    "evidence": "INFO: replay of same key by 2nd client returns 200 reused=true same txn=true (key is a bearer capability; the page's key is client-generated random UUID, never shown to other users)"
+  },
+  {
+    "id": "N1-5",
+    "name": "forged / guessed / truncated / tampered / garbage buyer cookies → treated as unknown client: 201 own session, NEW valid cookie, no 5xx, no other txn exposed",
+    "result": "PASS",
+    "evidence": "truncated:201+ck tampered_last_char:201 tampered_first:201 upper:201 reversed:201 empty:201+ck short31:201+ck long65:201+ck zeros:201 sql:201+ck nul:201+ck percent:201+ck latin1:201+ck hash_of_token:201 b64pad:201+ck guess_seq:201"
+  },
+  {
+    "id": "N1-6",
+    "name": "cookie also works with extra cookies/whitespace/duplicates; duplicate cookie names: first-wins/last-wins can't be used to smuggle another client's token",
+    "result": "PASS",
+    "evidence": "extras ok (200 reused); duplicate-name cookies: first-wins (r2→other, r3→a) — only tokens the caller already holds; no escalation"
+  },
+  {
+    "id": "N1-7",
+    "name": "cookie from drop A used on drop B (same email): B is a different drop → own txn, not A's; cookie is per-client not per-drop (reuses token) and does not cross-expose",
+    "result": "PASS",
+    "evidence": "per-(drop,email,client): A and B independent; each reuses own"
+  },
+  {
+    "id": "N1-8",
+    "name": "same cookie, DIFFERENT email → separate txn (cookie not an identity for other emails); cookie+email-case variants map to same",
+    "result": "PASS",
+    "evidence": "ok"
+  },
+  {
+    "id": "N1-9",
+    "name": "key + cookie combos: key from client A with cookie of client B; key on drop B after drop A → 409; key+cookie mismatch doesn't expose either txn to a third",
+    "result": "PASS",
+    "evidence": "key(A)+cookie(B) → 200 txn=A's; same key other drop → 409 (no id leak)"
+  },
+  {
+    "id": "N1-10",
+    "name": "Set-Cookie flags: HttpOnly, SameSite=Lax, Path=/api/checkout, Max-Age=86400; Secure present when NODE_ENV=production (config.isProd; also on loopback http — browsers accept Secure cookies on localhost)",
+    "result": "PASS",
+    "evidence": "unveil_buyer=<tok>; Path=/api/checkout; Expires=Fri, 02 Oct 2026 16:21:15 GMT; Max-Age=86400; Secure; HttpOnly; SameSite=lax | Secure=true Cache-Control=no-store"
+  },
+  {
+    "id": "N1-11",
+    "name": "cookie entropy/predictability: 300 issued tokens — unique, base64url, 43 chars (256-bit), no common prefix, not derived from email/time/txn id; DB stores only 64-hex SHA-256, never the token",
+    "result": "PASS",
+    "evidence": "300 unique 43-char tokens; per-byte distinct values ≥166/256; bit-balance 0.499; DB has SHA-256 only"
+  },
+  {
+    "id": "N1-12",
+    "name": "buyer cookie does not read other data: status API ignores cookie (txn uuid is the capability); no endpoint returns data for a cookie; cookie path /api/checkout not sent to /api/checkout/status or /pay",
+    "result": "PASS",
+    "evidence": "status identical with/without cookie; unknown id 404; /api/earnings 401 with buyer cookie. Keys: amountCents,message,retryable,status,transactionId"
+  },
+  {
+    "id": "N1-13",
+    "name": "concurrent duplicate checkout from SAME client: 20 parallel with same cookie → 1 txn; 20 parallel with same key (no cookie) → 1 txn; 20 parallel no key/no cookie (distinct unknown clients) → ≥1 txns, 0×5xx",
+    "result": "PASS",
+    "evidence": "same-cookie ×20 → 1 txn (all 200); same-key ×20 → 1 txn (1×201); 20 anonymous clients → 20 independent pending (by design: no key/cookie ⇒ separate clients); 20 distinct keys → 0×5xx"
+  },
+  {
+    "id": "N1-14",
+    "name": "BuyForm double-click behaviour end-to-end uses key: see qa-pay3-dblclick.mjs; here: key + immediate repeat without cookie jar → 1 txn",
+    "result": "PASS",
+    "evidence": "ok"
+  },
+  {
+    "id": "N1-15",
+    "name": "PRICE CHANGE mid-pending: reuse by cookie → old txn failed/superseded, new txn at new price, hosted page charges == link price; reuse by key same; other client unaffected",
+    "result": "PASS",
+    "evidence": "old 0e6e50b4 → failed/superseded; new 7ddbd039 at 9000 (201); hosted page for new session amount: pending in DB=9000"
+  },
+  {
+    "id": "N1-16",
+    "name": "price change + KEY reuse → superseded, key released, new txn at new price (201)",
+    "result": "PASS",
+    "evidence": "ok"
+  },
+  {
+    "id": "N1-17",
+    "name": "STALE-TAB PAY after supersede: buyer pays OLD session (old price) via webhook → check money: booked at charged price? or dropped? (notes say booked at amount charged)",
+    "result": "PASS",
+    "evidence": "hosted pay of superseded session → failed/This checkout was replaced by a newer one. Please go back to the page and start again.; tx status=failed code=superseded ledger lines=0 (INFO: refused)"
+  },
+  {
+    "id": "N1-18",
+    "name": "STALE-TAB webhook (valid signature, old price) for superseded txn: outcome recorded, ledger consistent with charged amount (no mismatch between amount and split), or rejected cleanly",
+    "result": "PASS",
+    "evidence": "webhook 200 processed/; tx succeeded/null/null; amount=2000; ledger 3 lines sum 1560"
+  },
+  {
+    "id": "N1-19",
+    "name": "price change then 2nd client (other cookie) gets new price independently; old pending of first client untouched until they return",
+    "result": "PASS",
+    "evidence": "ok (A stays pending at old price until A returns; INFO)"
+  },
+  {
+    "id": "N1-20",
+    "name": "reuse after seller verification fail / drop unpublished still blocked for cookie-bound reuse (no stale URL), and expiry (31 min) → new txn",
+    "result": "PASS",
+    "evidence": "unpublished → 404; 31 min → new 201"
+  },
+  {
+    "id": "N1-21",
+    "name": "migration-008 effect: DB unique index is per (drop,email,token hash); inserting 2 pendings with same token violates (23505), different tokens OK; no raw 23505 leaks to users under 60 mixed concurrent requests",
+    "result": "PASS",
+    "evidence": "unique index rejects duplicate (23505); 60 mixed concurrent: {\"200\":18,\"201\":42}, 0×5xx, 0 duplicate pendings"
+  },
+  {
+    "id": "N1-22",
+    "name": "pay a txn created by 'other client' with victim email: still pays only own session; victim's own session remains independent & payable; both can't both be booked as same sale? (two different buyers → two sales is by design)",
+    "result": "PASS",
+    "evidence": "victim txn succeeded; other-client txn pending (still pending, payable separately: INFO — one real buyer using two browsers can double-pay)"
+  }
+]

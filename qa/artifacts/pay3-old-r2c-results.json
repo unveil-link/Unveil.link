@@ -1,0 +1,206 @@
+[
+  {
+    "id": "BUG-8-01",
+    "name": "NODE_ENV unset, no flag",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-02",
+    "name": "NODE_ENV unset, flag=1, loopback",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=true"
+  },
+  {
+    "id": "BUG-8-03",
+    "name": "NODE_ENV unset, flag=1, public APP_URL",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-04",
+    "name": "production, no flag",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-05",
+    "name": "production, flag=1, public",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-06",
+    "name": "production, flag=1, loopback (documented e2e exception)",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=true"
+  },
+  {
+    "id": "BUG-8-07",
+    "name": "staging, no flag, loopback",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-08",
+    "name": "staging, flag=1, public",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-09",
+    "name": "'Production' (case), no flag",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-10",
+    "name": "'prod', no flag",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-11",
+    "name": "'Development' (case), no flag",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-12",
+    "name": "'development ' (trailing space)",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-13",
+    "name": "'' empty NODE_ENV",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-14",
+    "name": "development (by design)",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=true"
+  },
+  {
+    "id": "BUG-8-15",
+    "name": "test (by design)",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=true"
+  },
+  {
+    "id": "BUG-8-16",
+    "name": "flag='true' (not '1'), loopback",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-17",
+    "name": "flag='0'",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-18",
+    "name": "flag=' 1'",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-19",
+    "name": "OLD flag MOCK_PAYMENTS_LOCAL_BUILD=1 no longer honoured",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-20",
+    "name": "loopback 127.0.0.1",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=true"
+  },
+  {
+    "id": "BUG-8-21",
+    "name": "loopback [::1]",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=true"
+  },
+  {
+    "id": "BUG-8-22",
+    "name": "deceptive localhost.evil.com",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-23",
+    "name": "deceptive localhost@evil.com",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-24",
+    "name": "deceptive 127.0.0.1.evil.com",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-25",
+    "name": "deceptive evil.com/localhost",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-26",
+    "name": "deceptive user:pass localhost:80@evil.com",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-27",
+    "name": "deceptive evil.com#@localhost",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-28",
+    "name": "deceptive evil.com?x=localhost",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-29",
+    "name": "deceptive 0.0.0.0",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false (informational)"
+  },
+  {
+    "id": "BUG-8-30",
+    "name": "deceptive 127.1 (short loopback form)",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=true (informational)"
+  },
+  {
+    "id": "BUG-8-31",
+    "name": "deceptive 127.0.0.2",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false (informational)"
+  },
+  {
+    "id": "BUG-8-32",
+    "name": "APP_URL unset (default) + flag",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=true (informational)"
+  },
+  {
+    "id": "BUG-8-33",
+    "name": "APP_URL garbage + flag",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false"
+  },
+  {
+    "id": "BUG-8-34",
+    "name": "APP_URL empty + flag",
+    "result": "PASS",
+    "evidence": "mockPaymentsAllowed=false (informational)"
+  }
+]

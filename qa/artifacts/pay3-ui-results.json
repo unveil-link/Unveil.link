@@ -1,0 +1,52 @@
+[
+  {
+    "id": "M3-18 (link page)",
+    "result": "PASS",
+    "evidence": "R2: \"All sales are final. Because this is a digital product delivered immediately, purchases can't be refunded or exchanged once completed.\" visible=true, rendered above the Buy button (y 526 < 604) on 390px viewport"
+  },
+  {
+    "id": "M3-15 UI",
+    "result": "PASS",
+    "evidence": "unticked 18+ box blocks submit (HTML required); server also 400 (API case AGE-1)"
+  },
+  {
+    "id": "BUG-7 decline copy",
+    "result": "PASS",
+    "evidence": "R2 declined card message: \"Your card was declined. Please try a different card.\" (friendly, no raw failure code: true)"
+  },
+  {
+    "id": "M3-18 (hosted checkout)",
+    "result": "PASS",
+    "evidence": "R2 hosted page: \"All sales are final. Because this is a digital product delivered immediately, purchases can't be refunded or exchanged once completed.\""
+  },
+  {
+    "id": "M3-03e UI retry (R2 by-design change)",
+    "result": "PASS",
+    "evidence": "R2: re-submitting a good card on the SAME declined session: \"Payment succeeded (mock).\" (was terminal in R1; now payable again)"
+  },
+  {
+    "id": "M3-02 UI",
+    "result": "PASS",
+    "evidence": "fresh checkout with default 4242 card: \"Payment succeeded (mock).\""
+  },
+  {
+    "id": "M3-02 redirect",
+    "result": "BLOCKED",
+    "evidence": "No redirect to a download page after success: download/unlock delivery not built (documented known gap)"
+  },
+  {
+    "id": "M3-20 / S2-02",
+    "result": "BLOCKED",
+    "evidence": "link→paid (mock, mobile viewport, local, no typing delay) took 0.3s; link→checkout redirect 0.2s; cannot reach 'download' step (not built)"
+  },
+  {
+    "id": "M3-19 UI",
+    "result": "BLOCKED",
+    "evidence": "mock page posts card to our own origin (3 requests to /api/dev/payments/pay); hosted-field requirement can only be assessed against a real processor"
+  },
+  {
+    "id": "console",
+    "result": "PASS",
+    "evidence": "no console errors"
+  }
+]

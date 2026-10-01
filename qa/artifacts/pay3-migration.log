@@ -1,0 +1,42 @@
+applied 001-007: 7
+pre: ledger 3/1360; txns 001:pending 002:pending 003:pending 004:failed 005:succeeded 006:failed
+--- npm run migrate (007 -> 008,009,010)
+applied 008_checkout_buyer_binding.sql
+applied 009_payments_janitor.sql
+applied 010_admin_auth.sql
+done (3 applied)
+post: ledger 3/1360; txns 001:pending 002:pending 003:pending 004:failed 005:succeeded 006:failed
+pending rows buyer_token_hash NULL (never handed out): 3
+009 defaults: attempts=0..0 settings=5,5,72 janitor_state_rows=1
+010: legacy admin row kept (password_hash NULL => cannot log in): legacy-admin@example.test hash_null=true; audit rows kept: 1
+seller flag preserved: true reviewed_at=NULL
+indexes: admin_sessions_admin_active_idx,admin_sessions_expires_idx,transactions_one_pending_per_client_uniq,transactions_void_refund_todo_idx,webhook_events_parked_stale_idx
+unique per-client index enforced: 1 ; old 007 index dropped: t
+--- legacy pending rows stay mutually exclusive (coalesce '') : second NULL-token pending for same drop+email must violate
+ERROR:  duplicate key value violates unique constraint "transactions_one_pending_per_client_uniq"
+token hash CHECK: violates check constraint "transactions_buyer_token_hash_fmt"
+admins_email_lowercase NOT VALID accepts legacy mixed-case row, rejects new: violates check constraint "admins_email_lowercase"
+--- re-run migrate (no-op)
+up to date
+--- 008/009/010 SQL applied manually 2x more (idempotent?)
+run2 008_checkout_buyer_binding.sql OK
+run2 009_payments_janitor.sql OK
+run2 010_admin_auth.sql OK
+run3 008_checkout_buyer_binding.sql OK
+run3 009_payments_janitor.sql OK
+run3 010_admin_auth.sql OK
+post2: ledger 3/1360; txns 001:pending 002:pending 003:pending 004:failed 005:succeeded 006:failed
+--- failed migration atomicity: break each of 008/009/010 (append SELECT 1/0) on a rolled-back copy
+broken 008: [migration 008_checkout_buyer_binding.sql failed: division by zero ] recorded>=008: [none] leftover objects of 008 (0=rolled back): 0
+broken 009: [migration 009_payments_janitor.sql failed: division by zero ] recorded>=009: [none] leftover objects of 009 (0=rolled back): 0
+broken 010: [migration 010_admin_auth.sql failed: division by zero ] recorded>=010: [none] leftover objects of 010 (0=rolled back): 0
+--- rollback: no down migrations ship. QA-authored down for 008-010 then re-upgrade preserves data
+after down: ledger 3/1360; txns 6
+applied 008_checkout_buyer_binding.sql
+applied 009_payments_janitor.sql
+applied 010_admin_auth.sql
+done (3 applied)
+re-upgraded: ledger 3/1360; txns 001:pending 002:pending 003:pending 004:failed 005:succeeded 006:failed; flag kept: t
+--- concurrent migrate runners (advisory lock): 4 simultaneous npm run migrate on a fresh DB
+applied counts per runner: 0 10 0 0  errors: 0  schema_migrations rows: 10
+FINISHED

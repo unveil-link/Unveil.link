@@ -1,0 +1,53 @@
+▲ Next.js 16.3.8
+- Local:         http://localhost:3717
+- Network:       http://172.30.0.2:3717
+✓ Ready in 157ms
+✓ Running next.config.ts took 34ms
+unhandled api error error: invalid byte sequence for encoding "UTF8": 0x00
+    at async (.next-qa/server/chunks/[root-of-the-server]__050a3nw._.js:11:1121)
+    at async c (.next-qa/server/chunks/_1-l25y8._.js:3:1499)
+    at async (.next-qa/server/chunks/[root-of-the-server]__050a3nw._.js:1:2108)
+    at async (.next-qa/server/chunks/_0a_z9yo._.js:1:20251)
+    at async Z (.next-qa/server/chunks/[root-of-the-server]__050a3nw._.js:1:5433) {
+  length: 150,
+  severity: 'ERROR',
+  code: '22021',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'unnamed portal parameter $3',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'mbutils.c',
+  line: '1849',
+  routine: 'report_invalid_encoding_int'
+}
+unhandled api error error: invalid byte sequence for encoding "UTF8": 0x00
+    at async (.next-qa/server/chunks/[root-of-the-server]__050a3nw._.js:11:1121)
+    at async c (.next-qa/server/chunks/_1-l25y8._.js:3:1499)
+    at async (.next-qa/server/chunks/[root-of-the-server]__050a3nw._.js:1:2108)
+    at async (.next-qa/server/chunks/_0a_z9yo._.js:1:20251)
+    at async Z (.next-qa/server/chunks/[root-of-the-server]__050a3nw._.js:1:5433) {
+  length: 150,
+  severity: 'ERROR',
+  code: '22021',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'unnamed portal parameter $3',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'mbutils.c',
+  line: '1849',
+  routine: 'report_invalid_encoding_int'
+}
