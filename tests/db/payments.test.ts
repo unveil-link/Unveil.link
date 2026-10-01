@@ -7,6 +7,9 @@ let dropDb: (() => Promise<void>) | null = null;
 
 // Lazily imported after env is set (config reads env on access, the pg Pool is created on first query).
 type Mods = {
+  adm: typeof import("../../src/server/admin/auth");
+  admq: typeof import("../../src/server/admin/queries");
+  sess: typeof import("../../src/server/auth/session");
   jan: typeof import("../../src/server/payments/janitor");
   db: typeof import("../../src/server/db");
   wh: typeof import("../../src/server/payments/webhooks");
@@ -30,6 +33,9 @@ beforeAll(async () => {
   });
   delete process.env.MOCK_PROCESSING_FEE_PERCENT;
   m = {
+    adm: await import("../../src/server/admin/auth"),
+    admq: await import("../../src/server/admin/queries"),
+    sess: await import("../../src/server/auth/session"),
     jan: await import("../../src/server/payments/janitor"),
     db: await import("../../src/server/db"),
     wh: await import("../../src/server/payments/webhooks"),
@@ -1219,5 +1225,167 @@ describe.skipIf(!available)("FU-2 earnings label for voided charges", () => {
     const s = await seed(); const c = await checkout(s);
     await deliver(m.ev.mockEvents.saleFailed({ transactionId: c.transactionId, amountCents: 2000, failureCode: "card_declined" }));
     expect((await m.earn.getEarningsSummary(s.sellerId)).recent.find((x) => x.id === c.transactionId)).toMatchObject({ status: "failed", displayStatus: "failed" });
+  });
+});
+
+// =====================================================================================================================
+// Follow-ups 3: admin auth foundation + flagged sellers / review transactions / clear flag
+// =====================================================================================================================
+const ADMIN_PW = "Correct-horse-battery-staple-42";
+let adminCounter = 0;
+const mkAdmin = async (pw = ADMIN_PW) => { const email = `admin${++adminCounter}-${Date.now()}@example.test`; const r = await m.adm.createAdmin(email, pw); return { id: r.id, email }; };
+
+describe.skipIf(!available)("FU-3 admin authentication", () => {
+  it("createAdmin: bcrypt hash only (never the password), lower-cased email, weak/short passwords and bad emails refused, duplicates refused, audit row", async () => {
+    const a = await mkAdmin();
+    const row = await m.db.queryOne<{ email: string; password_hash: string }>(`SELECT email, password_hash FROM admins WHERE id=$1`, [a.id]);
+    expect(row!.password_hash).toMatch(/^\$2[aby]\$12\$/);
+    expect(row!.password_hash).not.toContain(ADMIN_PW);
+    await expect(m.adm.createAdmin("x@example.test", "short")).rejects.toThrow(/at least 10/);
+    await expect(m.adm.createAdmin("x@example.test", "password1234")).rejects.toThrow();
+    await expect(m.adm.createAdmin("not-an-email", ADMIN_PW)).rejects.toThrow(/invalid email/);
+    await expect(m.adm.createAdmin(a.email.toUpperCase(), ADMIN_PW)).rejects.toThrow(/already exists/);
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='admin_created_cli' AND target=$1`, [`admin:${a.id}`]))!.n)).toBe(1);
+  });
+  it("there is NO seeded/default admin: a fresh schema has zero admins until the CLI creates one (and the table has no default password)", async () => {
+    const cols = await m.db.query<{ column_name: string; column_default: string | null }>(`SELECT column_name, column_default FROM information_schema.columns WHERE table_name='admins' AND column_name='password_hash'`);
+    expect(cols[0].column_default).toBeNull();
+    // seeded rows would have no password_hash: none may exist except those created by this test file
+    const bad = await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM admins WHERE password_hash IS NULL`);
+    expect(Number(bad!.n)).toBe(0);
+  });
+  it("login: correct password -> session token that verifies; wrong password / unknown email / disabled admin -> null (uniform)", async () => {
+    const a = await mkAdmin();
+    const ok = await m.adm.loginAdmin(a.email, ADMIN_PW, "ua");
+    expect(ok).not.toBeNull();
+    expect(await m.adm.readAdminToken(ok!.token)).toEqual({ id: a.id, email: a.email });
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW + "x")).toBeNull();
+    expect(await m.adm.loginAdmin("nobody@example.test", ADMIN_PW)).toBeNull();
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [a.id]);
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW)).toBeNull();
+    expect(await m.adm.readAdminToken(ok!.token)).toBeNull(); // an existing session dies with the account
+    const au = await m.db.query<{ action: string }>(`SELECT action FROM audit_log WHERE admin_id=$1 ORDER BY created_at`, [a.id]);
+    expect(au.map((x) => x.action)).toContain("admin_login");
+  });
+  it("sessions are server-side revocable (logout) and expire", async () => {
+    const a = await mkAdmin();
+    const { token } = (await m.adm.loginAdmin(a.email, ADMIN_PW))!;
+    expect(await m.adm.revokeAdminToken(token)).toBe(true);
+    expect(await m.adm.readAdminToken(token)).toBeNull();
+    const t2 = (await m.adm.loginAdmin(a.email, ADMIN_PW))!.token;
+    await m.db.query(`UPDATE admin_sessions SET expires_at = now() - interval '1 second' WHERE admin_id=$1`, [a.id]);
+    expect(await m.adm.readAdminToken(t2)).toBeNull();
+  });
+  it("principals are separate: a SELLER session token never validates as an admin, and an admin token never as a seller", async () => {
+    const s = await seed();
+    const sellerToken = await m.sess.createSession(s.sellerId);
+    expect(await m.sess.readSessionToken(sellerToken)).toBe(s.sellerId);
+    expect(await m.adm.readAdminToken(sellerToken)).toBeNull();
+    const a = await mkAdmin();
+    const { token } = (await m.adm.loginAdmin(a.email, ADMIN_PW))!;
+    expect(await m.sess.readSessionToken(token)).toBeNull();
+    // a seller whose email equals an admin's email is still not an admin
+    expect(await m.adm.readAdminToken(sellerToken + "x")).toBeNull();
+    expect(await m.adm.readAdminToken("garbage")).toBeNull();
+  });
+  it("--reset-password path: replaces the hash, re-enables, revokes existing sessions, audit row; old password stops working", async () => {
+    const a = await mkAdmin();
+    const { token } = (await m.adm.loginAdmin(a.email, ADMIN_PW))!;
+    await m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true });
+    expect(await m.adm.readAdminToken(token)).toBeNull();
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW)).toBeNull();
+    expect(await m.adm.loginAdmin(a.email, "A-totally-different-passphrase-1")).not.toBeNull();
+  });
+});
+
+describe.skipIf(!available)("FU-3 admin queries and the audited 'clear flag' action", () => {
+  async function flagged(n = 3) {
+    const s = await seed();
+    for (let i = 0; i < n; i++) {
+      const out = await m.co.createCheckout({ dropId: s.dropId, email: `fl${i}@example.test`, confirmOver18: true });
+      await deliver(sale(out.transactionId, 2000));
+      await deliver(m.ev.mockEvents.chargeback({ transactionId: out.transactionId, amountCents: null }));
+    }
+    return s;
+  }
+  it("listFlaggedSellers: only flagged sellers, with counts, never password hashes or payout details", async () => {
+    const f = await flagged(3);
+    const notFlagged = await seed();
+    const list = await m.admq.listFlaggedSellers();
+    const row = list.find((x) => x.id === f.sellerId)!;
+    expect(row).toMatchObject({ chargebacks: 3, totalSales: 3, refunds: 0, verificationStatus: "verified" });
+    expect(row.flagReason).toMatch(/3 chargebacks/);
+    expect(list.find((x) => x.id === notFlagged.sellerId)).toBeUndefined();
+    const json = JSON.stringify(list);
+    expect(json).not.toMatch(/password|hash|payout_details|dob|legal_name/i);
+  });
+  it("listReviewTransactions: voided charge with refund state; failed retries show pending_retry / failed with last error", async () => {
+    await cleanSlate();
+    const ok = await voidedTx(); // refund requested
+    const fail = await voidedTx({ failProvider: true });
+    const list = await m.admq.listReviewTransactions();
+    expect(list.find((x) => x.id === ok.id)).toMatchObject({ refundState: "requested", reviewReason: "seller_not_verified", status: "failed", failureCode: "invalid_at_capture" });
+    expect(list.find((x) => x.id === fail.id)).toMatchObject({ refundState: "pending_retry", refundAttempts: 1, refundLastError: "processor down" });
+    await m.db.query(`UPDATE transactions SET void_refund_attempts = 99 WHERE id=$1`, [fail.id]);
+    expect((await m.admq.listReviewTransactions()).find((x) => x.id === fail.id)!.refundState).toBe("failed");
+    expect(JSON.stringify(list)).not.toMatch(/buyer_email|buyer@example|password/i);
+  });
+  it("listSellerTransactions: rows for that seller only, no buyer email; unknown/garbage id -> null seller", async () => {
+    const f = await flagged(3);
+    const r = await m.admq.listSellerTransactions(f.sellerId);
+    expect(r.rows).toHaveLength(3);
+    expect(JSON.stringify(r)).not.toMatch(/example\.test"?,"(dropTitle|status)|buyer/i);
+    expect((await m.admq.listSellerTransactions("not-a-uuid")).seller).toBeNull();
+    expect((await m.admq.listSellerTransactions("00000000-0000-4000-8000-000000000000")).seller).toBeNull();
+  });
+  it("clearSellerFlag: clears the flag, records reviewer + note, writes ONE audit row (admin id + time) atomically; nothing else about the seller changes", async () => {
+    const f = await flagged(3);
+    const a = await mkAdmin();
+    const before = await m.db.queryOne<{ verification_status: string }>(`SELECT verification_status FROM sellers WHERE id=$1`, [f.sellerId]);
+    const r = await m.admq.clearSellerFlag(a.id, f.sellerId, "Reviewed disputes: legitimate buyers' remorse, no fraud.");
+    expect(r.sellerId).toBe(f.sellerId);
+    const s = await m.db.queryOne<Record<string, unknown>>(`SELECT risk_flagged_at, risk_flag_reason, risk_reviewed_at, risk_reviewed_by, risk_review_note, verification_status FROM sellers WHERE id=$1`, [f.sellerId]);
+    expect(s).toMatchObject({ risk_flagged_at: null, risk_flag_reason: null, risk_reviewed_by: a.id, verification_status: before!.verification_status });
+    expect(s!.risk_reviewed_at).not.toBeNull();
+    expect(s!.risk_review_note).toMatch(/legitimate/);
+    const au = await m.db.query<{ admin_id: string; target: string; created_at: string }>(`SELECT admin_id, target, created_at FROM audit_log WHERE action='seller_flag_cleared' AND target LIKE $1`, [`seller:${f.sellerId}%`]);
+    expect(au).toHaveLength(1);
+    expect(au[0].admin_id).toBe(a.id);
+    expect(au[0].target).toMatch(/3 chargebacks/); // previous reason retained in the audit trail
+    expect(au[0].created_at).toBeTruthy();
+    expect((await m.admq.listFlaggedSellers()).find((x) => x.id === f.sellerId)).toBeUndefined();
+  });
+  it("clearSellerFlag validation: note required (3-500), unflagged seller 409, unknown seller 404 - and NO audit row / state change on failure", async () => {
+    const f = await flagged(3);
+    const a = await mkAdmin();
+    const auditCount = async () => Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='seller_flag_cleared'`))!.n);
+    const n0 = await auditCount();
+    await expect(m.admq.clearSellerFlag(a.id, f.sellerId, "  ")).rejects.toMatchObject({ status: 400, code: "note_required" });
+    await expect(m.admq.clearSellerFlag(a.id, f.sellerId, "x".repeat(501))).rejects.toMatchObject({ status: 400 });
+    await expect(m.admq.clearSellerFlag(a.id, "00000000-0000-4000-8000-000000000000", "valid note")).rejects.toMatchObject({ status: 404 });
+    await expect(m.admq.clearSellerFlag(a.id, "garbage", "valid note")).rejects.toMatchObject({ status: 404 });
+    expect((await m.db.queryOne<{ risk_flagged_at: string | null }>(`SELECT risk_flagged_at FROM sellers WHERE id=$1`, [f.sellerId]))!.risk_flagged_at).not.toBeNull();
+    expect(await auditCount()).toBe(n0);
+    await m.admq.clearSellerFlag(a.id, f.sellerId, "first review");
+    await expect(m.admq.clearSellerFlag(a.id, f.sellerId, "second review")).rejects.toMatchObject({ status: 409, code: "not_flagged" });
+    expect(await auditCount()).toBe(n0 + 1);
+  });
+  it("concurrent clears: exactly one succeeds and exactly one audit row exists", async () => {
+    const f = await flagged(3);
+    const a = await mkAdmin();
+    const rs = await Promise.allSettled(Array.from({ length: 6 }, () => m.admq.clearSellerFlag(a.id, f.sellerId, "concurrent review")));
+    expect(rs.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='seller_flag_cleared' AND target LIKE $1`, [`seller:${f.sellerId}%`]))!.n)).toBe(1);
+  });
+  it("after a review the count restarts: old chargebacks don't instantly re-flag; the next 3 new ones do", async () => {
+    const f = await flagged(3);
+    const a = await mkAdmin();
+    await m.admq.clearSellerFlag(a.id, f.sellerId, "reviewed, fine");
+    const cb = async (tag: string) => { const o = await m.co.createCheckout({ dropId: f.dropId, email: `${tag}@example.test`, confirmOver18: true }); await deliver(sale(o.transactionId, 2000)); await deliver(m.ev.mockEvents.chargeback({ transactionId: o.transactionId, amountCents: null })); };
+    const isFlagged = async () => (await m.db.queryOne<{ risk_flagged_at: string | null }>(`SELECT risk_flagged_at FROM sellers WHERE id=$1`, [f.sellerId]))!.risk_flagged_at !== null;
+    await cb("n1"); await cb("n2");
+    expect(await isFlagged()).toBe(false);
+    await cb("n3");
+    expect(await isFlagged()).toBe(true);
   });
 });
