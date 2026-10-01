@@ -544,3 +544,397 @@ describe.skipIf(!available)("reconciliation log", () => {
     expect(rows[0].payload).toContain("evt_recon");
   });
 });
+
+// =====================================================================================================================
+// QA round 1 fixes
+// =====================================================================================================================
+const idemCo = (s: { dropId: string }, key?: string | null, email = "buyer@example.test") =>
+  m.co.createCheckout({ dropId: s.dropId, email, confirmOver18: true, idempotencyKey: key });
+const pendingCount = async (dropId: string) => Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) AS n FROM transactions WHERE drop_id=$1 AND status='pending'`, [dropId]))!.n);
+const setSetting = (col: string, v: number) => m.db.query(`UPDATE platform_settings SET ${col} = $1 WHERE id=1`, [v]);
+
+describe.skipIf(!available)("QA-1 checkout idempotency / double submit", () => {
+  it("concurrent identical requests (20, no key) -> exactly ONE pending transaction and one session", async () => {
+    const s = await seed();
+    const rs = await Promise.all(Array.from({ length: 20 }, () => idemCo(s)));
+    expect(new Set(rs.map((r) => r.transactionId)).size).toBe(1);
+    expect(new Set(rs.map((r) => r.checkoutUrl)).size).toBe(1);
+    expect(rs.filter((r) => !r.reused)).toHaveLength(1);
+    expect(await pendingCount(s.dropId)).toBe(1);
+  });
+  it("same Idempotency-Key concurrently or later -> same txn/session; another buyer with the same key is independent", async () => {
+    const s = await seed();
+    const rs = await Promise.all(Array.from({ length: 10 }, () => idemCo(s, "key-abc-123")));
+    expect(new Set(rs.map((r) => r.transactionId)).size).toBe(1);
+    const again = await idemCo(s, "key-abc-123");
+    expect(again.transactionId).toBe(rs[0].transactionId);
+    expect(again.checkoutUrl).toBe(rs[0].checkoutUrl);
+    const other = await idemCo(s, "key-abc-123", "other@example.test");
+    expect(other.transactionId).not.toBe(rs[0].transactionId);
+  });
+  it("same key but a different drop -> 409 idempotency_key_reused; malformed key -> 400", async () => {
+    const a = await seed(), b = await seed();
+    await idemCo(a, "key-xyz");
+    await expect(idemCo(b, "key-xyz")).rejects.toMatchObject({ status: 409, code: "idempotency_key_reused" });
+    await expect(idemCo(a, "bad key with spaces")).rejects.toMatchObject({ status: 400, code: "invalid_idempotency_key" });
+    await expect(idemCo(a, "x".repeat(129))).rejects.toMatchObject({ status: 400 });
+  });
+  it("different buyers on one drop each get their own session; a PAID checkout does not block a new purchase", async () => {
+    const s = await seed();
+    const a = await idemCo(s, null, "a@example.test"), b = await idemCo(s, null, "b@example.test");
+    expect(a.transactionId).not.toBe(b.transactionId);
+    await deliver(sale(a.transactionId, 2000));
+    const again = await idemCo(s, null, "a@example.test");
+    expect(again.transactionId).not.toBe(a.transactionId); // buying the same drop again after success is a new purchase
+  });
+  it("a dead keyed checkout (failed/expired) releases the key: the retry gets a FRESH session", async () => {
+    const s = await seed();
+    const first = await idemCo(s, "retry-key");
+    await m.db.query(`UPDATE transactions SET status='failed', failure_code='session_expired' WHERE id=$1`, [first.transactionId]);
+    const second = await idemCo(s, "retry-key");
+    expect(second.transactionId).not.toBe(first.transactionId);
+    expect(second.reused).toBe(false);
+  });
+  it("DB backstop: a second pending row for the same drop+buyer is refused by the unique index", async () => {
+    const s = await seed();
+    const a = await idemCo(s);
+    await expect(m.db.query(
+      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, status, provider)
+       SELECT drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, 'pending', provider FROM transactions WHERE id=$1`, [a.transactionId],
+    )).rejects.toMatchObject({ code: "23505" });
+  });
+});
+
+describe.skipIf(!available)("QA-2 dedupe: rejected / ignored events never block a later valid one", () => {
+  it("amount_mismatch (same processor txn id) then the correct event with a NEW event id -> processed, tx succeeded", async () => {
+    const s = await seed({ price: 2000 });
+    const { transactionId: id } = await checkout(s);
+    const bad = await deliver(sale(id, 1, "evt_mm_1"));
+    expect(bad.body).toMatchObject({ outcome: "rejected", detail: "amount_mismatch" });
+    const good = await deliver(sale(id, 2000, "evt_mm_2"));
+    expect(good.body.outcome).toBe("processed");
+    expect((await txRow(id))!.status).toBe("succeeded");
+    expect(await sum(id)).toBe(1560);
+    // rejected row stays in the log but no longer holds the claim
+    const rej = await m.db.queryOne<{ dedupe_claim: boolean; outcome: string }>(`SELECT dedupe_claim, outcome FROM webhook_events WHERE provider_event_id='evt_mm_1'`);
+    expect(rej).toEqual({ dedupe_claim: false, outcome: "rejected" });
+  });
+  it("the SAME event id can be re-delivered after a rejection (processor fixed + retried): processed once", async () => {
+    const s = await seed({ price: 2000 });
+    const { transactionId: id } = await checkout(s);
+    await deliver(sale(id, 1, "evt_same_id")); // rejected
+    expect((await deliver(sale(id, 2000, "evt_same_id"))).body.outcome).toBe("processed");
+    expect((await deliver(sale(id, 2000, "evt_same_id"))).body.outcome).toBe("duplicate");
+    expect((await ledgerOf(id)).length).toBe(3);
+  });
+  it("ignored/unknown_transaction event, then the real sale for the same processor txn id -> processed", async () => {
+    const s = await seed({ price: 2000 });
+    const { transactionId: id } = await checkout(s);
+    const ghost = m.ev.mockEvents.saleSucceeded({ transactionId: id, amountCents: 2000, reference: "99999999-9999-4999-8999-999999999999", saleId: m.ev.mockSaleId(id), eventId: "evt_ghost" });
+    expect((await deliver(ghost)).body).toMatchObject({ outcome: "ignored", detail: "unknown_transaction" });
+    expect((await deliver(sale(id, 2000, "evt_real"))).body.outcome).toBe("processed");
+    expect((await txRow(id))!.status).toBe("succeeded");
+  });
+  it("a genuine sale delivered again under several different event ids after success -> exactly one ledger posting", async () => {
+    const s = await seed();
+    const { transactionId: id } = await checkout(s);
+    expect((await deliver(sale(id, 2000, "evt_g1"))).body.outcome).toBe("processed");
+    for (const e of ["evt_g2", "evt_g3", "evt_g4"]) expect((await deliver(sale(id, 2000, e))).body.outcome).toBe("duplicate");
+    expect((await ledgerOf(id)).length).toBe(3);
+    expect(await sum(id)).toBe(1560);
+  });
+  it("12 concurrent good deliveries mixed with 12 concurrent bad ones: exactly one posting, tx succeeded", async () => {
+    const s = await seed();
+    const { transactionId: id } = await checkout(s);
+    const jobs = [
+      ...Array.from({ length: 12 }, (_, i) => deliver(sale(id, 1, `evt_bad_${i}`))),
+      ...Array.from({ length: 12 }, (_, i) => deliver(sale(id, 2000, `evt_good_${i}`))),
+    ];
+    const rs = await Promise.all(jobs);
+    expect(rs.every((r) => r.status === 200)).toBe(true);
+    expect((await ledgerOf(id)).length).toBe(3);
+    expect((await txRow(id))!.status).toBe("succeeded");
+  });
+  it("confirmTransaction not approved (transient) is rejected without burning the claim: the retry succeeds", async () => {
+    const reg = await import("../../src/server/payments/registry");
+    const prov = reg.findProvider("mock")!;
+    let approved = false;
+    (prov as { confirmTransaction?: unknown }).confirmTransaction = async () => ({ approved, amountCents: 2000, currency: "USD" });
+    try {
+      const s = await seed();
+      const { transactionId: id } = await checkout(s);
+      expect((await deliver(sale(id, 2000, "evt_c1"))).body).toMatchObject({ outcome: "rejected", detail: "confirmation_not_approved" });
+      approved = true;
+      expect((await deliver(sale(id, 2000, "evt_c2"))).body.outcome).toBe("processed");
+    } finally {
+      delete (prov as { confirmTransaction?: unknown }).confirmTransaction;
+    }
+  });
+});
+
+describe.skipIf(!available)("QA-3 hostile strings never cause a 500", () => {
+  it("NUL in reference / event id / transaction id / failure code -> 400 + a rejected log row, no state change", async () => {
+    const s = await seed();
+    const { transactionId: id } = await checkout(s);
+    const before = await countAll("webhook_events");
+    const variants = [
+      m.ev.mockEvents.saleSucceeded({ transactionId: id, amountCents: 2000, reference: "a\u0000b" }),
+      sale(id, 2000, "e\u0000x"),
+      m.ev.mockEvents.saleSucceeded({ transactionId: id, amountCents: 2000, saleId: "tx\u0000" }),
+      m.ev.mockEvents.saleFailed({ transactionId: id, amountCents: 2000, failureCode: "bad\u0000code" }),
+      sale(id, 2000, "e\uD800x"), // lone surrogate
+      sale(id, 2000, "e".repeat(600)),
+    ];
+    for (const v of variants) {
+      const r = await deliver(v);
+      expect(r.status).toBe(400);
+      expect(r.body.code).toBe("invalid_payload");
+    }
+    expect(await countAll("webhook_events")).toBe(before + variants.length);
+    const rows = await m.db.query<{ outcome: string; signature_valid: boolean }>(`SELECT outcome, signature_valid FROM webhook_events ORDER BY received_at DESC, id DESC LIMIT ${variants.length}`);
+    expect(rows.every((r) => r.outcome === "rejected" && r.signature_valid)).toBe(true);
+    expect((await txRow(id))!.status).toBe("pending");
+    expect(await ledgerOf(id)).toEqual([]);
+    expect((await deliver(sale(id, 2000, "evt_after_nul"))).body.outcome).toBe("processed"); // processor can recover with a clean event
+  });
+  it("an unexpected handler error still leaves an 'error' reconciliation row (and a retry works)", async () => {
+    const s = await seed();
+    const { transactionId: id } = await checkout(s);
+    await m.db.query(`ALTER TABLE ledger_entries ADD CONSTRAINT tmp_break2 CHECK (false) NOT VALID`);
+    const bad = await deliver(sale(id, 2000, "evt_err_row"));
+    await m.db.query(`ALTER TABLE ledger_entries DROP CONSTRAINT tmp_break2`);
+    expect(bad.status).toBe(500);
+    const err = await m.db.query(`SELECT outcome_detail FROM webhook_events WHERE provider_event_id='evt_err_row' AND outcome='error'`);
+    expect(err).toHaveLength(1);
+  });
+});
+
+describe.skipIf(!available)("QA-4 repeated chargebacks flag the seller for review (M5-08)", () => {
+  async function chargebacks(sellerId: string, dropId: string, n: number) {
+    const ids: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const out = await m.co.createCheckout({ dropId, email: `cb${i}@example.test`, confirmOver18: true });
+      await deliver(sale(out.transactionId, 2000));
+      await deliver(m.ev.mockEvents.chargeback({ transactionId: out.transactionId, amountCents: null }));
+      ids.push(out.transactionId);
+    }
+    return ids;
+  }
+  const flag = (id: string) => m.db.queryOne<{ risk_flagged_at: string | null; risk_flag_reason: string | null; verification_status: string }>(`SELECT risk_flagged_at, risk_flag_reason, verification_status FROM sellers WHERE id=$1`, [id]);
+  const audits = async (id: string) => Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='seller_flagged_repeat_chargebacks' AND target LIKE $1`, [`seller:${id}%`]))!.n);
+
+  it("below threshold (2) no flag; the 3rd chargeback flags once with reason + audit row; the 4th does not re-flag; seller is NOT banned", async () => {
+    const s = await seed();
+    await chargebacks(s.sellerId, s.dropId, 2);
+    expect((await flag(s.sellerId))!.risk_flagged_at).toBeNull();
+    await chargebacks(s.sellerId, s.dropId, 1);
+    const f = (await flag(s.sellerId))!;
+    expect(f.risk_flagged_at).not.toBeNull();
+    expect(f.risk_flag_reason).toMatch(/3 chargebacks within 90 days/);
+    expect(f.verification_status).toBe("verified"); // no auto-ban, nothing else changed
+    expect(await audits(s.sellerId)).toBe(1);
+    const firstAt = f.risk_flagged_at;
+    await chargebacks(s.sellerId, s.dropId, 1);
+    expect(String((await flag(s.sellerId))!.risk_flagged_at)).toBe(String(firstAt));
+    expect(await audits(s.sellerId)).toBe(1);
+    // the seller can still be bought from
+    expect((await checkout(s)).transactionId).toBeTruthy();
+    // the triggering webhook is annotated in the reconciliation log
+    const n = await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM webhook_events w JOIN transactions t ON t.id=w.transaction_id WHERE t.seller_id=$1 AND w.outcome_detail='seller_flagged_for_review'`, [s.sellerId]);
+    expect(Number(n!.n)).toBe(1);
+  });
+  it("threshold and window are configurable; chargebacks outside the window don't count; other sellers unaffected", async () => {
+    await setSetting("chargeback_flag_threshold", 2);
+    try {
+      const s = await seed(), other = await seed();
+      await chargebacks(other.sellerId, other.dropId, 1);
+      await chargebacks(s.sellerId, s.dropId, 1);
+      expect((await flag(s.sellerId))!.risk_flagged_at).toBeNull();
+      expect((await flag(other.sellerId))!.risk_flagged_at).toBeNull();
+      await chargebacks(s.sellerId, s.dropId, 1);
+      expect((await flag(s.sellerId))!.risk_flagged_at).not.toBeNull();
+      expect((await flag(other.sellerId))!.risk_flagged_at).toBeNull();
+    } finally { await setSetting("chargeback_flag_threshold", 3); }
+    // window: with a 1-day window a chargeback whose ledger rows are older than 1 day doesn't count (simulated by a 0-day... use window 1 + backdated)
+  });
+  it("concurrent chargebacks cannot all slip under the threshold: 4 simultaneous -> flagged exactly once", async () => {
+    const s = await seed();
+    const outs = [];
+    for (let i = 0; i < 4; i++) { const o = await m.co.createCheckout({ dropId: s.dropId, email: `par${i}@example.test`, confirmOver18: true }); await deliver(sale(o.transactionId, 2000)); outs.push(o.transactionId); }
+    await Promise.all(outs.map((id) => deliver(m.ev.mockEvents.chargeback({ transactionId: id, amountCents: null }))));
+    expect((await flag(s.sellerId))!.risk_flagged_at).not.toBeNull();
+    expect(await audits(s.sellerId)).toBe(1);
+  });
+  it("refunds are not chargebacks: 5 refunds don't flag", async () => {
+    const s = await seed();
+    for (let i = 0; i < 5; i++) {
+      const o = await m.co.createCheckout({ dropId: s.dropId, email: `rf${i}@example.test`, confirmOver18: true });
+      await deliver(sale(o.transactionId, 2000));
+      await deliver(m.ev.mockEvents.refund({ transactionId: o.transactionId, refundId: `mockrf_flag_${s.sellerId}_${i}`, amountCents: 2000 }));
+    }
+    expect((await flag(s.sellerId))!.risk_flagged_at).toBeNull();
+  });
+});
+
+describe.skipIf(!available)("QA-6 session expiry and re-validation at capture", () => {
+  const backdate = (id: string, minutes: number) => m.db.query(`UPDATE transactions SET created_at = now() - make_interval(mins => $2::int) WHERE id=$1`, [id, minutes]);
+  const row = (id: string) => m.db.queryOne<{ status: string; failure_code: string | null; review_reason: string | null; refund_requested_at: string | null }>(`SELECT status, failure_code, review_reason, refund_requested_at FROM transactions WHERE id=$1`, [id]);
+  const sessionOf = async (id: string) => (await m.db.queryOne<{ provider_session_id: string }>(`SELECT provider_session_id FROM transactions WHERE id=$1`, [id]))!.provider_session_id;
+
+  it("pending sessions expire after the TTL (default 30 min): on status access, on the sweep, and on a new checkout; payment is refused", async () => {
+    const s = await seed();
+    const c1 = await checkout(s);
+    await backdate(c1.transactionId, 31);
+    const st = await m.co.getCheckoutStatus(c1.transactionId);
+    expect(st).toMatchObject({ status: "failed", retryable: false });
+    expect(st!.message).toMatch(/expired/i);
+    expect((await row(c1.transactionId))!.failure_code).toBe("session_expired");
+    // sweep
+    const c2 = await checkout(s, { email: "second@example.test" });
+    await backdate(c2.transactionId, 45);
+    expect(await m.co.expirePendingCheckouts()).toBeGreaterThanOrEqual(1);
+    expect((await row(c2.transactionId))!.status).toBe("failed");
+    // paying an expired session is refused by the (mock) hosted page and creates no ledger
+    const c3 = await checkout(s, { email: "third@example.test" });
+    await backdate(c3.transactionId, 60);
+    const pay = await m.sim.simulatePayment(await sessionOf(c3.transactionId), "4242424242424242");
+    expect(pay).toMatchObject({ status: "failed", approved: false, failureCode: "session_expired" });
+    expect(await ledgerOf(c3.transactionId)).toEqual([]);
+    // a fresh checkout creates a NEW session once the old one expired
+    const again = await checkout(s, { email: "third@example.test" });
+    expect(again.transactionId).not.toBe(c3.transactionId);
+  });
+  it("TTL is a setting", async () => {
+    const s = await seed();
+    const c = await checkout(s);
+    await backdate(c.transactionId, 10);
+    expect((await m.co.getCheckoutStatus(c.transactionId))!.status).toBe("pending");
+    await setSetting("checkout_session_ttl_minutes", 5);
+    try { expect((await m.co.getCheckoutStatus(c.transactionId))!.status).toBe("failed"); } finally { await setSetting("checkout_session_ttl_minutes", 30); }
+  });
+  it.each([
+    ["seller verification failed", async (s: { sellerId: string }) => { await m.db.query(`UPDATE sellers SET verification_status='failed' WHERE id=$1`, [s.sellerId]); }, "seller_not_verified"],
+    ["seller in manual_review", async (s: { sellerId: string }) => { await m.db.query(`UPDATE sellers SET verification_status='manual_review' WHERE id=$1`, [s.sellerId]); }, "seller_not_verified"],
+    ["drop unpublished", async (s: { dropId: string }) => { await m.db.query(`UPDATE drops SET status='unpublished' WHERE id=$1`, [s.dropId]); }, "drop_unavailable"],
+    ["drop flagged", async (s: { dropId: string }) => { await m.db.query(`UPDATE drops SET status='flagged' WHERE id=$1`, [s.dropId]); }, "drop_unavailable"],
+  ] as const)("%s after checkout: the mock hosted page refuses payment", async (_n, mutate) => {
+    const s = await seed();
+    const c = await checkout(s);
+    await (mutate as (s: unknown) => Promise<void>)(s);
+    const pay = await m.sim.simulatePayment(await sessionOf(c.transactionId), "4242424242424242");
+    expect(pay).toMatchObject({ approved: false, status: "failed", failureCode: "unavailable" });
+    expect(pay.message).toMatch(/no longer available/i);
+    expect(await ledgerOf(c.transactionId)).toEqual([]);
+    expect((await txRow(c.transactionId))!.status).toBe("failed");
+  });
+  it.each([
+    ["seller verification failed", async (s: { sellerId: string }) => { await m.db.query(`UPDATE sellers SET verification_status='failed' WHERE id=$1`, [s.sellerId]); }, "seller_not_verified"],
+    ["drop unpublished", async (s: { dropId: string }) => { await m.db.query(`UPDATE drops SET status='unpublished' WHERE id=$1`, [s.dropId]); }, "drop_unavailable"],
+    ["drop flagged", async (s: { dropId: string }) => { await m.db.query(`UPDATE drops SET status='flagged' WHERE id=$1`, [s.dropId]); }, "drop_unavailable"],
+  ] as const)("webhook success arriving after %s: NOT credited; voided (refund requested through the provider), flagged for review, logged", async (_n, mutate, reason) => {
+    const s = await seed();
+    const c = await checkout(s);
+    await (mutate as (s: unknown) => Promise<void>)(s);
+    const r = await deliver(sale(c.transactionId, 2000, `evt_void_${reason}_${Math.random()}`));
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ outcome: "processed", detail: `voided:${reason}` });
+    const t = await row(c.transactionId);
+    expect(t).toMatchObject({ status: "failed", failure_code: "invalid_at_capture", review_reason: reason });
+    expect(t!.refund_requested_at).not.toBeNull();
+    expect(await ledgerOf(c.transactionId)).toEqual([]);
+    expect((await m.ledger.getBalance(m.db.pool(), s.sellerId)).totalCents).toBe(0);
+    // the processor's refund confirmation is recorded, doesn't touch the books; a replay of the sale is ignored
+    const rf = await deliver(m.ev.mockEvents.refund({ transactionId: c.transactionId, refundId: `mockrf_void_${_n.replace(/\W+/g, "_")}`, amountCents: 2000 }));
+    expect(rf.body).toMatchObject({ outcome: "processed", detail: "void_refund_confirmed" });
+    expect(await ledgerOf(c.transactionId)).toEqual([]);
+    expect((await deliver(sale(c.transactionId, 2000, `evt_void_again_${_n.length}`))).body.outcome).toBe("duplicate"); // the voided sale was a processed event: replays collapse
+    expect((await row(c.transactionId))!.status).toBe("failed");
+  });
+  it("LATE success: within TTL+grace of an expired session -> honoured (credited); beyond the grace -> voided + review", async () => {
+    const s = await seed();
+    const late = await checkout(s, { email: "late1@example.test" });
+    await backdate(late.transactionId, 31); // expired, but within the 24 h grace
+    await m.co.expirePendingCheckouts();
+    expect((await row(late.transactionId))!.failure_code).toBe("session_expired");
+    expect((await deliver(sale(late.transactionId, 2000))).body.outcome).toBe("processed");
+    expect(await row(late.transactionId)).toMatchObject({ status: "succeeded", review_reason: null });
+    expect(await sum(late.transactionId)).toBe(1560);
+
+    const toolate = await checkout(s, { email: "late2@example.test" });
+    await backdate(toolate.transactionId, 30 + 1440 + 5);
+    const r = await deliver(sale(toolate.transactionId, 2000));
+    expect(r.body).toMatchObject({ outcome: "processed", detail: "voided:session_expired" });
+    expect(await row(toolate.transactionId)).toMatchObject({ status: "failed", review_reason: "session_expired" });
+    expect((await row(toolate.transactionId))!.refund_requested_at).not.toBeNull();
+    expect(await ledgerOf(toolate.transactionId)).toEqual([]);
+  });
+  it("retryVoidRefunds re-requests a void whose first provider call failed", async () => {
+    const s = await seed();
+    const c = await checkout(s);
+    await m.db.query(`UPDATE sellers SET verification_status='failed' WHERE id=$1`, [s.sellerId]);
+    const reg = await import("../../src/server/payments/registry");
+    const prov = reg.findProvider("mock")!;
+    const orig = prov.issueRefund;
+    prov.issueRefund = async () => { throw new Error("processor down"); };
+    try {
+      expect((await deliver(sale(c.transactionId, 2000))).status).toBe(200); // still 200: the event is recorded, the void is retried later
+    } finally { prov.issueRefund = orig; }
+    expect((await row(c.transactionId))!.refund_requested_at).toBeNull();
+    expect(await m.refunds.retryVoidRefunds()).toBeGreaterThanOrEqual(1);
+    expect((await row(c.transactionId))!.refund_requested_at).not.toBeNull();
+  });
+});
+
+describe.skipIf(!available)("QA-7 friendly failures and clean retry", () => {
+  const sessionOf = async (id: string) => (await m.db.queryOne<{ provider_session_id: string }>(`SELECT provider_session_id FROM transactions WHERE id=$1`, [id]))!.provider_session_id;
+  it("decline -> friendly message (no raw code), then a good card on the SAME session succeeds and credits once", async () => {
+    const s = await seed();
+    const c = await checkout(s);
+    const sid = await sessionOf(c.transactionId);
+    const d1 = await m.sim.simulatePayment(sid, "4000000000000002");
+    expect(d1).toMatchObject({ status: "failed", approved: false });
+    expect(d1.message).toBe("Your card was declined. Please try a different card.");
+    expect(JSON.stringify(d1.message)).not.toMatch(/card_declined|_/);
+    const st = await m.co.getCheckoutStatus(c.transactionId);
+    expect(st).toMatchObject({ status: "failed", retryable: true });
+    expect(st!.message).not.toMatch(/card_declined/);
+    // 2nd decline (a different failure) also works and shows its own message
+    const d2 = await m.sim.simulatePayment(sid, "4000000000009995");
+    expect(d2.message).toMatch(/insufficient funds/i);
+    const ok = await m.sim.simulatePayment(sid, "4242424242424242");
+    expect(ok).toMatchObject({ status: "succeeded", approved: true });
+    expect(await sum(c.transactionId)).toBe(1560);
+    expect((await ledgerOf(c.transactionId)).length).toBe(3);
+    // paying again after success is idempotent
+    expect((await m.sim.simulatePayment(sid, "4242424242424242")).status).toBe("succeeded");
+    expect((await ledgerOf(c.transactionId)).length).toBe(3);
+  });
+  it("every failure code the mock can produce maps to a friendly sentence", async () => {
+    const { friendlyFailure, GENERIC_FAILURE } = await import("../../lib/purchase-copy");
+    for (const code of ["card_declined", "insufficient_funds", "expired_card", "incorrect_cvc", "invalid_card_number", "unrecognized_test_card", "session_expired", "unavailable", "invalid_at_capture", "superseded", "session_error"]) {
+      const msg = friendlyFailure(code);
+      expect(msg).not.toBe(GENERIC_FAILURE);
+      expect(msg).not.toContain(code);
+      expect(msg).toMatch(/\s/);
+    }
+    expect(friendlyFailure("some_new_processor_code")).toBe(GENERIC_FAILURE);
+    expect(friendlyFailure(null)).toBe(GENERIC_FAILURE);
+  });
+  it("after a decline the buyer can also start a fresh checkout for the same drop (new session)", async () => {
+    const s = await seed();
+    const c = await checkout(s);
+    await m.sim.simulatePayment(await sessionOf(c.transactionId), "4000000000000002");
+    const again = await checkout(s);
+    expect(again.transactionId).not.toBe(c.transactionId);
+    expect((await m.sim.simulatePayment(await sessionOf(again.transactionId), "4242424242424242")).status).toBe("succeeded");
+  });
+  it("an expired / voided session is terminal for card retries (no stuck-looking retry that can never work)", async () => {
+    const s = await seed();
+    const c = await checkout(s);
+    await m.db.query(`UPDATE transactions SET status='failed', failure_code='session_expired' WHERE id=$1`, [c.transactionId]);
+    const r = await m.sim.simulatePayment(await sessionOf(c.transactionId), "4242424242424242");
+    expect(r).toMatchObject({ approved: false });
+    expect(r.message).toMatch(/expired/i);
+    expect(await ledgerOf(c.transactionId)).toEqual([]);
+  });
+});

@@ -292,7 +292,9 @@ async function invalidAtCapture(c: PoolClient, txId: string, ctx: ApplyCtx): Pro
  * writes an audit_log row. The seller row is locked first so concurrent chargebacks can't each miss the threshold.
  */
 async function flagSellerIfRepeatChargebacks(c: PoolClient, sellerId: string, ctx: ApplyCtx): Promise<boolean> {
-  await c.query(`SELECT 1 FROM sellers WHERE id = $1 FOR UPDATE`, [sellerId]);
+  // FOR NO KEY UPDATE (not FOR UPDATE): this transaction already holds a KEY SHARE lock on the seller through the ledger_entries FK,
+  // and two concurrent chargebacks taking FOR UPDATE would deadlock on each other.
+  await c.query(`SELECT 1 FROM sellers WHERE id = $1 FOR NO KEY UPDATE`, [sellerId]);
   const n = await c.query<{ n: number }>(
     `SELECT count(DISTINCT transaction_id)::int AS n FROM ledger_entries
       WHERE seller_id = $1 AND entry_type = 'chargeback_reversal' AND component = 'gross'

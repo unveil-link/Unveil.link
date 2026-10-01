@@ -45,8 +45,10 @@ async function loadDrop(input: CheckoutInput): Promise<Drop | null> {
  * Call with a transaction id (on access) or a client/pool-level filter, or with no filter as a sweep (cron/ops hook).
  * A late processor-confirmed success for such a transaction is still handled safely (see webhooks.ts invalidAtCapture).
  */
-export async function expirePendingCheckouts(opts: { transactionId?: string; dropId?: string; email?: string } = {}, c?: Pick<PoolClient, "query">): Promise<number> {
-  const ttl = (await getSettings()).checkout_session_ttl_minutes;
+export async function expirePendingCheckouts(opts: { transactionId?: string; dropId?: string; email?: string } = {}, c?: Pick<PoolClient, "query">, ttlMinutes?: number): Promise<number> {
+  // NB: callers that already hold a pooled connection pass ttlMinutes - fetching settings here would need a SECOND connection
+  // and can deadlock the pool when many requests wait on the advisory lock.
+  const ttl = ttlMinutes ?? (await getSettings()).checkout_session_ttl_minutes;
   const q = c ?? pool();
   const r = await q.query(
     `UPDATE transactions SET status = 'failed', failure_code = 'session_expired', updated_at = now()
@@ -88,13 +90,14 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     throw new HttpError(409, "This drop can't be purchased right now", "seller_not_verified");
   }
   const { split, rates } = await quoteSale(provider, drop.price_cents);
+  const ttlMinutes = (await getSettings()).checkout_session_ttl_minutes;
   const email = input.email.trim().toLowerCase();
 
   for (let attempt = 0; ; attempt++) {
     try {
       return await withTx(async (c) => {
         await c.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`checkout:${drop.id}:${email}`]);
-        await expirePendingCheckouts({ dropId: drop.id, email }, c);
+        await expirePendingCheckouts({ dropId: drop.id, email }, c, ttlMinutes);
         if (key) {
           const k = await c.query<ExistingRow>(`SELECT ${EXISTING_COLS} FROM transactions WHERE lower(buyer_email) = $1 AND idempotency_key = $2`, [email, key]);
           if (k.rows[0]) {
