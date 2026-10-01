@@ -1,0 +1,71 @@
+# PAYMENTS-NOTES — payments/abstraction
+
+Branched from `origin/main` @ `94af2c0`. Adds a processor-agnostic payment layer, a **mock** processor, a webhook pipeline with a reconciliation log, a seller ledger, record-only payouts and a read-only earnings API. **No real processor is integrated and no real money moves.** Nothing here has been merged to main.
+
+## What changed
+- **Migrations** `005_payments_enums.sql` (new enum labels; separate file because PG can't use a new enum label in the transaction that adds it and `scripts/migrate.ts` runs one tx per file) and `006_payments.sql`:
+  - `transactions` (ALTERed, not duplicated): statuses `pending`/`failed` added (existing: `succeeded`/`refunded`/`charged_back`); `provider`, `provider_session_id`, `currency`, `fee_percent`/`processing_fee_percent` (rate snapshot), `reversed_cents` (cumulative refunded+charged-back gross), `failure_code`, `buyer_confirmed_18_at`, `succeeded_at`, `updated_at`; `processor_ref` now nullable and unique per `(provider, processor_ref)`; default status is now `pending`.
+  - `payouts` (ALTERed): statuses `requested`/`approved` added (flow `requested → approved → paid | failed`); `provider`, timestamps, `failure_reason`.
+  - `webhook_events` (new): the reconciliation log — one row per delivery.
+  - `ledger_entries` (new): append-only (UPDATE/DELETE/TRUNCATE blocked by triggers), signed integer cents.
+  - `platform_settings`: `processing_fee_percent` (NULL ⇒ provider default), `payout_hold_days` (7), `min_payout_cents` (2500), `chargeback_fee_cents` (0). `fee_percent` (10) already existed and is what the platform fee uses.
+- **`src/server/payments/`** — `types.ts` (interface), `registry.ts`, `signature.ts`, `money.ts`, `ledger.ts`, `webhooks.ts`, `checkout.ts`, `refunds.ts`, `payouts.ts`, `earnings.ts`, `pricing.ts`, `mock/{index,cards,events}.ts`, `dev/simulator.ts`.
+- **Routes**: `POST /api/checkout` (replaces the 501 stub; **same `CHECKOUT` limiter call, first thing in the handler**), `POST /api/webhooks/[provider]`, `GET /api/checkout/status?id=`, `GET /api/earnings` (seller session), dev-only `POST /api/dev/payments/{pay,refund}`, dev-only page `/pay/mock/[sessionId]`.
+- **Minimal UI**: `src/app/u/[linkId]/BuyForm.tsx` (+ 3 lines in `page.tsx`) replaces the disabled "payments coming soon" button with email + 18+ checkbox + "Unlock for $X". Uses existing `components/ui` only; no redesign. `/pay/mock/*` is a bare dev page.
+- **Config/limiter**: `config.payments`, `config.mockPaymentsAllowed`; new limiter name `WEBHOOK_REJECTED` (60/min/IP) so unauthenticated junk can't flood the log table.
+- **Tests**: `tests/payments-money.test.ts`, `tests/payments-provider.test.ts` (pure, no DB), `tests/db/payments.test.ts` (38 DB tests; skip automatically if Postgres isn't reachable), e2e +16 payments checks (and the old "checkout stub 501" check now asserts the limiter still fires before validation: 400,400,400,429).
+
+## How to verify
+```bash
+git checkout payments/abstraction && npm ci
+cp .env.example .env   # set DATABASE_URL, SESSION_SECRET, SIGNED_URL_SECRET, PAYMENT_WEBHOOK_SECRET (>=32 chars)
+npm run migrate                    # applies 005 + 006 (re-running is a no-op; 006 is also re-runnable by hand)
+npm run typecheck && npm run lint
+npm test                           # pure + DB-backed (DB suites create/drop db "unveil_paytest_payments")
+npm run e2e                        # builds, starts the app on :3100.., throwaway DB `unveil_e2e`, runs everything incl. [pay] checks
+```
+Manual (dev): `npm run dev`, publish a drop as a verified seller, open `/u/<link>`, enter an email + tick 18+, *Unlock* → mock page → card `4242 4242 4242 4242` (approve) or `4000 0000 0000 0002` (declined). `GET /api/earnings` as the seller shows the pending balance.
+
+## Design decisions
+**Provider interface** (`types.ts`): `createCheckoutSession`, `verifyWebhook(rawBody, headers) → NormalizedPaymentEvent`, `issueRefund`, `recordPayout`, optional `confirmTransaction`, plus `availability()` and `processingFeePercent()`. Providers never touch the DB; the generic pipeline owns dedupe/ordering/ledger so Segpay/CCBill only supply parsing + verification. Normalized types: `sale_succeeded | sale_failed | refunded | chargeback`. Events carry `eventId` (processor id, or `<tranid>:<type>` where none exists), `providerTransactionId`, `relatedProviderTransactionId` (original sale on refunds/chargebacks), and `merchantReference` (our `transactions.id` round-tripped through the processor).
+
+**Signatures** (`signature.ts`): header `x-unveil-signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>.<raw body>")>`; MAC covers the raw bytes; constant-time compare (`timingSafeEqual`, always executed); `|now − t| ≤ PAYMENT_WEBHOOK_TOLERANCE_SECONDS` (300). A captured request replayed *inside* the window is caught by dedupe. For Segpay/CCBill (no documented signatures) the same primitive can sign `transactionId + price` into the processor's custom variable and be verified in their `verifyWebhook`; `confirmTransaction` is the hook for the server-side confirmation call.
+
+**Rounding rule** (`money.ts`, the only one): each percentage is `round_half_up(cents × bps / 10000)` in pure integer math (percent stored as `numeric(5,2)` ⇒ basis points). `processing = pct(G)`, `platform = min(pct(G), G − processing)`, `seller_net = G − platform − processing` ⇒ the three always sum to `G` and none is negative (the `min` only bites if the two rates exceed 100 %). $20.00 → 2.40 / 2.00 / 15.60 exactly (unit-tested). Fees are taken on the gross. The rates in force are snapshotted on the transaction at checkout, so later setting changes never alter an open sale.
+**Refund math**: tracked *cumulatively* — after `R` of `G` cents are reversed the seller has returned `round_half_up(net·R/G)` of net and the rest as fee shares (split processing/platform by `round_half_up`); each refund posts `cumulative(after) − cumulative(before)`. All cumulatives are non-decreasing and equal the original components at `R = G`, so any sequence of partial refunds (even 1 ¢ at a time) sums to exactly the original postings — property-tested on 4 000 random sales/sequences. Over-refund is impossible (`OverRefundError`, DB `CHECK reversed_cents <= amount_cents`, handler outcome `rejected/over_refund`). Chargebacks use the same reversal math plus an optional `chargeback_fee` entry.
+
+**Idempotency**: inside one DB transaction the handler `INSERT … ON CONFLICT DO NOTHING` a claim row in `webhook_events` (`dedupe_claim = true`). Two partial unique indexes enforce it: `(provider, provider_event_id)` and `(provider, provider_transaction_id, event_type)` (the second covers processors that re-issue event ids). Concurrent deliveries serialise on the index; the loser sees no row, logs a `duplicate` row and returns **200**. Because the claim is in the same transaction as the state change, a failure rolls the claim back and the processor's retry is processed normally (tested by forcing a DB error). Defence in depth: `ledger_entries` has unique indexes `(transaction_id, entry_type, component)` for sale lines and `(webhook_event_id, entry_type, component)`, and the transaction row is locked `FOR UPDATE`. Tested with 12 parallel deliveries (DB test) and 10 parallel HTTP deliveries (e2e).
+
+**Ordering**: webhooks are at-least-once and unordered. *Refund/chargeback before the sale*: if the transaction is still `pending` (or only the processor-side sale id is known and nothing matches yet) the event is claimed and stored as `outcome='parked'` with its normalized JSON; when the sale event is applied, parked events for that sale are applied in `received_at` order in the same transaction (`outcome_detail = applied_after_sale`). `retryParkedEvents()` is an ops hook for stragglers. *Sale after a failure* (`failed → succeeded`) is accepted; *failure after success* is ignored; *over-refund* and *amount mismatch* are `rejected` (logged, 200, no state change); *unknown transaction* is `ignored` (200).
+
+**Reconciliation log**: every delivery gets a row: provider, event id, normalized + raw type, `signature_valid`, `outcome` (`processed|duplicate|rejected|ignored|parked|error`), `outcome_detail`, linked `transaction_id`, `payload_sha256`, and the raw payload (≤ 64 KiB; rejected deliveries keep only 1 KiB). Bad-signature requests answer **401**, authentic-but-malformed **400**, and change no payment state.
+
+**Ledger** (`ledger_entries`): seller-perspective signed cents. Sale = `sale_credit +G`, `platform_fee −p`, `processing_fee −c`. Refund/chargeback = `*_reversal` lines (`−gross`, `+platform share`, `+processing share`), `chargeback_fee`, `payout_debit` (reserved when a payout is *requested*), `payout_reversal` (payout failed). Balance = `SUM(amount_cents)`; **pending** = entries with `available_at > now` (sale lines: `+payout_hold_days`; reversals inherit the sale's `available_at`, so a refund inside the hold lowers *pending*; fees/payouts are immediate). Negative available balances are allowed and are naturally netted against future earnings; payouts need `available ≥ min_payout_cents` and are serialised per seller (`SELECT … FOR UPDATE` on the seller row — tested with 5 concurrent requests). `getBalance` uses `clock_timestamp()` (not `now()`) so concurrent transactions agree on "available".
+
+**Mock can't run in production**: `config.mockPaymentsAllowed` is false whenever `NODE_ENV=production`; the provider's `availability()` returns not-ok (checkout and webhook answer 503), `/api/dev/payments/*` and `/pay/mock/*` 404. Tested in unit tests and against a real `next start` in the e2e. **The one exception**: this repo's e2e must run a *production build* (`next start`), so `MOCK_PAYMENTS_LOCAL_BUILD=1` re-enables the mock **only if** `APP_URL`'s host is `localhost`/`127.0.0.1`/`::1`; a real deployment has a public `APP_URL` and can't pass. `scripts/e2e.sh` sets it (and a fresh random `PAYMENT_WEBHOOK_SECRET` per run).
+
+**Checkout rules**: published drop + verified seller; price always from `drops.price_cents` (a client-supplied amount is ignored — no amount field exists in the schema); buyer email required (receipt delivery not built); 18+ confirmation (`confirmOver18: true`) is required for **every** drop, because the schema has no adult-flag column — see open questions. The transaction is created `pending` and only a verified webhook can make it `succeeded`.
+
+## Deviations / things to know
+- **Two migration files** (005 enums, 006 rest) instead of one — forced by the PG enum rule above.
+- **18+ is required for all drops** (no per-drop adult flag exists), recorded as `buyer_confirmed_18_at`.
+- **Mock-in-production exception** for the local e2e (above). It is deliberately narrow; say if you'd rather the e2e run `next dev`-style instead.
+- `/api/dev/payments/pay` has no auth by design (it's the mock "card form" backend): it exists only when the mock is allowed, and only acts on a pending mock session.
+- The mock page `/pay/mock/[sessionId]` is functional, not designed.
+- `recordPayout` is called at `approvePayout` (admin step); there's no admin UI/route for approve/paid/failed yet — they are service functions only. `GET /api/earnings` is the only payout-related route; there is no seller "request payout" route yet.
+- No receipt email, no download/unlock delivery after purchase (explicitly out of scope).
+- `proof/db.txt` is regenerated by `npm run e2e`; not committed in this branch's changes.
+
+## Known gaps / open questions
+1. **Webhook authenticity for Segpay and CCBill**: neither documents an HMAC (processor-evaluation.md). Plan = our HMAC of `(transactionId, price)` in a custom variable + IP allowlist (CCBill publishes ranges) + `confirmTransaction` server-side check before applying. Need to ask both reps whether signed webhooks exist/are planned, whether custom variables are returned on refund/chargeback postbacks (the pipeline can fall back to the processor's related-transaction id), and retry behaviour (CCBill webhooks: undocumented).
+2. **Flow of funds / legal**: Unveil collecting buyer funds and paying creators is marketplace/payment-facilitator-like. The ledger models "seller is owed X" only; who holds the money (processor split payouts, Segpay Partner Payout, own bank rails) needs the processors' and counsel's answer. No payout transfer exists.
+3. **Per-drop 2257 / age & identity attestations are untouched.** Buyer 18+ is a self-declared checkbox only.
+4. **Price range exceptions**: processors default to roughly $2.95–$100; $1–$500 needs written exceptions (CCBill) / approved dynamic ranges (Segpay). Dynamic-price integrity (CCBill `formDigest`, Segpay dynamic pricing id) belongs in the real `createCheckoutSession`.
+5. **Real processing fee** is processor-specific and may not be a flat percent (per-transaction + percent, chargeback fees, rolling reserves, FX). `processing_fee_percent` is a stand-in; the real fee likely arrives in settlement reports and would need a reconciliation step (the log is built for it) rather than a computed value.
+6. **Refund fee treatment**: the spec says nothing about whether processing/platform fees are returned on refund. Chosen: fees are returned proportionally (the seller bears only the net share). Processors often keep the fee on refunds — confirm; changing it is a change in `reversalFor`/`postReversal` only.
+7. **Chargeback fee** default is $0 (configurable); real disputes also involve evidence deadlines and possible reversals of a chargeback (a `chargeback_won` event type isn't modelled).
+8. **Currency** is USD-only (stored, validated on sale events).
+9. **Retention/PII**: `webhook_events.payload` stores raw payloads (up to 64 KiB) which may include buyer email/card metadata for real processors; decide retention or switch to hash-only before going live. Buyer email is stored lower-cased on `transactions`.
+10. **CSP** will need the processors' hosted-page origins (`frame-src`/`form-action`) when real providers land.
+11. **Buyer unlock/download after purchase** and receipt email are not built; `/api/checkout/status?id=` (unguessable transaction UUID as capability) is the hook for the post-payment page.
+12. Webhook bodies are capped at 256 KiB; rejected-delivery logging is rate limited per IP (`WEBHOOK_REJECTED`).
