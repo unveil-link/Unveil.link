@@ -1,0 +1,57 @@
+# Screenshots (frontend/dashboard)
+
+Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. Full-page unless noted (dialogs are viewport shots).
+
+- buyer-checkout-test-mode
+- buyer-draft-not-found
+- buyer-needs-confirmation
+- buyer-not-found
+- buyer-published-3-files
+- buyer-published
+- buyer-unpublished
+- dashboard-empty-state
+- dashboard-overview
+- dashboard-pending-verification
+- design
+- download-page-panel
+- drop-detail-draft
+- drop-detail-flagged
+- drop-detail-not-found
+- drop-detail-pending-verification
+- drop-detail-published
+- drop-list-empty
+- drop-list-filter-drafts
+- drop-list-filter-under-review
+- drop-list
+- drop-publish-attestation-dialog
+- drop-unpublish-confirm
+- forgot-password
+- forgot-password-sent
+- forgot-password-validation
+- landing
+- new-drop-empty
+- new-drop-file-and-price-validation
+- new-drop-filled
+- new-drop-mid-upload
+- new-drop-publish-attestations
+- new-drop-success-draft
+- new-drop-success-published
+- new-drop-validation-errors
+- reset-password-invalid-token
+- reset-password-missing-token
+- reset-password
+- reset-password-weak-server
+- signin-lockout-countdown
+- signin-lockout-countdown-ticking
+- signin
+- signin-network-error
+- signin-validation-errors
+- signin-wrong-credentials
+- signup-429-rate-limited
+- signup-email-taken
+- signup
+- signup-pattern-rule
+- signup-strong-password
+- signup-validation-errors
+- signup-weak-password-hint
+- signup-weak-password-server

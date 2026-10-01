@@ -1,0 +1,152 @@
+[
+  {
+    "path": "/",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/design",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/design",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/design",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/signup",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/signup",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/signup",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/login",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/login",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/login",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/forgot-password",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/forgot-password",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/forgot-password",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard/drops",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard/drops",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard/drops",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard/drops/new",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard/drops/new",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/dashboard/drops/new",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/u/mGNDEheaR-Dl",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/u/mGNDEheaR-Dl",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/u/mGNDEheaR-Dl",
+    "width": 1280,
+    "overflowPx": 0
+  },
+  {
+    "path": "/u/doesnotexist1",
+    "width": 360,
+    "overflowPx": 0
+  },
+  {
+    "path": "/u/doesnotexist1",
+    "width": 390,
+    "overflowPx": 0
+  },
+  {
+    "path": "/u/doesnotexist1",
+    "width": 1280,
+    "overflowPx": 0
+  }
+]
