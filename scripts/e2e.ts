@@ -1241,7 +1241,8 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     eq(c1.status, 201, "first");
     const sc = c1.headers.getSetCookie().find((x) => x.startsWith("unveil_buyer="));
     assert(sc && /httponly/i.test(sc) && /samesite=lax/i.test(sc), `buyer cookie is httpOnly: ${sc}`);
-    const reps = await Promise.all(Array.from({ length: 5 }, () => coFor(em3, {}, br)));
+    // same browser (same cookie jar), different source IPs so the e2e's tiny checkout limiter (3/min/IP) isn't what is being tested here
+    const reps = await Promise.all(Array.from({ length: 5 }, (_, i) => coFor(em3, { "x-forwarded-for": `10.88.7.${i + 1}` }, br)));
     assert(reps.every((r) => r.status === 200), `cookie replays 200 ${reps.map((r) => r.status)}`);
     eq(new Set((await Promise.all(reps.map((r) => r.json()))).map((b) => b.transactionId)).size, 1, "same txn for the same browser");
     eq((await c1.json()).transactionId, (await reps[0].json()).transactionId, "same as the first");
