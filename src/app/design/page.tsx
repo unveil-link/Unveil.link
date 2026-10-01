@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Logo } from "@/components/Logo";
+import { DesignExtras } from "@/components/design/DesignExtras";
 import {
   Badge,
   Button,
@@ -196,6 +197,8 @@ export default function DesignPage() {
             </Card>
           </div>
         </Block>
+
+        <DesignExtras />
 
         <Block id="layout" title="Container & Section">
           <div className="overflow-hidden rounded-lg border border-border">
