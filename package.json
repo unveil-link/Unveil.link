@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "migrate": "tsx scripts/migrate.ts",
     "verify-seller": "tsx scripts/set-verification.ts",
+    "payments:janitor": "tsx scripts/payments-janitor.ts",
     "e2e": "bash scripts/e2e.sh",
     "test": "vitest run",
     "lint": "eslint ."
