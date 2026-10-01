@@ -87,6 +87,11 @@ export const config = {
       return false;
     }
   },
+  /** Bearer token for /api/internal/cron/*. Unset or shorter than 32 chars => the cron routes answer 503 (disabled). */
+  get cronSecret(): string | null {
+    const v = process.env.CRON_SECRET;
+    return v && v.length >= 32 ? v : null;
+  },
   get google() {
     const id = process.env.GOOGLE_CLIENT_ID;
     const secret = process.env.GOOGLE_CLIENT_SECRET;

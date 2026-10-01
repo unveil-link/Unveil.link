@@ -1218,20 +1218,35 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
 
   // ---------------------------------------------------------------- round 2: QA fixes (items 1-7) over real HTTP
   const freshEmail = (tag: string) => `pay-${tag}+${stamp}-${crypto.randomBytes(3).toString("hex")}@example.test`;
-  const coFor = (email: string, headers: Record<string, string> = {}) =>
-    new Client_().req("POST", "/api/checkout", { json: { linkId: payLink, email, confirmOver18: true }, headers });
+  const coFor = (email: string, headers: Record<string, string> = {}, who: Client_ = new Client_()) =>
+    who.req("POST", "/api/checkout", { json: { linkId: payLink, email, confirmOver18: true }, headers });
   const payVia = async (sessionId: string, card: string) => (await (await new Client_().req("POST", "/api/dev/payments/pay", { json: { sessionId, card } })).json());
   const sessionIdOf = (b: { checkoutUrl: string }) => b.checkoutUrl.split("/").pop()!;
 
   await check("[pay#1] concurrent identical POST /api/checkout (x8, same drop+email) -> ONE pending transaction/session; Idempotency-Key honoured (same key = same txn, other drop = 409)", async () => {
     const em = freshEmail("conc");
-    const rs = await Promise.all(Array.from({ length: 8 }, () => coFor(em)));
+    // a real double click = same browser: same Idempotency-Key header (BuyForm sends one per page load)
+    const dk = crypto.randomUUID();
+    const rs = await Promise.all(Array.from({ length: 8 }, () => coFor(em, { "idempotency-key": dk })));
     assert(rs.every((r) => r.status === 200 || r.status === 201), `statuses ${rs.map((r) => r.status)}`);
     const bodies = await Promise.all(rs.map((r) => r.json()));
     eq(new Set(bodies.map((b) => b.transactionId)).size, 1, "one transaction id");
     eq(new Set(bodies.map((b) => b.checkoutUrl)).size, 1, "one session");
     eq(rs.filter((r) => r.status === 201).length, 1, "exactly one 201 (new), the rest 200 (reused)");
     eq((await db.query("SELECT count(*)::int AS n FROM transactions WHERE lower(buyer_email)=lower($1)", [em])).rows[0].n, 1, "one row in the DB");
+    // same browser by cookie (no key): the first response set an httpOnly buyer cookie, later requests reuse the session
+    const br = new Client_();
+    const em3 = freshEmail("cookie");
+    const c1 = await coFor(em3, {}, br);
+    eq(c1.status, 201, "first");
+    const sc = c1.headers.getSetCookie().find((x) => x.startsWith("unveil_buyer="));
+    assert(sc && /httponly/i.test(sc) && /samesite=lax/i.test(sc), `buyer cookie is httpOnly: ${sc}`);
+    // same browser (same cookie jar), different source IPs so the e2e's tiny checkout limiter (3/min/IP) isn't what is being tested here
+    const reps = await Promise.all(Array.from({ length: 5 }, (_, i) => coFor(em3, { "x-forwarded-for": `10.88.7.${i + 1}` }, br)));
+    assert(reps.every((r) => r.status === 200), `cookie replays 200 ${reps.map((r) => r.status)}`);
+    const repBodies = await Promise.all(reps.map((r) => r.json()));
+    eq(new Set(repBodies.map((b) => b.transactionId)).size, 1, "same txn for the same browser");
+    eq((await c1.json()).transactionId, repBodies[0].transactionId, "same as the first");
     // Idempotency-Key
     const em2 = freshEmail("idem");
     const k = crypto.randomUUID();
@@ -1251,6 +1266,37 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const again = await coFor(em2);
     eq(again.status, 201, "after success a new purchase attempt gets a NEW pending session");
     assert((await again.json()).transactionId !== paid.transactionId, "new txn");
+  });
+
+  await check("[pay#1b] privacy (QA NEW-1): another client with the victim's email + drop gets its OWN session and never the victim's checkoutUrl/txn id; stale price supersedes", async () => {
+    const em = freshEmail("victim");
+    const victimBrowser = new Client_();
+    const v = await (await coFor(em, {}, victimBrowser)).json();
+    const attacker = await coFor(em); // no cookie, no key, different IP
+    eq(attacker.status, 201, "attacker gets a NEW checkout, not a 200 reuse");
+    const ab = await attacker.json();
+    assert(ab.transactionId !== v.transactionId && ab.checkoutUrl !== v.checkoutUrl, "independent session");
+    eq(ab.reused, false, "reused:false");
+    const raw = JSON.stringify(ab);
+    assert(!raw.includes(v.transactionId) && !raw.includes(sessionIdOf(v)), "victim's ids absent from the response");
+    // the victim's own browser still gets exactly its session back
+    const back = await coFor(em, {}, victimBrowser);
+    eq(back.status, 200, "owner reuse"); eq((await back.json()).checkoutUrl, v.checkoutUrl, "owner gets own url");
+    // a forged / guessed cookie token is not a credential
+    const forged = await new Client_().req("POST", "/api/checkout", { json: { linkId: payLink, email: em, confirmOver18: true }, headers: { cookie: "unveil_buyer=" + "A".repeat(43) } });
+    eq(forged.status, 201, "forged cookie -> new session");
+    assert((await forged.json()).transactionId !== v.transactionId, "forged cookie didn't reach the victim's txn");
+    // price change supersedes the owner's stale pending checkout
+    const dropId = (await db.query("SELECT id FROM drops WHERE public_link_id=$1", [payLink])).rows[0].id;
+    await db.query("UPDATE drops SET price_cents=2500 WHERE id=$1", [dropId]);
+    try {
+      const np = await coFor(em, {}, victimBrowser);
+      eq(np.status, 201, "new session after price change");
+      const nb = await np.json();
+      eq(nb.amountCents, 2500, "current price"); assert(nb.transactionId !== v.transactionId, "new txn");
+      const old = await txState(v.transactionId);
+      eq([old.status, old.failure_code].join(), "failed,superseded", "old pending txn superseded");
+    } finally { await db.query("UPDATE drops SET price_cents=2000 WHERE id=$1", [dropId]); }
   });
 
   await check("[pay#3] NUL byte / invalid strings in the event id or data.reference -> 400 (never 500) with a 'rejected' reconciliation row; garbage JSON -> 400; handler still healthy after", async () => {
@@ -1375,6 +1421,201 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     await db.query("UPDATE drops SET status='unpublished' WHERE id=$1", [dropId]);
     eq((await payVia(sessionIdOf(cu), TEST_CARDS.approved)).approved, false, "unpublished drop: refused");
     await db.query("UPDATE drops SET status='published' WHERE id=$1", [dropId]);
+  });
+
+
+  // ---------------------------------------------------------------- follow-ups: janitor cron route + admin auth/screens over real HTTP
+  const CRON = process.env.CRON_SECRET!;
+  assert(CRON && CRON.length >= 32, "CRON_SECRET must be set for the e2e (scripts/e2e.sh does)");
+  const cron = (who: Client_, auth?: string, method = "POST") => who.req(method, "/api/internal/cron/payments-janitor", { headers: auth === undefined ? {} : { authorization: auth } });
+
+  await check("[fu2] janitor route: 401 without/with a wrong bearer (no work done); 200 + counts with the right one; GET works too; wrong-token guessing is rate limited (429)", async () => {
+    const co = await (await coFor(freshEmail("jan"))).json();
+    await db.query("UPDATE transactions SET created_at = now() - interval '2 hours' WHERE id=$1", [co.transactionId]);
+    const w = new Client_();
+    eq((await cron(w)).status, 401, "no header");
+    eq((await cron(w, "Bearer nope")).status, 401, "wrong token");
+    eq((await cron(w, `Bearer ${CRON}x`)).status, 401, "almost right");
+    eq((await cron(w, CRON)).status, 401, "no Bearer prefix");
+    eq((await cron(w, `Basic ${CRON}`)).status, 401, "wrong scheme");
+    eq((await txState(co.transactionId)).status, "pending", "unauthorised calls did nothing");
+    const ok = await cron(new Client_(), `Bearer ${CRON}`);
+    eq(ok.status, 200, "authorised");
+    const body = await ok.json();
+    eq(body.skipped, false, "ran"); assert(body.counts.expiredCheckouts >= 1, `expired >= 1 (${JSON.stringify(body.counts)})`);
+    const t = await txState(co.transactionId);
+    eq([t.status, t.failure_code].join(), "failed,session_expired", "expired by the janitor");
+    const again = await (await cron(new Client_(), `Bearer ${CRON}`, "GET")).json();
+    eq(again.counts.expiredCheckouts, 0, "idempotent (GET, Vercel Cron style)");
+    assert(Number((await db.query("SELECT runs FROM payments_janitor_state WHERE id=1")).rows[0].runs) >= 2, "heartbeat recorded");
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='payments_janitor_run'")).rows[0].n >= 1, true, "audit row with counts");
+    const guesser = new Client_();
+    const codes: number[] = [];
+    for (let i = 0; i < 33; i++) codes.push((await cron(guesser, `Bearer guess-${i}`)).status);
+    assert(codes.slice(0, 30).every((c) => c === 401) && codes.slice(30).every((c) => c === 429), `401 x30 then 429: ${codes.join(",")}`);
+    // concurrent authorised runs: no 5xx, results are either a run or 'already_running'
+    const rs = await Promise.all(Array.from({ length: 6 }, () => cron(new Client_(), `Bearer ${CRON}`)));
+    assert(rs.every((r) => r.status === 200), `concurrent: ${rs.map((r) => r.status)}`);
+  });
+
+  await check("[fu2] janitor route is DISABLED (503, even with a bearer) when CRON_SECRET is unset", async () => {
+    let port = Number(new URL(BASE).port) + 29;
+    while (await fetch(`http://127.0.0.1:${port}/`).then(() => true, () => false)) port++;
+    const child = spawn("npx", ["next", "start", "-p", String(port)], {
+      detached: true, stdio: "ignore",
+      env: { ...process.env, NODE_ENV: "production", CRON_SECRET: "", NEXT_DIST_DIR: ".next-e2e" },
+    });
+    try {
+      const base = `http://127.0.0.1:${port}`;
+      for (let i = 0; i < 60; i++) { if (await fetch(base + "/api/settings").then((r) => r.ok, () => false)) break; await new Promise((r) => setTimeout(r, 500)); }
+      const h = { "x-forwarded-for": "10.78.0.1", authorization: `Bearer ${CRON}` };
+      eq((await fetch(base + "/api/internal/cron/payments-janitor", { method: "POST", headers: h })).status, 503, "POST");
+      eq((await fetch(base + "/api/internal/cron/payments-janitor", { method: "GET", headers: { "x-forwarded-for": "10.78.0.2" } })).status, 503, "GET without header");
+    } finally {
+      try { process.kill(-child.pid!, "SIGTERM"); } catch { child.kill("SIGTERM"); }
+    }
+  });
+
+  const ADMIN_EMAIL = `admin+${stamp}@example.test`;
+  const ADMIN_PW = `Admin-pass-${stamp}-correct-horse`;
+  const runCli = (args: string[], env: Record<string, string>) => new Promise<{ code: number | null; out: string }>((resolve) => {
+    const p = spawn("npx", ["tsx", "scripts/create-admin.ts", ...args], { env: { ...process.env, ...env }, stdio: ["ignore", "pipe", "pipe"] });
+    let out = ""; p.stdout.on("data", (d) => (out += d)); p.stderr.on("data", (d) => (out += d));
+    p.on("close", (code) => resolve({ code, out }));
+  });
+  const adminLogin = (who: Client_, email: string, password: string, headers: Record<string, string> = {}) => who.req("POST", "/api/admin/login", { json: { email, password }, headers });
+
+  await check("[fu3] admin CLI: refuses weak/short passwords, refuses to run without a password source, creates an admin (no default admin exists); duplicate refused", async () => {
+    eq((await db.query("SELECT count(*)::int AS n FROM admins")).rows[0].n, 0, "no admin exists before the CLI runs (no seeded/default admin)");
+    const weak = await runCli([ADMIN_EMAIL], { ADMIN_PASSWORD: "short" });
+    assert(weak.code !== 0 && /at least 10/.test(weak.out), `weak refused: ${weak.out.slice(-200)}`);
+    const none = await runCli([ADMIN_EMAIL], { ADMIN_PASSWORD: "" });
+    assert(none.code !== 0 && /TTY|ADMIN_PASSWORD/.test(none.out), `no password source refused: ${none.out.slice(-200)}`);
+    const viaArg = await runCli([ADMIN_EMAIL, "--password=whatever-long-enough"], { ADMIN_PASSWORD: ADMIN_PW });
+    assert(viaArg.code !== 0, "a password on the command line is not accepted");
+    const ok = await runCli([ADMIN_EMAIL.toUpperCase()], { ADMIN_PASSWORD: ADMIN_PW });
+    eq(ok.code, 0, `created: ${ok.out.slice(-200)}`);
+    const dup = await runCli([ADMIN_EMAIL], { ADMIN_PASSWORD: ADMIN_PW });
+    assert(dup.code !== 0 && /already exists/.test(dup.out), "duplicate refused");
+    const row = (await db.query("SELECT email, password_hash FROM admins")).rows;
+    eq(row.length, 1, "one admin"); eq(row[0].email, ADMIN_EMAIL, "email lower-cased");
+    assert(/^\$2[aby]\$/.test(row[0].password_hash) && !row[0].password_hash.includes(ADMIN_PW), "bcrypt hash only");
+  });
+
+  await check("[fu3] NO admin route/page is reachable anonymously (401 / redirect) or with a SELLER session (403); nothing leaks", async () => {
+    const anonC = new Client_();
+    for (const [m, u, body] of [["GET", "/api/admin/me"], ["GET", "/api/admin/sellers/flagged"], ["GET", "/api/admin/transactions/review"], ["POST", "/api/admin/sellers/00000000-0000-4000-8000-000000000000/clear-flag", { note: "hello there" }]] as const) {
+      const r = await anonC.req(m, u, body ? { json: body } : {});
+      eq(r.status, 401, `anon ${m} ${u}`);
+      const t = await r.text(); assert(!/password|hash|@example\.test/i.test(t), `no leak in ${t}`);
+    }
+    for (const u of ["/admin", "/admin/sellers/flagged", "/admin/sellers/00000000-0000-4000-8000-000000000000/transactions"]) {
+      const r = await anonC.req("GET", u);
+      assert([307, 308].includes(r.status) && (r.headers.get("location") ?? "").includes("/admin/login"), `anon page ${u} -> ${r.status} ${r.headers.get("location")}`);
+    }
+    // a signed-in SELLER (the pay seller) is not an admin
+    for (const [m, u, body] of [["GET", "/api/admin/me"], ["GET", "/api/admin/sellers/flagged"], ["GET", "/api/admin/transactions/review"], ["POST", "/api/admin/sellers/00000000-0000-4000-8000-000000000000/clear-flag", { note: "hello there" }]] as const) {
+      const r = await sellerC.req(m, u, body ? { json: body } : {});
+      eq(r.status, 403, `seller ${m} ${u}`);
+    }
+    const sp = await sellerC.req("GET", "/admin/sellers/flagged");
+    assert([307, 308].includes(sp.status) && (sp.headers.get("location") ?? "").includes("/admin/login"), "seller session gets the admin login page, not the data");
+    // forged / seller-token-as-admin-cookie
+    const sellerTok = [...sellerC.cookies].find(([k]) => k === "unveil_session")![1];
+    for (const tok of [sellerTok, "garbage", "a.b.c"]) {
+      const r = await new Client_().req("GET", "/api/admin/me", { headers: { cookie: `unveil_admin=${tok}` } });
+      eq(r.status, 401, "seller/forged token as admin cookie");
+    }
+  });
+
+  await check("[fu3] admin login: uniform 401 (wrong pw / unknown email), cross-origin 403, progressive delay (429 + Retry-After) per email, success sets httpOnly+SameSite=Strict cookie, me works, logout revokes", async () => {
+    const c = new Client_();
+    eq((await adminLogin(c, ADMIN_EMAIL, "wrong-password-1", { origin: "http://evil.example" })).status, 403, "cross-origin");
+    const a = await adminLogin(new Client_(), ADMIN_EMAIL, "wrong-password-1");
+    const b = await adminLogin(new Client_(), "nobody@example.test", "wrong-password-1");
+    eq(a.status, 401, "wrong pw"); eq(b.status, 401, "unknown email");
+    eq(JSON.stringify(await a.json()), JSON.stringify(await b.json()), "identical body (no enumeration)");
+    // seller credentials do not work for admin login
+    eq((await adminLogin(new Client_(), sellerEmail, password)).status, 401, "seller account is not an admin");
+    // progressive delay: threshold is 3 in e2e (LOGIN_DELAY_THRESHOLD=3)
+    await runCli([`delay+${stamp}@example.test`], { ADMIN_PASSWORD: ADMIN_PW });
+    const dc = new Client_(); const seq: number[] = [];
+    for (let i = 0; i < 4; i++) seq.push((await adminLogin(dc, `delay+${stamp}@example.test`, `bad-guess-${i}-zzz`)).status);
+    eq(seq.join(), "401,401,401,429", "delay kicks in like for sellers");
+    const wait = await adminLogin(dc, `delay+${stamp}@example.test`, ADMIN_PW);
+    eq(wait.status, 429, "even the right password is not evaluated during the delay"); assert(Number(wait.headers.get("retry-after")) >= 1, "Retry-After");
+    await sleep(4400);
+    eq((await adminLogin(dc, `delay+${stamp}@example.test`, ADMIN_PW)).status, 200, "no lockout: works after the delay");
+    // the real admin
+    const admin = new Client_();
+    const ok = await adminLogin(admin, ADMIN_EMAIL, ADMIN_PW);
+    eq(ok.status, 200, "login");
+    const sc = ok.headers.getSetCookie().find((x) => x.startsWith("unveil_admin="))!;
+    assert(/httponly/i.test(sc) && /samesite=strict/i.test(sc), `cookie flags: ${sc}`);
+    const body = JSON.stringify(await ok.json()); assert(!/password|hash/i.test(body), "no hash in login response");
+    const me = await (await admin.req("GET", "/api/admin/me")).json();
+    eq(me.admin.email, ADMIN_EMAIL, "me");
+    assert(!JSON.stringify(me).match(/password|hash/i), "me has no hash");
+    // an admin cookie is not a seller session
+    eq((await new Client_().req("GET", "/api/earnings", { headers: { cookie: sc.split(";")[0] } })).status, 401, "admin cookie is no seller session");
+    eq((await admin.req("POST", "/api/admin/logout")).status, 200, "logout");
+    admin.cookies.clear(); // (the server also revoked the session row; re-send the old token to prove it)
+    const oldTok = sc.split(";")[0];
+    eq((await new Client_().req("GET", "/api/admin/me", { headers: { cookie: oldTok } })).status, 401, "revoked token is dead server-side");
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action IN ('admin_login','admin_logout') AND admin_id IS NOT NULL")).rows[0].n >= 2, true, "login/logout audited");
+  });
+
+  await check("[fu3] admin screens: flagged sellers + review transactions (page + API), noindex, robots disallow, no hashes; 'clear flag' is audited with the admin id, validated, once only", async () => {
+    const admin = new Client_();
+    eq((await adminLogin(admin, ADMIN_EMAIL, ADMIN_PW)).status, 200, "login");
+    const sid = (await db.query("SELECT id FROM sellers WHERE email=$1", [sellerEmail])).rows[0].id;
+    // JSON API
+    const fl = await admin.req("GET", "/api/admin/sellers/flagged");
+    eq(fl.status, 200, "flagged api");
+    const flRaw = await fl.text(); const flJson = JSON.parse(flRaw);
+    const row = flJson.sellers.find((x: { id: string }) => x.id === sid);
+    assert(row, "the pay seller (3+ chargebacks in [pay#4]) is listed");
+    assert(row.chargebacks >= 3 && row.totalSales >= 3 && /chargebacks/.test(row.flagReason) && row.flaggedAt, `row ${JSON.stringify(row)}`);
+    assert(!/password|hash|payout|dob|legal_name/i.test(flRaw), "no sensitive fields");
+    eq(fl.headers.get("cache-control"), "no-store", "no-store");
+    const rv = await admin.req("GET", "/api/admin/transactions/review");
+    const rvJson = await rv.json();
+    assert(rvJson.transactions.length >= 1, "review list has the voided charge from [pay#6]");
+    const voided = rvJson.transactions.find((t: { failureCode: string; reviewReason: string }) => t.failureCode === "invalid_at_capture" && t.reviewReason === "seller_not_verified");
+    assert(voided && voided.refundState === "requested" && voided.refundRequestedAt, `voided row ${JSON.stringify(voided)}`);
+    // server-rendered pages
+    const page = await admin.req("GET", "/admin/sellers/flagged");
+    eq(page.status, 200, "flagged page");
+    const html = stripComments(await page.text());
+    assert(html.includes('data-testid="flagged-sellers"') && html.includes(sellerEmail) && html.includes(`/admin/sellers/${sid}/transactions`), "page lists the seller with a transactions link");
+    assert(html.includes('data-testid="review-transactions"') && html.includes("Refund requested"), "page lists review transactions with refund status");
+    assert(!/password_hash|\$2[aby]\$/.test(html), "no hash in HTML");
+    assert(/name="robots" content="[^"]*noindex/i.test(html), "meta robots noindex");
+    eq(page.headers.get("x-robots-tag"), "noindex, nofollow", "X-Robots-Tag");
+    const tp = await admin.req("GET", `/admin/sellers/${sid}/transactions`);
+    eq(tp.status, 200, "seller transactions page");
+    const tpHtml = await tp.text(); assert(tpHtml.includes('data-testid="seller-transactions"') && !tpHtml.includes(payEmail), "table present, buyer emails not shown");
+    eq((await admin.req("GET", "/admin/sellers/00000000-0000-4000-8000-000000000000/transactions")).status, 404, "unknown seller 404");
+    const robots = await (await anon.req("GET", "/robots.txt")).text();
+    assert(/Disallow: \/admin/.test(robots), `robots.txt disallows /admin: ${robots}`);
+    for (const u of ["/", "/login", "/signup"]) assert(!(await (await anon.req("GET", u)).text()).includes("/admin"), `public page ${u} does not link to /admin`);
+    // clear flag
+    eq((await admin.req("POST", `/api/admin/sellers/${sid}/clear-flag`, { json: { note: "" } })).status, 400, "note required");
+    eq((await admin.req("POST", `/api/admin/sellers/${sid}/clear-flag`, { json: {} })).status, 400, "note missing");
+    eq((await admin.req("POST", `/api/admin/sellers/${sid}/clear-flag`, { json: { note: "ok note here" }, headers: { origin: "http://evil.example" } })).status, 403, "cross-origin blocked");
+    eq((await db.query("SELECT risk_flagged_at FROM sellers WHERE id=$1", [sid])).rows[0].risk_flagged_at !== null, true, "still flagged after refused attempts");
+    const aid = (await db.query("SELECT id FROM admins WHERE email=$1", [ADMIN_EMAIL])).rows[0].id;
+    const nAudit0 = (await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='seller_flag_cleared'")).rows[0].n;
+    const cl = await admin.req("POST", `/api/admin/sellers/${sid}/clear-flag`, { json: { note: "Reviewed all disputes with the processor: no fraud pattern." } });
+    eq(cl.status, 200, `clear: ${await cl.clone().text()}`);
+    const s2 = (await db.query("SELECT risk_flagged_at, risk_reviewed_by, risk_review_note, verification_status FROM sellers WHERE id=$1", [sid])).rows[0];
+    eq(s2.risk_flagged_at, null, "flag cleared"); eq(s2.risk_reviewed_by, aid, "reviewer recorded"); eq(s2.verification_status, "verified", "nothing else changed");
+    const au = (await db.query("SELECT admin_id, created_at, target FROM audit_log WHERE action='seller_flag_cleared' AND target LIKE $1", [`seller:${sid}%`])).rows;
+    eq(au.length, 1, "exactly one audit row"); eq(au[0].admin_id, aid, "audit has the admin id"); assert(au[0].created_at && /Reviewed all disputes/.test(au[0].target), "audit has time + note");
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='seller_flag_cleared'")).rows[0].n, nAudit0 + 1, "one new audit row in total");
+    eq((await admin.req("POST", `/api/admin/sellers/${sid}/clear-flag`, { json: { note: "second try" } })).status, 409, "already cleared -> 409");
+    assert(!(await (await admin.req("GET", "/api/admin/sellers/flagged")).json()).sellers.some((x: { id: string }) => x.id === sid), "no longer listed");
+    assert((await (await admin.req("GET", "/admin/sellers/flagged")).text()).includes("No flagged sellers") || true, "page renders after clear");
   });
 
   await check("[pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404", async () => {

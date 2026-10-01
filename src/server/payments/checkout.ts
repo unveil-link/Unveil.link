@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import type { PoolClient } from "pg";
 import { pool, queryOne, withTx } from "../db";
 import { HttpError } from "../errors";
@@ -17,6 +18,8 @@ export interface CheckoutInput {
   confirmOver18: boolean;
   /** `Idempotency-Key` request header (1-128 printable chars). Namespaced by buyer email. */
   idempotencyKey?: string | null;
+  /** Value of the httpOnly `unveil_buyer` cookie (opaque random token). Absent/invalid => this request is a new, unknown client. */
+  buyerToken?: string | null;
 }
 export interface CheckoutResult {
   transactionId: string;
@@ -28,6 +31,12 @@ export interface CheckoutResult {
   /** True when an existing checkout was returned (same Idempotency-Key, or an identical live pending checkout). */
   reused: boolean;
 }
+/** `setBuyerToken` is non-null only when the caller must be given a NEW buyer cookie (never part of the JSON response). */
+export type CheckoutOutcome = CheckoutResult & { setBuyerToken: string | null };
+
+export const BUYER_COOKIE = "unveil_buyer";
+const TOKEN_RE = /^[A-Za-z0-9_-]{32,64}$/;
+export const hashBuyerToken = (t: string) => crypto.createHash("sha256").update(t).digest("hex");
 
 const DROP_COLS = "id, seller_id, public_link_id, title, description, price_cents, cover_url, status, created_at";
 const KEY_RE = /^[\x21-\x7e]{1,128}$/;
@@ -61,6 +70,9 @@ export async function expirePendingCheckouts(opts: { transactionId?: string; dro
 
 interface ExistingRow { id: string; drop_id: string; status: string; amount_cents: number; currency: string; provider: string; checkout_url: string | null }
 const EXISTING_COLS = "id, drop_id, status, amount_cents, currency, provider, checkout_url";
+/** The price changed since this pending checkout was created: it must not be handed out (the buyer would pay a stale price). */
+const supersede = (c: Pick<PoolClient, "query">, id: string) =>
+  c.query(`UPDATE transactions SET status = 'failed', failure_code = 'superseded', idempotency_key = NULL, updated_at = now() WHERE id = $1 AND status = 'pending'`, [id]);
 const asResult = (r: ExistingRow): CheckoutResult => ({
   transactionId: r.id, provider: r.provider, amountCents: r.amount_cents, currency: r.currency.trim(), checkoutUrl: r.checkout_url ?? "", status: r.status, reused: true,
 });
@@ -70,13 +82,19 @@ const asResult = (r: ExistingRow): CheckoutResult => ({
  * The transaction only becomes `succeeded` when a verified webhook says so (payments/webhooks.ts) - never from the
  * browser redirect. The client never supplies an amount.
  *
- * Idempotency / double submit (race-safe): everything below runs in one DB transaction holding a transaction-scoped advisory
- * lock on (drop, buyer email), so concurrent identical requests serialise. Then:
- *   1. same Idempotency-Key (+ same buyer)  -> the stored transaction/session is returned (a different drop => 409);
- *   2. an identical LIVE pending checkout (same drop + email) exists -> that session is returned;
- *   3. otherwise a new transaction + session. The partial unique index transactions_one_pending_uniq is the DB backstop.
+ * Idempotency / double submit (race-safe) AND privacy: a pending checkout is only ever handed back to the client that created it.
+ * "Same client" = presents the same `Idempotency-Key`, or the same random httpOnly `unveil_buyer` cookie (only its SHA-256 is stored).
+ * Everything below runs in one DB transaction holding a transaction-scoped advisory lock on (drop, buyer email), so concurrent
+ * requests serialise. Then:
+ *   1. same Idempotency-Key (+ same buyer email) -> the stored transaction/session is returned (a different drop => 409);
+ *   2. a LIVE pending checkout of the SAME client (drop + email + cookie token) -> that session is returned;
+ *   3. otherwise a NEW transaction + session (an unknown client - e.g. someone who only knows the victim's email - gets its own,
+ *      independent session and never sees anybody else's checkoutUrl). `setBuyerToken` tells the route to issue the cookie.
+ * In 1 and 2, if the drop's price changed since the pending transaction was created, that transaction is superseded
+ * (failed/superseded) and a fresh one at the current price is created instead. The partial unique index
+ * transactions_one_pending_per_client_uniq (drop, email, token) is the DB backstop.
  */
-export async function createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
+export async function createCheckout(input: CheckoutInput): Promise<CheckoutOutcome> {
   if (input.confirmOver18 !== true) {
     throw new HttpError(400, "You must confirm you are 18 or older to buy", "age_confirmation_required");
   }
@@ -92,32 +110,42 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
   const { split, rates } = await quoteSale(provider, drop.price_cents);
   const ttlMinutes = (await getSettings()).checkout_session_ttl_minutes;
   const email = input.email.trim().toLowerCase();
+  const presented = input.buyerToken && TOKEN_RE.test(input.buyerToken) ? input.buyerToken : null;
+  const token = presented ?? crypto.randomBytes(32).toString("base64url");
+  const tokenHash = hashBuyerToken(token);
+  const setBuyerToken = presented ? null : token;
 
   for (let attempt = 0; ; attempt++) {
     try {
-      return await withTx(async (c) => {
+      const out = await withTx(async (c): Promise<CheckoutResult> => {
         await c.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`checkout:${drop.id}:${email}`]);
         await expirePendingCheckouts({ dropId: drop.id, email }, c, ttlMinutes);
         if (key) {
           const k = await c.query<ExistingRow>(`SELECT ${EXISTING_COLS} FROM transactions WHERE lower(buyer_email) = $1 AND idempotency_key = $2`, [email, key]);
           if (k.rows[0]) {
             if (k.rows[0].drop_id !== drop.id) throw new HttpError(409, "Idempotency-Key was already used for a different purchase", "idempotency_key_reused");
-            if (k.rows[0].status === "pending" || k.rows[0].status === "succeeded") return asResult(k.rows[0]);
-            // The keyed checkout is dead (expired / superseded / failed): release the key so this request starts a fresh one.
+            if (k.rows[0].status === "succeeded") return asResult(k.rows[0]);
+            if (k.rows[0].status === "pending" && k.rows[0].amount_cents === split.grossCents) return asResult(k.rows[0]);
+            // The keyed checkout is dead (expired / failed) or has a stale price: release the key so this request starts a fresh one.
+            if (k.rows[0].status === "pending") await supersede(c, k.rows[0].id);
             await c.query(`UPDATE transactions SET idempotency_key = NULL WHERE id = $1`, [k.rows[0].id]);
           }
         }
         const live = await c.query<ExistingRow>(
-          `SELECT ${EXISTING_COLS} FROM transactions WHERE drop_id = $1 AND lower(buyer_email) = $2 AND status = 'pending' AND checkout_url IS NOT NULL`, [drop.id, email]);
-        if (live.rows[0]) return asResult(live.rows[0]);
+          `SELECT ${EXISTING_COLS} FROM transactions
+            WHERE drop_id = $1 AND lower(buyer_email) = $2 AND status = 'pending' AND checkout_url IS NOT NULL AND buyer_token_hash = $3`, [drop.id, email, tokenHash]);
+        if (live.rows[0]) {
+          if (live.rows[0].amount_cents === split.grossCents) return asResult(live.rows[0]);
+          await supersede(c, live.rows[0].id); // price changed since: never hand out the stale-priced session
+        }
 
         const ins = await c.query<{ id: string }>(
           `INSERT INTO transactions
              (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents,
-              status, provider, currency, fee_percent, processing_fee_percent, buyer_confirmed_18_at, idempotency_key)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8,'USD',$9,$10, now(), $11) RETURNING id`,
+              status, provider, currency, fee_percent, processing_fee_percent, buyer_confirmed_18_at, idempotency_key, buyer_token_hash)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8,'USD',$9,$10, now(), $11, $12) RETURNING id`,
           [drop.id, drop.seller_id, email, split.grossCents, split.platformFeeCents, split.processingFeeCents, split.sellerNetCents,
-            provider.name, rates.feePercent, rates.processingFeePercent, key],
+            provider.name, rates.feePercent, rates.processingFeePercent, key, tokenHash],
         );
         const id = ins.rows[0].id;
         let session;
@@ -133,6 +161,9 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
         await c.query(`UPDATE transactions SET provider_session_id = $2, checkout_url = $3, updated_at = now() WHERE id = $1`, [id, session.providerSessionId, session.redirectUrl]);
         return { transactionId: id, provider: provider.name, amountCents: split.grossCents, currency: "USD", checkoutUrl: session.redirectUrl, status: "pending", reused: false };
       });
+      // The cookie is only issued when a NEW transaction was created for a client without one (a reused row belongs to whoever
+      // already holds its credential, so we never mint a second token for it).
+      return { ...out, setBuyerToken: out.reused ? null : setBuyerToken };
     } catch (e) {
       // Backstop: if some other writer slipped past the lock and hit a unique index, re-run once and pick up its row.
       if ((e as { code?: string }).code === "23505" && attempt < 2) continue;

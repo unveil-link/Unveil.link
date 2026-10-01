@@ -19,6 +19,9 @@ export interface PlatformSettings {
   checkout_late_success_grace_minutes: number;
   chargeback_flag_threshold: number;
   chargeback_flag_window_days: number;
+  void_refund_max_attempts: number;
+  void_refund_backoff_minutes: number;
+  parked_event_stale_hours: number;
 }
 
 /** Read live from DB each call so admin changes take effect without a deploy. */
@@ -31,7 +34,8 @@ export async function getSettings(): Promise<PlatformSettings> {
             download_ttl_seconds, allowed_image_mimes,
             processing_fee_percent, payout_hold_days, min_payout_cents, chargeback_fee_cents,
             checkout_session_ttl_minutes, checkout_late_success_grace_minutes,
-            chargeback_flag_threshold, chargeback_flag_window_days
+            chargeback_flag_threshold, chargeback_flag_window_days,
+            void_refund_max_attempts, void_refund_backoff_minutes, parked_event_stale_hours
        FROM platform_settings WHERE id = 1`,
   );
   if (!r) throw new Error("platform_settings row missing; run migrations");

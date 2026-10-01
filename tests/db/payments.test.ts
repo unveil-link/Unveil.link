@@ -7,6 +7,10 @@ let dropDb: (() => Promise<void>) | null = null;
 
 // Lazily imported after env is set (config reads env on access, the pg Pool is created on first query).
 type Mods = {
+  adm: typeof import("../../src/server/admin/auth");
+  admq: typeof import("../../src/server/admin/queries");
+  sess: typeof import("../../src/server/auth/session");
+  jan: typeof import("../../src/server/payments/janitor");
   db: typeof import("../../src/server/db");
   wh: typeof import("../../src/server/payments/webhooks");
   ev: typeof import("../../src/server/payments/mock/events");
@@ -29,6 +33,10 @@ beforeAll(async () => {
   });
   delete process.env.MOCK_PROCESSING_FEE_PERCENT;
   m = {
+    adm: await import("../../src/server/admin/auth"),
+    admq: await import("../../src/server/admin/queries"),
+    sess: await import("../../src/server/auth/session"),
+    jan: await import("../../src/server/payments/janitor"),
     db: await import("../../src/server/db"),
     wh: await import("../../src/server/payments/webhooks"),
     ev: await import("../../src/server/payments/mock/events"),
@@ -548,15 +556,16 @@ describe.skipIf(!available)("reconciliation log", () => {
 // =====================================================================================================================
 // QA round 1 fixes
 // =====================================================================================================================
-const idemCo = (s: { dropId: string }, key?: string | null, email = "buyer@example.test") =>
-  m.co.createCheckout({ dropId: s.dropId, email, confirmOver18: true, idempotencyKey: key });
+const idemCo = (s: { dropId: string }, key?: string | null, email = "buyer@example.test", buyerToken?: string | null) =>
+  m.co.createCheckout({ dropId: s.dropId, email, confirmOver18: true, idempotencyKey: key, buyerToken });
+const TOKEN_A = "A".repeat(43), TOKEN_B = "B".repeat(43);
 const pendingCount = async (dropId: string) => Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) AS n FROM transactions WHERE drop_id=$1 AND status='pending'`, [dropId]))!.n);
 const setSetting = (col: string, v: number) => m.db.query(`UPDATE platform_settings SET ${col} = $1 WHERE id=1`, [v]);
 
 describe.skipIf(!available)("QA-1 checkout idempotency / double submit", () => {
-  it("concurrent identical requests (20, no key) -> exactly ONE pending transaction and one session", async () => {
+  it("concurrent identical requests from the SAME client (20, buyer token, no key) -> exactly ONE pending transaction and one session", async () => {
     const s = await seed();
-    const rs = await Promise.all(Array.from({ length: 20 }, () => idemCo(s)));
+    const rs = await Promise.all(Array.from({ length: 20 }, () => idemCo(s, null, "buyer@example.test", TOKEN_A)));
     expect(new Set(rs.map((r) => r.transactionId)).size).toBe(1);
     expect(new Set(rs.map((r) => r.checkoutUrl)).size).toBe(1);
     expect(rs.filter((r) => !r.reused)).toHaveLength(1);
@@ -595,12 +604,12 @@ describe.skipIf(!available)("QA-1 checkout idempotency / double submit", () => {
     expect(second.transactionId).not.toBe(first.transactionId);
     expect(second.reused).toBe(false);
   });
-  it("DB backstop: a second pending row for the same drop+buyer is refused by the unique index", async () => {
+  it("DB backstop: a second pending row for the same drop+buyer+client is refused by the unique index", async () => {
     const s = await seed();
-    const a = await idemCo(s);
+    const a = await idemCo(s, null, "buyer@example.test", TOKEN_A);
     await expect(m.db.query(
-      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, status, provider)
-       SELECT drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, 'pending', provider FROM transactions WHERE id=$1`, [a.transactionId],
+      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, status, provider, buyer_token_hash)
+       SELECT drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, 'pending', provider, buyer_token_hash FROM transactions WHERE id=$1`, [a.transactionId],
     )).rejects.toMatchObject({ code: "23505" });
   });
 });
@@ -883,7 +892,8 @@ describe.skipIf(!available)("QA-6 session expiry and re-validation at capture", 
       expect((await deliver(sale(c.transactionId, 2000))).status).toBe(200); // still 200: the event is recorded, the void is retried later
     } finally { prov.issueRefund = orig; }
     expect((await row(c.transactionId))!.refund_requested_at).toBeNull();
-    expect(await m.refunds.retryVoidRefunds()).toBeGreaterThanOrEqual(1);
+    await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = NULL WHERE id=$1`, [c.transactionId]); // skip the backoff wait (tested separately)
+    expect((await m.refunds.retryVoidRefunds()).requested).toBeGreaterThanOrEqual(1);
     expect((await row(c.transactionId))!.refund_requested_at).not.toBeNull();
   });
 });
@@ -939,5 +949,443 @@ describe.skipIf(!available)("QA-7 friendly failures and clean retry", () => {
     expect(r).toMatchObject({ approved: false });
     expect(r.message).toMatch(/expired/i);
     expect(await ledgerOf(c.transactionId)).toEqual([]);
+  });
+});
+
+// =====================================================================================================================
+// Follow-ups 1: buyer binding of pending checkouts (QA run 2 NEW-1) + stale price supersede (INFO-1)
+// =====================================================================================================================
+describe.skipIf(!available)("FU-1 pending checkouts are bound to the client that created them", () => {
+  it("another client (no cookie/key) with the same email + drop gets a DIFFERENT session and never the victim's URL/txn id", async () => {
+    const s = await seed();
+    const victim = await idemCo(s, null, "victim@example.test", TOKEN_A);
+    expect(victim.reused).toBe(false);
+    const attacker = await idemCo(s, null, "victim@example.test", null);
+    expect(attacker.reused).toBe(false);
+    expect(attacker.transactionId).not.toBe(victim.transactionId);
+    expect(attacker.checkoutUrl).not.toBe(victim.checkoutUrl);
+    expect(JSON.stringify({ ...attacker, setBuyerToken: undefined })).not.toContain(victim.checkoutUrl.split("/").pop()!);
+    expect(attacker.setBuyerToken).toMatch(/^[A-Za-z0-9_-]{43}$/); // the new client is given its own credential
+    const other = await idemCo(s, null, "victim@example.test", TOKEN_B); // a (well-formed) token we have never issued
+    expect(other.transactionId).not.toBe(victim.transactionId);
+    expect(await pendingCount(s.dropId)).toBe(3);
+    // the victim still gets exactly their own back
+    const again = await idemCo(s, null, "victim@example.test", TOKEN_A);
+    expect(again).toMatchObject({ transactionId: victim.transactionId, checkoutUrl: victim.checkoutUrl, reused: true, setBuyerToken: null });
+  });
+  it("the same client double-click (same cookie token, or same Idempotency-Key with no cookie yet) still yields ONE txn; concurrent too", async () => {
+    const s = await seed();
+    const first = await idemCo(s, null, "dbl@example.test", null);
+    const token = first.setBuyerToken!;
+    const rs = await Promise.all(Array.from({ length: 12 }, () => idemCo(s, null, "dbl@example.test", token)));
+    expect(new Set(rs.map((r) => r.transactionId))).toEqual(new Set([first.transactionId]));
+    expect(rs.every((r) => r.reused && r.setBuyerToken === null)).toBe(true);
+    // first-ever concurrent burst with a key and no cookie: one txn, exactly one response carries the new cookie
+    const s2 = await seed();
+    const burst = await Promise.all(Array.from({ length: 12 }, () => idemCo(s2, "burst-key-1", "dbl@example.test", null)));
+    expect(new Set(burst.map((r) => r.transactionId)).size).toBe(1);
+    expect(burst.filter((r) => r.setBuyerToken).length).toBe(1);
+    expect(await pendingCount(s2.dropId)).toBe(1);
+  });
+  it("the raw buyer token is never stored (only its SHA-256), and malformed tokens are treated as 'no token'", async () => {
+    const s = await seed();
+    const a = await idemCo(s, null, "h@example.test", TOKEN_A);
+    const row = await m.db.queryOne<{ buyer_token_hash: string }>(`SELECT buyer_token_hash FROM transactions WHERE id=$1`, [a.transactionId]);
+    expect(row!.buyer_token_hash).toBe(m.co.hashBuyerToken(TOKEN_A));
+    expect(row!.buyer_token_hash).not.toContain(TOKEN_A);
+    const bad = await idemCo(s, null, "h@example.test", "short");
+    expect(bad.transactionId).not.toBe(a.transactionId);
+    expect(bad.setBuyerToken).toBeTruthy();
+  });
+  it("legacy pending rows (no token, created before migration 008) keep the one-pending rule among themselves and are never returned to a client", async () => {
+    const s = await seed();
+    const a = await idemCo(s, null, "legacy@example.test", TOKEN_A);
+    await m.db.query(`UPDATE transactions SET buyer_token_hash = NULL WHERE id=$1`, [a.transactionId]);
+    const b = await idemCo(s, null, "legacy@example.test", TOKEN_A);
+    expect(b.transactionId).not.toBe(a.transactionId);
+    await expect(m.db.query(
+      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, status, provider)
+       SELECT drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, 'pending', provider FROM transactions WHERE id=$1`, [a.transactionId],
+    )).rejects.toMatchObject({ code: "23505" });
+  });
+  it("a PAID checkout of one client does not leak to another; a keyed replay by the owner returns the succeeded txn", async () => {
+    const s = await seed();
+    const a = await idemCo(s, "paid-key-1", "p@example.test", TOKEN_A);
+    await deliver(sale(a.transactionId, 2000));
+    const other = await idemCo(s, null, "p@example.test", null);
+    expect(other.transactionId).not.toBe(a.transactionId);
+    expect((await idemCo(s, "paid-key-1", "p@example.test", TOKEN_A)).transactionId).toBe(a.transactionId);
+  });
+});
+
+describe.skipIf(!available)("FU-1 price change supersedes a stale pending checkout (QA INFO-1)", () => {
+  it("reuse with a changed drop price -> old pending txn superseded, NEW txn at the current price (same client, no key)", async () => {
+    const s = await seed({ price: 2000 });
+    const a = await idemCo(s, null, "price@example.test", TOKEN_A);
+    expect(a.amountCents).toBe(2000);
+    await m.db.query(`UPDATE drops SET price_cents = 9000 WHERE id=$1`, [s.dropId]);
+    const b = await idemCo(s, null, "price@example.test", TOKEN_A);
+    expect(b).toMatchObject({ amountCents: 9000, reused: false });
+    expect(b.transactionId).not.toBe(a.transactionId);
+    expect(await txRow(a.transactionId)).toMatchObject({ status: "failed", failure_code: "superseded" });
+    expect(await txRow(b.transactionId)).toMatchObject({ status: "pending", amount_cents: 9000, platform_fee_cents: 900, processing_fee_cents: 1080, seller_net_cents: 7020 });
+    expect(await pendingCount(s.dropId)).toBe(1);
+    // unchanged price -> reuse again
+    expect((await idemCo(s, null, "price@example.test", TOKEN_A)).transactionId).toBe(b.transactionId);
+  });
+  it("same with an Idempotency-Key: the stale keyed txn is superseded and the key moves to the new one", async () => {
+    const s = await seed({ price: 2000 });
+    const a = await idemCo(s, "price-key-1", "pk@example.test", TOKEN_A);
+    await m.db.query(`UPDATE drops SET price_cents = 1000 WHERE id=$1`, [s.dropId]);
+    const b = await idemCo(s, "price-key-1", "pk@example.test", TOKEN_A);
+    expect(b).toMatchObject({ amountCents: 1000, reused: false });
+    expect((await txRow(a.transactionId))!.failure_code).toBe("superseded");
+    expect((await idemCo(s, "price-key-1", "pk@example.test", TOKEN_A)).transactionId).toBe(b.transactionId);
+  });
+  it("a processor-confirmed payment for the superseded txn (buyer paid the OLD price in another tab) is still booked at the price actually charged: money was captured", async () => {
+    const s = await seed({ price: 2000 });
+    const a = await idemCo(s, null, "late@example.test", TOKEN_A);
+    await m.db.query(`UPDATE drops SET price_cents = 3000 WHERE id=$1`, [s.dropId]);
+    await idemCo(s, null, "late@example.test", TOKEN_A);
+    const r = await deliver(sale(a.transactionId, 2000));
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ outcome: "processed" });
+    expect(await sum(a.transactionId)).toBe(1560); // 2000 - 200 - 240: the snapshot the buyer was actually charged
+    expect((await txRow(a.transactionId))!.status).toBe("succeeded");
+  });
+});
+
+// =====================================================================================================================
+// Follow-ups 2: payments janitor
+// =====================================================================================================================
+async function voidedTx(over: { failProvider?: boolean } = {}) {
+  const s = await seed();
+  const c = await checkout(s);
+  await m.db.query(`UPDATE sellers SET verification_status='failed' WHERE id=$1`, [s.sellerId]);
+  const reg = await import("../../src/server/payments/registry");
+  const prov = reg.findProvider("mock")!;
+  const orig = prov.issueRefund;
+  if (over.failProvider) prov.issueRefund = async () => { throw new Error("processor down"); };
+  try { await deliver(sale(c.transactionId, 2000)); } finally { prov.issueRefund = orig; }
+  return { ...s, id: c.transactionId };
+}
+const withProvider = async <T,>(impl: (() => Promise<never>) | null, fn: () => Promise<T>): Promise<T> => {
+  const prov = (await import("../../src/server/payments/registry")).findProvider("mock")!;
+  const orig = prov.issueRefund;
+  if (impl) prov.issueRefund = impl as never;
+  try { return await fn(); } finally { prov.issueRefund = orig; }
+};
+const cleanSlate = async () => { // other tests leave work for the janitor; start each janitor test from zero
+  await m.db.query(`UPDATE transactions SET status='failed', failure_code='session_expired' WHERE status='pending'`);
+  await m.db.query(`UPDATE transactions SET refund_requested_at = now() WHERE review_reason IS NOT NULL AND refund_requested_at IS NULL`);
+  await m.db.query(`UPDATE webhook_events SET stale_flagged_at = now() WHERE outcome='parked' AND stale_flagged_at IS NULL`);
+};
+
+describe.skipIf(!available)("FU-2 janitor: expiry sweep", () => {
+  it("expires only pending sessions older than the TTL; idempotent; writes heartbeat + audit row with counts", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const old = await idemCo(s, null, "old@example.test", TOKEN_A), fresh = await idemCo(s, null, "fresh@example.test", TOKEN_A);
+    await m.db.query(`UPDATE transactions SET created_at = now() - interval '45 minutes' WHERE id=$1`, [old.transactionId]);
+    const r1 = await m.jan.runPaymentsJanitor();
+    expect(r1).toMatchObject({ skipped: false, counts: { expiredCheckouts: 1 } });
+    expect(await txRow(old.transactionId)).toMatchObject({ status: "failed", failure_code: "session_expired" });
+    expect((await txRow(fresh.transactionId))!.status).toBe("pending");
+    const audit = await m.db.queryOne<{ target: string }>(`SELECT target FROM audit_log WHERE action='payments_janitor_run' ORDER BY created_at DESC LIMIT 1`);
+    expect(audit!.target).toMatch(/"expiredCheckouts":1/);
+    const r2 = await m.jan.runPaymentsJanitor(); // nothing left to do
+    expect(r2).toMatchObject({ skipped: false, counts: { expiredCheckouts: 0, voidRefundsRequested: 0 } });
+    const before = Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='payments_janitor_run'`))!.n);
+    await m.jan.runPaymentsJanitor();
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='payments_janitor_run'`))!.n)).toBe(before); // quiet runs don't spam the audit log
+    const st = await m.jan.getJanitorState();
+    expect(st!.last_run_at).not.toBeNull();
+    expect(Number(st!.runs)).toBeGreaterThanOrEqual(3);
+  });
+  it("honours checkout_session_ttl_minutes", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const a = await idemCo(s, null, "ttl@example.test", TOKEN_A);
+    await m.db.query(`UPDATE transactions SET created_at = now() - interval '5 minutes' WHERE id=$1`, [a.transactionId]);
+    expect((await m.jan.runPaymentsJanitor() as { counts: { expiredCheckouts: number } }).counts.expiredCheckouts).toBe(0);
+    await setSetting("checkout_session_ttl_minutes", 2);
+    try { expect((await m.jan.runPaymentsJanitor() as { counts: { expiredCheckouts: number } }).counts.expiredCheckouts).toBe(1); }
+    finally { await setSetting("checkout_session_ttl_minutes", 30); }
+  });
+});
+
+describe.skipIf(!available)("FU-2 janitor: void refund retry (success / failure / backoff / cap / last error)", () => {
+  it("backoff schedule is pure and capped at 24h", () => {
+    expect([1, 2, 3, 4, 5].map((n) => m.refunds.voidRefundBackoffMinutes(n, 5))).toEqual([5, 10, 20, 40, 80]);
+    expect(m.refunds.voidRefundBackoffMinutes(30, 5)).toBe(1440);
+  });
+  it("a failing provider: attempt counted, last error + next attempt recorded; the janitor does not retry before the backoff elapses", async () => {
+    await cleanSlate();
+    const t = await voidedTx({ failProvider: true });
+    let row = (await txRow(t.id)) as unknown as Record<string, unknown>;
+    expect(row).toMatchObject({ void_refund_attempts: 1, void_refund_last_error: "processor down", refund_requested_at: null });
+    expect(row.void_refund_next_attempt_at).not.toBeNull();
+    const r = await m.jan.runPaymentsJanitor();
+    expect(r).toMatchObject({ skipped: false, counts: { voidRefundsRequested: 0, voidRefundsFailed: 0 } }); // still inside the backoff window
+    expect(((await txRow(t.id)) as unknown as Record<string, unknown>).void_refund_attempts).toBe(1);
+    // backoff elapsed + provider still down -> attempt 2, longer next delay
+    await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = now() - interval '1 second' WHERE id=$1`, [t.id]);
+    const r2 = await withProvider(async () => { throw new Error("still down"); }, () => m.jan.runPaymentsJanitor());
+    expect(r2).toMatchObject({ counts: { voidRefundsFailed: 1 } });
+    row = (await txRow(t.id)) as unknown as Record<string, unknown>;
+    expect(row).toMatchObject({ void_refund_attempts: 2, void_refund_last_error: "still down" });
+    const gap = await m.db.queryOne<{ mins: string }>(`SELECT round(extract(epoch FROM (void_refund_next_attempt_at - void_refund_last_attempt_at))/60) AS mins FROM transactions WHERE id=$1`, [t.id]);
+    expect(Number(gap!.mins)).toBe(10); // 5 * 2^1
+    // provider recovers -> requested, error history kept, no more retries
+    await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = NULL WHERE id=$1`, [t.id]);
+    const r3 = await m.jan.runPaymentsJanitor();
+    expect(r3).toMatchObject({ counts: { voidRefundsRequested: 1 } });
+    row = (await txRow(t.id)) as unknown as Record<string, unknown>;
+    expect(row.refund_requested_at).not.toBeNull();
+    expect(row.void_refund_next_attempt_at).toBeNull();
+    expect(await m.jan.runPaymentsJanitor()).toMatchObject({ counts: { voidRefundsRequested: 0 } }); // idempotent
+    expect(await ledgerOf(t.id)).toEqual([]); // the janitor never posts money
+  });
+  it("attempt cap: after void_refund_max_attempts failures the row is no longer retried and is reported as gaveUp", async () => {
+    await cleanSlate();
+    await setSetting("void_refund_max_attempts", 2);
+    try {
+      const t = await voidedTx({ failProvider: true }); // attempt 1
+      await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = NULL WHERE id=$1`, [t.id]);
+      await withProvider(async () => { throw new Error("down #2"); }, () => m.jan.runPaymentsJanitor()); // attempt 2 = cap
+      expect(((await txRow(t.id)) as unknown as Record<string, unknown>).void_refund_attempts).toBe(2);
+      await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = NULL WHERE id=$1`, [t.id]);
+      const calls = { n: 0 };
+      const r = await withProvider(async () => { calls.n++; throw new Error("never called"); }, () => m.jan.runPaymentsJanitor());
+      expect(calls.n).toBe(0);
+      expect(r).toMatchObject({ counts: { voidRefundsFailed: 0, voidRefundsGaveUp: 1 } });
+      expect(((await txRow(t.id)) as unknown as Record<string, unknown>)).toMatchObject({ void_refund_last_error: "down #2", refund_requested_at: null });
+    } finally { await setSetting("void_refund_max_attempts", 5); }
+  });
+});
+
+describe.skipIf(!available)("FU-2 janitor: stale parked events and concurrency", () => {
+  it("a refund parked for longer than parked_event_stale_hours is flagged stale (not deleted, still parked); fresh ones are untouched; flagged once", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const c1 = await checkout(s), c2 = await checkout(s, { email: "other@example.test" });
+    for (const c of [c1, c2]) expect((await deliver(m.ev.mockEvents.refund({ transactionId: c.transactionId, refundId: `mockrf_park_${c.transactionId.slice(0, 8)}`, amountCents: 500 }))).body.outcome).toBe("parked");
+    await m.db.query(`UPDATE webhook_events SET received_at = now() - interval '100 hours' WHERE transaction_id=$1 AND outcome='parked'`, [c1.transactionId]);
+    const r = await m.jan.runPaymentsJanitor();
+    expect(r).toMatchObject({ counts: { parkedEventsFlaggedStale: 1 } });
+    const rows = await m.db.query<{ transaction_id: string; outcome: string; stale: boolean }>(`SELECT transaction_id, outcome, stale_flagged_at IS NOT NULL AS stale FROM webhook_events WHERE outcome='parked' AND transaction_id = ANY($1)`, [[c1.transactionId, c2.transactionId]]);
+    expect(rows.find((x) => x.transaction_id === c1.transactionId)).toMatchObject({ outcome: "parked", stale: true });
+    expect(rows.find((x) => x.transaction_id === c2.transactionId)).toMatchObject({ outcome: "parked", stale: false });
+    expect(await m.jan.runPaymentsJanitor()).toMatchObject({ counts: { parkedEventsFlaggedStale: 0 } });
+    // the sale still arrives later and applies the parked refund (the stale flag never blocks reconciliation)
+    expect((await deliver(sale(c1.transactionId, 2000))).body.outcome).toBe("processed");
+  });
+  it("concurrent janitor runs: exactly one does the work, the others return skipped; counts are never doubled", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const rows = [] as string[];
+    for (let i = 0; i < 6; i++) rows.push((await idemCo(s, null, `race${i}@example.test`, TOKEN_A)).transactionId);
+    await m.db.query(`UPDATE transactions SET created_at = now() - interval '2 hours' WHERE id = ANY($1)`, [rows]);
+    const rs = await Promise.all(Array.from({ length: 8 }, () => m.jan.runPaymentsJanitor()));
+    const done = rs.filter((r) => !r.skipped) as Extract<Awaited<ReturnType<typeof m.jan.runPaymentsJanitor>>, { skipped: false }>[];
+    expect(done.length).toBeGreaterThanOrEqual(1);
+    expect(done.reduce((a, r) => a + r.counts.expiredCheckouts, 0)).toBe(6); // each row expired exactly once across all runs
+    expect(rs.filter((r) => r.skipped).every((r) => r.skipped && r.reason === "already_running")).toBe(true);
+    const lockFree = await m.db.queryOne<{ ok: boolean }>(`SELECT pg_try_advisory_lock(hashtextextended('payments:janitor', 0)) AS ok`);
+    expect(lockFree!.ok).toBe(true); // the lock is released after the runs (this connection may now hold it; release below)
+    await m.db.query(`SELECT pg_advisory_unlock_all()`);
+  });
+  it("a failing step is recorded as an error (heartbeat + audit) but the other steps still run, and the lock is released", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const a = await idemCo(s, null, "stepfail@example.test", TOKEN_A);
+    await m.db.query(`UPDATE transactions SET created_at = now() - interval '2 hours' WHERE id=$1`, [a.transactionId]);
+    await m.db.query(`ALTER TABLE webhook_events RENAME COLUMN stale_flagged_at TO stale_flagged_at_x`); // make step 4 blow up
+    try {
+      const r = await m.jan.runPaymentsJanitor();
+      expect(r).toMatchObject({ skipped: false, counts: { expiredCheckouts: 1, parkedEventsFlaggedStale: 0 } });
+      expect((r as { errors: string[] }).errors.join()).toMatch(/flag_stale_parked/);
+    } finally { await m.db.query(`ALTER TABLE webhook_events RENAME COLUMN stale_flagged_at_x TO stale_flagged_at`); }
+    const audit = await m.db.queryOne<{ target: string }>(`SELECT target FROM audit_log WHERE action='payments_janitor_run' ORDER BY created_at DESC LIMIT 1`);
+    expect(audit!.target).toMatch(/errors/);
+    expect(await m.jan.runPaymentsJanitor()).toMatchObject({ skipped: false, errors: [] }); // lock was released; next run is healthy
+  });
+});
+
+describe.skipIf(!available)("FU-2 earnings label for voided charges", () => {
+  it("a void shows as voided_refunding (refund asked) / voided (not yet) in the seller's recent list; raw status stays 'failed'; money totals unchanged", async () => {
+    await cleanSlate();
+    const t = await voidedTx();
+    const e1 = await m.earn.getEarningsSummary(t.sellerId);
+    expect(e1.recent.find((x) => x.id === t.id)).toMatchObject({ status: "failed", displayStatus: "voided_refunding" });
+    expect(e1.lifetime.grossCents).toBe(0);
+    expect(e1.balance.totalCents).toBe(0);
+    await m.db.query(`UPDATE transactions SET refund_requested_at = NULL WHERE id=$1`, [t.id]);
+    expect((await m.earn.getEarningsSummary(t.sellerId)).recent.find((x) => x.id === t.id)!.displayStatus).toBe("voided");
+    const s = await seed(); const c = await checkout(s);
+    await deliver(m.ev.mockEvents.saleFailed({ transactionId: c.transactionId, amountCents: 2000, failureCode: "card_declined" }));
+    expect((await m.earn.getEarningsSummary(s.sellerId)).recent.find((x) => x.id === c.transactionId)).toMatchObject({ status: "failed", displayStatus: "failed" });
+  });
+});
+
+// =====================================================================================================================
+// Follow-ups 3: admin auth foundation + flagged sellers / review transactions / clear flag
+// =====================================================================================================================
+const ADMIN_PW = "Correct-horse-battery-staple-42";
+let adminCounter = 0;
+const mkAdmin = async (pw = ADMIN_PW) => { const email = `admin${++adminCounter}-${Date.now()}@example.test`; const r = await m.adm.createAdmin(email, pw); return { id: r.id, email }; };
+
+describe.skipIf(!available)("FU-3 admin authentication", () => {
+  it("createAdmin: bcrypt hash only (never the password), lower-cased email, weak/short passwords and bad emails refused, duplicates refused, audit row", async () => {
+    const a = await mkAdmin();
+    const row = await m.db.queryOne<{ email: string; password_hash: string }>(`SELECT email, password_hash FROM admins WHERE id=$1`, [a.id]);
+    expect(row!.password_hash).toMatch(/^\$2[aby]\$12\$/);
+    expect(row!.password_hash).not.toContain(ADMIN_PW);
+    await expect(m.adm.createAdmin("x@example.test", "short")).rejects.toThrow(/at least 10/);
+    await expect(m.adm.createAdmin("x@example.test", "password1234")).rejects.toThrow();
+    await expect(m.adm.createAdmin("not-an-email", ADMIN_PW)).rejects.toThrow(/invalid email/);
+    await expect(m.adm.createAdmin(a.email.toUpperCase(), ADMIN_PW)).rejects.toThrow(/already exists/);
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='admin_created_cli' AND target=$1`, [`admin:${a.id}`]))!.n)).toBe(1);
+  });
+  it("there is NO seeded/default admin: a fresh schema has zero admins until the CLI creates one (and the table has no default password)", async () => {
+    const cols = await m.db.query<{ column_name: string; column_default: string | null }>(`SELECT column_name, column_default FROM information_schema.columns WHERE table_name='admins' AND column_name='password_hash'`);
+    expect(cols[0].column_default).toBeNull();
+    // seeded rows would have no password_hash: none may exist except those created by this test file
+    const bad = await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM admins WHERE password_hash IS NULL`);
+    expect(Number(bad!.n)).toBe(0);
+  });
+  it("login: correct password -> session token that verifies; wrong password / unknown email / disabled admin -> null (uniform)", async () => {
+    const a = await mkAdmin();
+    const ok = await m.adm.loginAdmin(a.email, ADMIN_PW, "ua");
+    expect(ok).not.toBeNull();
+    expect(await m.adm.readAdminToken(ok!.token)).toEqual({ id: a.id, email: a.email });
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW + "x")).toBeNull();
+    expect(await m.adm.loginAdmin("nobody@example.test", ADMIN_PW)).toBeNull();
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [a.id]);
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW)).toBeNull();
+    expect(await m.adm.readAdminToken(ok!.token)).toBeNull(); // an existing session dies with the account
+    const au = await m.db.query<{ action: string }>(`SELECT action FROM audit_log WHERE admin_id=$1 ORDER BY created_at`, [a.id]);
+    expect(au.map((x) => x.action)).toContain("admin_login");
+  });
+  it("sessions are server-side revocable (logout) and expire", async () => {
+    const a = await mkAdmin();
+    const { token } = (await m.adm.loginAdmin(a.email, ADMIN_PW))!;
+    expect(await m.adm.revokeAdminToken(token)).toBe(true);
+    expect(await m.adm.readAdminToken(token)).toBeNull();
+    const t2 = (await m.adm.loginAdmin(a.email, ADMIN_PW))!.token;
+    await m.db.query(`UPDATE admin_sessions SET expires_at = now() - interval '1 second' WHERE admin_id=$1`, [a.id]);
+    expect(await m.adm.readAdminToken(t2)).toBeNull();
+  });
+  it("principals are separate: a SELLER session token never validates as an admin, and an admin token never as a seller", async () => {
+    const s = await seed();
+    const sellerToken = await m.sess.createSession(s.sellerId);
+    expect(await m.sess.readSessionToken(sellerToken)).toBe(s.sellerId);
+    expect(await m.adm.readAdminToken(sellerToken)).toBeNull();
+    const a = await mkAdmin();
+    const { token } = (await m.adm.loginAdmin(a.email, ADMIN_PW))!;
+    expect(await m.sess.readSessionToken(token)).toBeNull();
+    // a seller whose email equals an admin's email is still not an admin
+    expect(await m.adm.readAdminToken(sellerToken + "x")).toBeNull();
+    expect(await m.adm.readAdminToken("garbage")).toBeNull();
+  });
+  it("--reset-password path: replaces the hash, re-enables, revokes existing sessions, audit row; old password stops working", async () => {
+    const a = await mkAdmin();
+    const { token } = (await m.adm.loginAdmin(a.email, ADMIN_PW))!;
+    await m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true });
+    expect(await m.adm.readAdminToken(token)).toBeNull();
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW)).toBeNull();
+    expect(await m.adm.loginAdmin(a.email, "A-totally-different-passphrase-1")).not.toBeNull();
+  });
+});
+
+describe.skipIf(!available)("FU-3 admin queries and the audited 'clear flag' action", () => {
+  async function flagged(n = 3) {
+    const s = await seed();
+    for (let i = 0; i < n; i++) {
+      const out = await m.co.createCheckout({ dropId: s.dropId, email: `fl${i}@example.test`, confirmOver18: true });
+      await deliver(sale(out.transactionId, 2000));
+      await deliver(m.ev.mockEvents.chargeback({ transactionId: out.transactionId, amountCents: null }));
+    }
+    return s;
+  }
+  it("listFlaggedSellers: only flagged sellers, with counts, never password hashes or payout details", async () => {
+    const f = await flagged(3);
+    const notFlagged = await seed();
+    const list = await m.admq.listFlaggedSellers();
+    const row = list.find((x) => x.id === f.sellerId)!;
+    expect(row).toMatchObject({ chargebacks: 3, totalSales: 3, refunds: 0, verificationStatus: "verified" });
+    expect(row.flagReason).toMatch(/3 chargebacks/);
+    expect(list.find((x) => x.id === notFlagged.sellerId)).toBeUndefined();
+    const json = JSON.stringify(list);
+    expect(json).not.toMatch(/password|hash|payout_details|dob|legal_name/i);
+  });
+  it("listReviewTransactions: voided charge with refund state; failed retries show pending_retry / failed with last error", async () => {
+    await cleanSlate();
+    const ok = await voidedTx(); // refund requested
+    const fail = await voidedTx({ failProvider: true });
+    const list = await m.admq.listReviewTransactions();
+    expect(list.find((x) => x.id === ok.id)).toMatchObject({ refundState: "requested", reviewReason: "seller_not_verified", status: "failed", failureCode: "invalid_at_capture" });
+    expect(list.find((x) => x.id === fail.id)).toMatchObject({ refundState: "pending_retry", refundAttempts: 1, refundLastError: "processor down" });
+    await m.db.query(`UPDATE transactions SET void_refund_attempts = 99 WHERE id=$1`, [fail.id]);
+    expect((await m.admq.listReviewTransactions()).find((x) => x.id === fail.id)!.refundState).toBe("failed");
+    expect(JSON.stringify(list)).not.toMatch(/buyer_email|buyer@example|password/i);
+  });
+  it("listSellerTransactions: rows for that seller only, no buyer email; unknown/garbage id -> null seller", async () => {
+    const f = await flagged(3);
+    const r = await m.admq.listSellerTransactions(f.sellerId);
+    expect(r.rows).toHaveLength(3);
+    expect(JSON.stringify(r)).not.toMatch(/example\.test"?,"(dropTitle|status)|buyer/i);
+    expect((await m.admq.listSellerTransactions("not-a-uuid")).seller).toBeNull();
+    expect((await m.admq.listSellerTransactions("00000000-0000-4000-8000-000000000000")).seller).toBeNull();
+  });
+  it("clearSellerFlag: clears the flag, records reviewer + note, writes ONE audit row (admin id + time) atomically; nothing else about the seller changes", async () => {
+    const f = await flagged(3);
+    const a = await mkAdmin();
+    const before = await m.db.queryOne<{ verification_status: string }>(`SELECT verification_status FROM sellers WHERE id=$1`, [f.sellerId]);
+    const r = await m.admq.clearSellerFlag(a.id, f.sellerId, "Reviewed disputes: legitimate buyers' remorse, no fraud.");
+    expect(r.sellerId).toBe(f.sellerId);
+    const s = await m.db.queryOne<Record<string, unknown>>(`SELECT risk_flagged_at, risk_flag_reason, risk_reviewed_at, risk_reviewed_by, risk_review_note, verification_status FROM sellers WHERE id=$1`, [f.sellerId]);
+    expect(s).toMatchObject({ risk_flagged_at: null, risk_flag_reason: null, risk_reviewed_by: a.id, verification_status: before!.verification_status });
+    expect(s!.risk_reviewed_at).not.toBeNull();
+    expect(s!.risk_review_note).toMatch(/legitimate/);
+    const au = await m.db.query<{ admin_id: string; target: string; created_at: string }>(`SELECT admin_id, target, created_at FROM audit_log WHERE action='seller_flag_cleared' AND target LIKE $1`, [`seller:${f.sellerId}%`]);
+    expect(au).toHaveLength(1);
+    expect(au[0].admin_id).toBe(a.id);
+    expect(au[0].target).toMatch(/3 chargebacks/); // previous reason retained in the audit trail
+    expect(au[0].created_at).toBeTruthy();
+    expect((await m.admq.listFlaggedSellers()).find((x) => x.id === f.sellerId)).toBeUndefined();
+  });
+  it("clearSellerFlag validation: note required (3-500), unflagged seller 409, unknown seller 404 - and NO audit row / state change on failure", async () => {
+    const f = await flagged(3);
+    const a = await mkAdmin();
+    const auditCount = async () => Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='seller_flag_cleared'`))!.n);
+    const n0 = await auditCount();
+    await expect(m.admq.clearSellerFlag(a.id, f.sellerId, "  ")).rejects.toMatchObject({ status: 400, code: "note_required" });
+    await expect(m.admq.clearSellerFlag(a.id, f.sellerId, "x".repeat(501))).rejects.toMatchObject({ status: 400 });
+    await expect(m.admq.clearSellerFlag(a.id, "00000000-0000-4000-8000-000000000000", "valid note")).rejects.toMatchObject({ status: 404 });
+    await expect(m.admq.clearSellerFlag(a.id, "garbage", "valid note")).rejects.toMatchObject({ status: 404 });
+    expect((await m.db.queryOne<{ risk_flagged_at: string | null }>(`SELECT risk_flagged_at FROM sellers WHERE id=$1`, [f.sellerId]))!.risk_flagged_at).not.toBeNull();
+    expect(await auditCount()).toBe(n0);
+    await m.admq.clearSellerFlag(a.id, f.sellerId, "first review");
+    await expect(m.admq.clearSellerFlag(a.id, f.sellerId, "second review")).rejects.toMatchObject({ status: 409, code: "not_flagged" });
+    expect(await auditCount()).toBe(n0 + 1);
+  });
+  it("concurrent clears: exactly one succeeds and exactly one audit row exists", async () => {
+    const f = await flagged(3);
+    const a = await mkAdmin();
+    const rs = await Promise.allSettled(Array.from({ length: 6 }, () => m.admq.clearSellerFlag(a.id, f.sellerId, "concurrent review")));
+    expect(rs.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='seller_flag_cleared' AND target LIKE $1`, [`seller:${f.sellerId}%`]))!.n)).toBe(1);
+  });
+  it("after a review the count restarts: old chargebacks don't instantly re-flag; the next 3 new ones do", async () => {
+    const f = await flagged(3);
+    const a = await mkAdmin();
+    await m.admq.clearSellerFlag(a.id, f.sellerId, "reviewed, fine");
+    const cb = async (tag: string) => { const o = await m.co.createCheckout({ dropId: f.dropId, email: `${tag}@example.test`, confirmOver18: true }); await deliver(sale(o.transactionId, 2000)); await deliver(m.ev.mockEvents.chargeback({ transactionId: o.transactionId, amountCents: null })); };
+    const isFlagged = async () => (await m.db.queryOne<{ risk_flagged_at: string | null }>(`SELECT risk_flagged_at FROM sellers WHERE id=$1`, [f.sellerId]))!.risk_flagged_at !== null;
+    await cb("n1"); await cb("n2");
+    expect(await isFlagged()).toBe(false);
+    await cb("n3");
+    expect(await isFlagged()).toBe(true);
   });
 });
