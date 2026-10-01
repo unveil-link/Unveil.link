@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { query, queryOne } from "../db";
 import { HttpError } from "../errors";
+import { isUuid } from "../input";
 import { getSettings } from "./settings";
 import { getSellerById } from "./sellers";
 
@@ -72,7 +73,7 @@ export const listDropsForSeller = (sellerId: string) =>
 
 /** Loads a drop and asserts ownership (404 rather than 403 so ids don't leak). */
 export async function getOwnedDrop(sellerId: string, dropId: string): Promise<Drop> {
-  if (!/^[0-9a-f-]{36}$/i.test(dropId)) throw new HttpError(404, "Drop not found");
+  if (!isUuid(dropId)) throw new HttpError(404, "Drop not found");
   const d = await queryOne<Drop>(`SELECT ${DROP_COLS} FROM drops WHERE id = $1 AND seller_id = $2`, [
     dropId,
     sellerId,

@@ -7,6 +7,7 @@ import { pool, query, queryOne } from "../db";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { checkPasswordStrength } from "../auth/password-policy";
 import { getSessionSellerId } from "../auth/session";
+import { hasBadText } from "../input";
 
 /**
  * Admin authentication. A separate principal from sellers (no shared tables, cookie, signing key or role claim):
@@ -27,7 +28,8 @@ export interface Admin { id: string; email: string }
 
 export async function createAdmin(email: string, password: string, opts: { resetIfExists?: boolean } = {}): Promise<{ id: string; created: boolean }> {
   const e = email.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || e.length > 254) throw new Error("invalid email");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || e.length > 254 || hasBadText(e)) throw new Error("invalid email");
+  if (hasBadText(password)) throw new Error("password contains invalid characters");
   const weak = checkPasswordStrength(password, { email: e });
   if (weak) throw new Error(weak);
   const hash = await hashPassword(password);
@@ -46,6 +48,7 @@ export async function createAdmin(email: string, password: string, opts: { reset
 
 /** Returns a signed session token, or null for ANY failure (unknown email, wrong password, disabled): callers answer a uniform 401. */
 export async function loginAdmin(email: string, password: string, userAgent?: string | null): Promise<{ token: string; admin: Admin } | null> {
+  if (hasBadText(email) || email.length > 254) return null; // defence in depth (the route already rejects these with 400)
   const a = await queryOne<{ id: string; email: string; password_hash: string | null; disabled_at: string | null }>(
     `SELECT id, email, password_hash, disabled_at FROM admins WHERE email = $1`, [email.trim().toLowerCase()]);
   const ok = await verifyPassword(password, a?.password_hash ?? null); // constant-ish time even when the admin doesn't exist

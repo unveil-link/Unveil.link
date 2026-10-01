@@ -1,5 +1,6 @@
 import { query, queryOne, withTx } from "../db";
 import { HttpError } from "../errors";
+import { isUuid } from "../input";
 
 export interface FlaggedSeller {
   id: string; displayName: string; email: string; verificationStatus: string;
@@ -53,7 +54,7 @@ export interface SellerTransactionRow { id: string; dropTitle: string; status: s
 
 /** A seller's most recent transactions (no buyer emails: the admin brick doesn't need that PII). */
 export async function listSellerTransactions(sellerId: string): Promise<{ seller: { id: string; displayName: string; email: string } | null; rows: SellerTransactionRow[] }> {
-  if (!/^[0-9a-f-]{36}$/i.test(sellerId)) return { seller: null, rows: [] };
+  if (!isUuid(sellerId)) return { seller: null, rows: [] };
   const seller = await queryOne<{ id: string; display_name: string; email: string }>(`SELECT id, display_name, email FROM sellers WHERE id = $1`, [sellerId]);
   if (!seller) return { seller: null, rows: [] };
   const rows = await query<{ id: string; title: string; status: string; amount_cents: number; reversed_cents: number; failure_code: string | null; review_reason: string | null; created_at: string }>(
@@ -73,7 +74,7 @@ export async function listSellerTransactions(sellerId: string): Promise<{ seller
 export async function clearSellerFlag(adminId: string, sellerId: string, note: string): Promise<{ sellerId: string; reviewedAt: string }> {
   const n = note.trim();
   if (n.length < 3 || n.length > 500) throw new HttpError(400, "A review note of 3-500 characters is required", "note_required");
-  if (!/^[0-9a-f-]{36}$/i.test(sellerId)) throw new HttpError(404, "Seller not found", "not_found");
+  if (!isUuid(sellerId)) throw new HttpError(404, "Seller not found", "not_found");
   return withTx(async (c) => {
     const s = await c.query<{ risk_flagged_at: string | null; risk_flag_reason: string | null }>(`SELECT risk_flagged_at, risk_flag_reason FROM sellers WHERE id = $1 FOR UPDATE`, [sellerId]);
     if (!s.rows[0]) throw new HttpError(404, "Seller not found", "not_found");

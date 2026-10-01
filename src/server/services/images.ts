@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import sharp from "sharp";
 import { queryOne, withTx } from "../db";
 import { HttpError } from "../errors";
+import { isUuid } from "../input";
 import { storage } from "../storage";
 import { getSettings, type PlatformSettings } from "./settings";
 import { getOwnedDrop } from "./drops";
@@ -134,7 +135,7 @@ export async function addImageToDrop(
 }
 
 export async function getFileRow(fileId: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(fileId)) return null;
+  if (!isUuid(fileId)) return null;
   return queryOne<{
     id: string;
     drop_id: string;
