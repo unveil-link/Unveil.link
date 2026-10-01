@@ -1,0 +1,8 @@
+ RUN  v5.0.3 /workspace/qa-pay2
+
+
+ Test Files  9 passed (9)
+      Tests  140 passed (140)
+   Start at  10:44:41
+   Duration  3.07s (tests 50%, import 30%, transform 20%, worker 1%)
+

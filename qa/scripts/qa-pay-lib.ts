@@ -10,7 +10,7 @@ import { mockEvents, mockSaleId, signMockEvent } from "../../src/server/payments
 import { signPayload } from "../../src/server/payments/signature";
 
 loadEnv({ path: path.resolve(__dirname, "../../.env"), quiet: true });
-export const BASE = process.env.QA_BASE_URL ?? "http://localhost:3517";
+export const BASE = process.env.QA_BASE_URL ?? "http://localhost:3617";
 export const SECRET = process.env.PAYMENT_WEBHOOK_SECRET!;
 export const DBURL = process.env.DATABASE_URL!;
 if (!/unveil_qa_pay/.test(DBURL)) throw new Error("refusing: DATABASE_URL is not the throwaway qa-pay DB");
@@ -77,8 +77,10 @@ export async function makeDrop(s: Seller, priceCents: number, opts: { publish?: 
   }
   return { id: drop.id as string, link: drop.public_link_id as string };
 }
-export const checkout = (link: string, extra: Record<string, unknown> = {}, http = new Http(), email = `buyer+${stamp}@example.test`) =>
-  http.json("POST", "/api/checkout", { json: { linkId: link, email, confirmOver18: true, ...extra } });
+let buyerSeq = 0;
+// Round 2: same drop+email now REUSES the live pending txn, so by default every call uses a fresh buyer email (pass `email` to test reuse).
+export const checkout = (link: string, extra: Record<string, unknown> = {}, http = new Http(), email = `buyer${++buyerSeq}+${stamp}@example.test`, headers: Record<string, string> = {}) =>
+  http.json("POST", "/api/checkout", { json: { linkId: link, email, confirmOver18: true, ...extra }, headers });
 
 export async function sendWebhook(ev: unknown, opts: { secret?: string; nowSec?: number; provider?: string; ip?: string; base?: string; headers?: Record<string, string>; rawBody?: string; sig?: string | null } = {}) {
   const rawBody = opts.rawBody ?? JSON.stringify(ev);

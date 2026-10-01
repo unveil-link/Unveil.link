@@ -1,0 +1,37 @@
+applied 001-006: 6
+pre ledger count/sum: 3/1360
+pre txns: 001:pending 002:pending 003:pending 004:pending 005:pending 006:pending 007:failed 008:succeeded
+--- npm run migrate (upgrade 006->007)
+applied 007_payments_hardening.sql
+done (1 applied)
+post txns: 001:failed/superseded 002:failed/superseded 003:failed/superseded 004:pending 005:pending 006:pending 007:failed 008:succeeded
+post ledger count/sum: 3/1360
+settings: 30,1440,3,90
+indexes: sellers_risk_flagged_idx,transactions_idem_key_uniq,transactions_one_pending_uniq,transactions_pending_created_idx,transactions_review_idx
+--- re-run migrate (no-op)
+> unveil@0.1.0 migrate
+> tsx scripts/migrate.ts
+up to date
+--- 007 SQL applied manually twice more (idempotent?)
+2nd manual run OK
+3rd manual run OK
+post2 txns: 001:failed 002:failed 003:failed 004:pending 005:pending 006:pending 007:failed 008:succeeded
+--- rollback: 007 in a txn then ROLLBACK leaves 006 shape?
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+down-in-txn: columns remaining=0
+ROLLBACK
+--- manual DOWN (no down migration shipped; QA-authored) then re-upgrade
+after down: ledger 3/1360; txns 8
+applied 007_payments_hardening.sql
+done (1 applied)
+re-upgraded: ledger 3/1360; status 001:failed 002:failed 003:failed 004:pending 005:pending 006:pending 007:failed 008:succeeded
+--- failure atomicity: break 007 mid-way in a copy -> whole migration rolls back
+state before failing run: all 007 columns absent, 007 not recorded
+migration 007_payments_hardening.sql failed: division by zero
+after failed 007: 007 recorded? 0 ; 007 columns present after failed run (0 = fully rolled back): 0
+applied 007_payments_hardening.sql
+done (1 applied)
+final: 4 cols; ledger 3/1360

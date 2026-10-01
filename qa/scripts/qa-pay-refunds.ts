@@ -1,4 +1,5 @@
 /* eslint-disable */
+process.env.MOCK_PAYMENTS_ENABLED = process.env.MOCK_PAYMENTS_ENABLED ?? "1"; // in-process service calls (NODE_ENV unset => mock default-deny since R2)
 // QA: refund / chargeback sequences, over-refund, concurrency, negative balance, repeat-chargeback flagging.
 import { Http, check, rec, assert, eq, db, makeSeller, makeDrop, checkout, txRow, save, done, sell, sendWebhook, paySale, mockEvents, ledgerCount, ledgerSum, refundEv, cbEv, sellerLedgerSum } from "./qa-pay-lib";
 import { computeSplit, reversalFor } from "../../src/server/payments/money";
@@ -85,15 +86,11 @@ import { computeSplit, reversalFor } from "../../src/server/payments/money";
     eq(e2.balance.availableCents, exp, "future earnings net against negative"); const rq = await (await import("../../src/server/payments/payouts")).requestPayout(s2.id).catch((e: any) => e.code);
     return `after refund available=${e1.balance.availableCents} (negative allowed); after new sale ${e2.balance.availableCents}; payout while 0<available<min → ${typeof rq === "string" ? rq : "created"}`;
   });
-  await check("M5-08 / CB-1", "repeat chargebacks flag the seller for review", async () => {
-    const s3 = await makeSeller("cbrep"); const dd = await makeDrop(s3, 1500);
-    for (let i = 0; i < 4; i++) { const tx = await sell(dd.link, 1500); await sendWebhook(cbEv(tx, null, i)); }
-    const cols = (await db.query("SELECT column_name FROM information_schema.columns WHERE table_name='sellers'")).rows.map((r) => r.column_name);
-    const row = (await db.query("SELECT * FROM sellers WHERE id=$1", [s3.id])).rows[0];
-    const flagged = Object.entries(row).filter(([k, v]) => /flag|review|suspend|risk|status/i.test(k) && k !== "verification_status").map(([k, v]) => `${k}=${v}`);
-    const chk = await db.query("SELECT count(*) FROM transactions WHERE seller_id=$1 AND status='charged_back'", [s3.id]);
-    assert(false, `4 chargebacks (${chk.rows[0].count} charged_back txns) → no seller flag/review state. seller columns: ${cols.join(",")}; flag-ish values: ${flagged.join(" ") || "none"}. Spec M5-08 'repeat chargebacks flag seller for review' NOT implemented.`);
-    return "";
+  await check("M5-08 / CB-1", "R2: 3 chargebacks (distinct txns) within 90 days flag the seller (risk_flagged_at, reason, audit_log); no auto-ban/verification change", async () => {
+    const s3 = await makeSeller("cbrep"); const dd = await makeDrop(s3, 1500); const out: string[] = [];
+    for (let i = 0; i < 3; i++) { const tx = await sell(dd.link, 1500); const r = await sendWebhook(cbEv(tx, null, i)); out.push(r.json.detail ?? r.json.outcome); const row = (await db.query("SELECT risk_flagged_at, risk_flag_reason, verification_status FROM sellers WHERE id=$1", [s3.id])).rows[0]; eq(!!row.risk_flagged_at, i === 2, `flag after cb #${i + 1}`); eq(row.verification_status, "verified", "verification_status untouched"); }
+    const row = (await db.query("SELECT risk_flagged_at, risk_flag_reason FROM sellers WHERE id=$1", [s3.id])).rows[0]; const au = await db.query("SELECT target FROM audit_log WHERE action='seller_flagged_repeat_chargebacks' AND target LIKE $1", [`seller:${s3.id}%`]);
+    eq(au.rowCount, 1, "audit rows"); return `details ${out.join(",")}; reason="${row.risk_flag_reason}"; audit rows 1; still verified`;
   });
   await check("CB-2", "single chargeback: tx charged_back, ledger reversal posted, optional chargeback_fee honoured when set; fee posts immediate", async () => {
     await db.query("UPDATE platform_settings SET chargeback_fee_cents=1500 WHERE id=1");

@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import { Http, check, rec, assert, eq, db, makeSeller, makeDrop, checkout, txRow, save, done, sell, sendWebhook, paySale, mockEvents, ledgerCount, ledgerSum, freshIp, BASE, stamp } from "./qa-pay-lib";
 
-const RL_BASE = process.env.QA_RL_BASE ?? "http://localhost:3518";
+const RL_BASE = process.env.QA_RL_BASE ?? "http://localhost:3618";
 const pay = (sessionId: string, card: string, extra: Record<string, unknown> = {}) => new Http().json("POST", "/api/dev/payments/pay", { json: { sessionId, card, ...extra } });
 const sess = (url: string) => url.split("/").pop()!;
 
@@ -30,8 +30,8 @@ const sess = (url: string) => url.split("/").pop()!;
   }
   await check("M3-03e", "after a decline: same session can't be re-paid (session terminal) and a new checkout with 4242 succeeds; no succeeded tx for the failed one", async () => {
     const c = await checkout(d.link); const sid = sess(c.json.checkoutUrl); await pay(sid, "4000000000000002"); const again = await pay(sid, "4242424242424242");
-    eq(again.json.status, "failed", "still failed"); eq((await txRow(c.json.transactionId)).status, "failed", "db"); eq(await ledgerCount(c.json.transactionId), 0, "ledger");
-    return `second attempt on same session → ${again.json.status} (buyer must restart checkout; UX note)`;
+    eq(again.json.status, "succeeded", "ROUND 2 by design: declined session can be paid again"); eq((await txRow(c.json.transactionId)).status, "succeeded", "db"); eq(await ledgerCount(c.json.transactionId), 3, "ledger");
+    return `second attempt on same session after decline → ${again.json.status}, 3 ledger lines (R2 assertion changed: was terminal)`;
   });
 
   // ---- validation ----
@@ -52,7 +52,7 @@ const sess = (url: string) => url.split("/").pop()!;
   });
   await check("PRICE-1", "price tamper: amount/amountCents/price/priceCents/total/seller_net/platform_fee fields in body ignored; DB price used", async () => {
     const c = await checkout(d.link, { amount: 1, amountCents: 1, price: 0.01, priceCents: 1, price_cents: 1, total: 0, seller_net_cents: 2000, platform_fee_cents: 0, status: "succeeded", sellerId: "x", feePercent: 0 });
-    eq(c.status, 201, c.text); eq(c.json.amountCents, 2000, "resp amount"); const t = await txRow(c.json.transactionId); eq(`${t.amount_cents},${t.platform_fee_cents},${t.seller_net_cents},${t.status}`, "2000,200,1560,pending", "tx");
+    eq(c.status, 201, c.text); eq(c.json.amountCents, 2000, "resp amount"); { const em = `price1+${stamp}@example.test`; const a = await checkout(d.link, { amountCents: 1 }, new Http(), em); const b = await checkout(d.link, { amountCents: 1 }, new Http(), em); eq(a.status, 201, "first"); eq(b.status, 200, "R2: same email+drop reuses live pending → 200"); eq(b.json.reused, true, "reused flag"); eq(b.json.transactionId, a.json.transactionId, "same tx"); eq(b.json.amountCents, 2000, "amount"); } const t = await txRow(c.json.transactionId); eq(`${t.amount_cents},${t.platform_fee_cents},${t.seller_net_cents},${t.status}`, "2000,200,1560,pending", "tx");
     return "all tamper fields ignored → 2000/200/1560 pending";
   });
   await check("PRICE-2", "price edited by seller after link is shown: checkout uses current DB price", async () => {
@@ -113,7 +113,7 @@ const sess = (url: string) => url.split("/").pop()!;
     const r2 = await pay(sess(c.json.checkoutUrl), "4242 4242 4242 4242", { cvc, exp: "12/30" }); void r2;
     const dump = execSync(`pg_dump --no-owner "${process.env.DATABASE_URL}"`, { maxBuffer: 1 << 28 }).toString("utf8"); fs.writeFileSync("/tmp/qa-pay-dump.sql", dump);
     const hits: string[] = []; for (const needle of [marker, "4242424242424242", "4242 4242 4242 4242", "737"]) { const rx = needle === "737" ? /(?<![0-9a-f])737(?![0-9a-f])/ : new RegExp(needle.replace(/ /g, " ")); const n = dump.split("\n").filter((l) => rx.test(l)).length; if (n && needle !== "737") hits.push(`${needle}×${n}`); }
-    const logs = ["qa/artifacts/pay-server-3517.log", "qa/artifacts/pay-server-3518-defaultlimits.log"].map((f) => (fs.existsSync(f) ? fs.readFileSync(f, "utf8") : "")).join("\n");
+    const logs = ["qa/artifacts/pay-server-3617.log", "qa/artifacts/pay-server-3618-defaultlimits.log"].map((f) => (fs.existsSync(f) ? fs.readFileSync(f, "utf8") : "")).join("\n");
     const logHits = [marker, "4242424242424242", "4242 4242 4242 4242"].filter((n) => logs.includes(n));
     assert(!hits.length && !logHits.length, `PAN found: db=${hits} logs=${logHits}`); return `pg_dump (${(dump.length / 1024) | 0} KiB) and app logs contain no PAN; only payload hashes/fixed fields stored in webhook_events`;
   });
@@ -133,8 +133,8 @@ const sess = (url: string) => url.split("/").pop()!;
   await check("M3-16 / RL-1", "checkout limiter (default 10/60s per IP): 10 allowed then 429 + Retry-After; other IP unaffected; single legit buyer fine", async () => {
     const h = new Http(); const codes: number[] = []; let ra = "";
     for (let i = 0; i < 13; i++) { const r = await h.req("POST", "/api/checkout", { base: RL_BASE, json: { linkId: d.link, email: "rl@example.test", confirmOver18: true } }); codes.push(r.status); if (r.status === 429) ra = r.headers.get("retry-after") ?? ""; await r.text(); }
-    eq(codes.slice(0, 10).join(), "201,201,201,201,201,201,201,201,201,201", "first 10"); assert(codes.slice(10).every((c) => c === 429), "after 10: " + codes.slice(10)); assert(Number(ra) > 0 && Number(ra) <= 60, "retry-after " + ra);
-    const other = await new Http().req("POST", "/api/checkout", { base: RL_BASE, json: { linkId: d.link, email: "rl2@example.test", confirmOver18: true } }); eq(other.status, 201, "other IP");
+    assert(codes.slice(0, 10).every((c) => c === 200 || c === 201), "first 10 (R2: 200 = reused same email): " + codes.slice(0, 10)); assert(codes.slice(10).every((c) => c === 429), "after 10: " + codes.slice(10)); assert(Number(ra) > 0 && Number(ra) <= 60, "retry-after " + ra);
+    const other = await new Http().req("POST", "/api/checkout", { base: RL_BASE, json: { linkId: d.link, email: "rl2@example.test", confirmOver18: true } }); assert(other.status === 201 || other.status === 200, "other IP " + other.status);
     return `codes ${codes.join()}, Retry-After ${ra}, other IP 201`;
   });
   await check("RL-2 invalid requests count", "limiter runs BEFORE validation: invalid requests also consume the budget (e2e already relies on this)", async () => {
@@ -159,7 +159,7 @@ const sess = (url: string) => url.split("/").pop()!;
     return `A total ${ea.json.balance.totalCents}, B total ${eb.json.balance.totalCents}; sellerId param ignored; no emails`;
   });
   await check("AUTHZ-2", "/api/checkout/status leaks only status/amount/failure_code (UUID capability); random uuid 404; SQLi id 404", async () => {
-    const c = await checkout(d.link); const r = await new Http().json("GET", `/api/checkout/status?id=${c.json.transactionId}`); eq(Object.keys(r.json).sort().join(), "amountCents,failureCode,status,transactionId", "keys");
+    const c = await checkout(d.link); const r = await new Http().json("GET", `/api/checkout/status?id=${c.json.transactionId}`); eq(Object.keys(r.json).sort().join(), "amountCents,message,retryable,status,transactionId", "keys (R2: failureCode replaced by retryable+message)"); assert(!("failureCode" in r.json), "raw code exposed");
     for (const id of ["00000000-0000-4000-8000-000000000000", "1' OR '1'='1", "", "../x"]) { const x = await new Http().json("GET", `/api/checkout/status?id=${encodeURIComponent(id)}`); eq(x.status, 404, id); } return "ok";
   });
   await check("SEC-3 checkout injection", "SQLi / mass-assignment in checkout JSON (dropId/linkId/email) → 400/404, tables intact", async () => {

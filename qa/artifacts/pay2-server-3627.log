@@ -1,0 +1,7 @@
+▲ Next.js 16.3.8
+- Local:         http://localhost:3627
+- Network:       http://172.30.0.2:3627
+✓ Ready in 158ms
+✓ Running next.config.ts took 33ms
+payment provider "mock" unavailable: PAYMENT_WEBHOOK_SECRET (>= 32 chars) is required
+webhook for unavailable provider "mock": PAYMENT_WEBHOOK_SECRET (>= 32 chars) is required

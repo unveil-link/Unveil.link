@@ -1,4 +1,5 @@
 /* eslint-disable */
+process.env.MOCK_PAYMENTS_ENABLED = process.env.MOCK_PAYMENTS_ENABLED ?? "1"; // in-process service calls (NODE_ENV unset => mock default-deny since R2)
 // QA: payout ledger invariants, hold, minimum, concurrency, failure flow, earnings summary (M4-09, M4-13..M4-16, M3-09).
 import { check, rec, assert, eq, db, makeSeller, makeDrop, sell, sendWebhook, refundEv, sellerLedgerSum, setSettings, save, done, Http } from "./qa-pay-lib";
 import { requestPayout, approvePayout, markPayoutPaid, markPayoutFailed, getPayout } from "../../src/server/payments/payouts";

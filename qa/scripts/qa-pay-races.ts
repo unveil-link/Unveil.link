@@ -27,7 +27,7 @@ import { check, assert, eq, db, makeSeller, makeDrop, checkout, txRow, save, don
     return `first ${a.json.outcome}, second (different amount, same refund id) ${b.json.outcome}; reversed ${(await txRow(tx)).reversed_cents} — by design dedupe key; NOTE only`;
   });
   await check("LOG-1", "app logs: no stack traces/secrets: PAYMENT_WEBHOOK_SECRET / SESSION_SECRET never printed; list distinct error lines", async () => {
-    const logs = ["qa/artifacts/pay-server-3517.log", "qa/artifacts/pay-server-3518-defaultlimits.log"].map((f) => fs.readFileSync(f, "utf8")).join("\n");
+    const logs = ["qa/artifacts/pay-server-3617.log", "qa/artifacts/pay-server-3618-defaultlimits.log"].map((f) => fs.readFileSync(f, "utf8")).join("\n");
     for (const k of ["PAYMENT_WEBHOOK_SECRET", "SESSION_SECRET", "SIGNED_URL_SECRET"]) assert(!logs.includes(process.env[k]!), `${k} value in logs`);
     const errs = [...new Set(logs.split("\n").filter((l) => /error|fail/i.test(l)).map((l) => l.slice(0, 160)))]; return `no secrets in logs; ${errs.length} distinct error-ish lines: ${errs.slice(0, 4).join(" | ")}`;
   });

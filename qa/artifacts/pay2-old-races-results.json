@@ -1,0 +1,32 @@
+[
+  {
+    "id": "RACE-1",
+    "name": "sale and refund webhooks delivered CONCURRENTLY (15 trials): final state always refunded, ledger nets 0, exactly 3+3 lines, no 5xx",
+    "result": "PASS",
+    "evidence": "15/15 consistent (sale,refund outcomes: pp pp pp pp pp pp pp pp pp pp pp pp pp pp pp)"
+  },
+  {
+    "id": "RACE-2",
+    "name": "sale_succeeded racing sale_failed (12 trials): final state consistent with ledger",
+    "result": "PASS",
+    "evidence": "always succeeded/3 lines (success after failure accepted; failure after success ignored)"
+  },
+  {
+    "id": "RACE-3",
+    "name": "refund re-delivered under NEW event id with the same processor refund id → duplicate, not a second refund",
+    "result": "PASS",
+    "evidence": "duplicate via (provider, processor tx id, type) key"
+  },
+  {
+    "id": "RACE-4",
+    "name": "two DIFFERENT partial refunds that reuse the same processor refund id (processor bug / collision): second silently dropped as duplicate → books understate refund (record)",
+    "result": "PASS",
+    "evidence": "first processed, second (different amount, same refund id) duplicate; reversed 500 — by design dedupe key; NOTE only"
+  },
+  {
+    "id": "LOG-1",
+    "name": "app logs: no stack traces/secrets: PAYMENT_WEBHOOK_SECRET / SESSION_SECRET never printed; list distinct error lines",
+    "result": "PASS",
+    "evidence": "no secrets in logs; 0 distinct error-ish lines: "
+  }
+]

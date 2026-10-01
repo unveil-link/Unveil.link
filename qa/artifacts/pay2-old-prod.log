@@ -1,0 +1,10 @@
+PASS    PROD-1 (M3 / mock disabled) NODE_ENV=production, no MOCK_PAYMENTS_ENABLED, localhost APP_URL: checkout 503, VALID-signature webhook 503 (no state change), dev pay 404, mock page 404 — {"checkout":503,"webhook":503,"pay":404,"page":404}
+PASS    PROD-2       production + MOCK_PAYMENTS_ENABLED=1 + PUBLIC APP_URL (https://unveil.link): still disabled — {"checkout":503,"webhook":503,"pay":404,"page":404}
+PASS    PROD-3       production + flag + deceptive hosts (http://localhost.evil.com, http://localhost@evil.com, http://127.0.0.1.evil.com): still disabled — http://localhost.evil.com:ok http://localhost@evil.com:ok http://127.0.0.1.evil.com:ok http://evil.com/localhost:ok
+PASS    PROD-4 (config residual risk) mock allowed in production when flag=1 + localhost APP_URL (documented e2e exception). Verify that exception works and record the risk: a prod deploy that accidentally sets both is NOT guarded — exception works (201) — only when both flag and loopback APP_URL are set
+PASS    PROD-5 missing/short secret fails closed PAYMENT_WEBHOOK_SECRET 31 chars / empty / 5 chars (truly-unset not testable: Next auto-loads the worktree .env): checkout 503 + webhook 503 even in non-prod-flag mode (local build flag on) — 31ch:503/503 0ch:503/503 5ch:503/503
+PASS    PROD-6 unknown PAYMENT_PROVIDER PAYMENT_PROVIDER=stripe / segpay (not registered) → checkout 503 (fails closed), not fallback to mock — 503 payments_unavailable
+PASS    PROD-7 test card in prod no test-card acceptance in prod: /api/dev/payments/pay 404 for card 4242 (covered by PROD-1/2/3: pay=404) and no tx became succeeded — tx remained pending across all prod-mode probes
+PASS    PROD-8 non-'production' NODE_ENV R2: config.mockPaymentsAllowed is FALSE for NODE_ENV=staging (default-deny) — NODE_ENV=staging → mockPaymentsAllowed=false (R2: default-deny; was true in round 1)
+
+Saved pay-prod-results.json: PASS 8 FAIL 0 BLOCKED 0 NOTE 0

@@ -1,0 +1,5 @@
+PASS    SESS-1       pending checkout older than 30 days can still be paid (no session expiry) — expired
+PASS    SESS-2       seller loses verification (failed/manual_review) after checkout started: payment still completes — blocked
+PASS    SESS-3       pending tx never auto-expire: count of pending older than 1 day is 0 after cleanup job? (no cleanup job exists) — none
+
+Saved pay-session-results.json: PASS 3 FAIL 0 BLOCKED 0 NOTE 0

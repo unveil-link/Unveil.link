@@ -1,0 +1,7 @@
+▲ Next.js 16.3.8
+- Local:         http://localhost:3624
+- Network:       http://172.30.0.2:3624
+✓ Ready in 253ms
+✓ Running next.config.ts took 50ms
+payment provider "mock" unavailable: mock payment provider is disabled in production
+webhook for unavailable provider "mock": mock payment provider is disabled in production
