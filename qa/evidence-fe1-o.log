@@ -1,0 +1,10 @@
+[M4-18] submit w/o attestations -> Please confirm all three statements to publish. | label: Upload & publish
+[M4-18] attestation checkboxes checked: 4
+[M4-18] one-step result: Your drop is live | “One-step publish” · $7.50 · 1 file | YOUR PAYMENT LINK | unveil.link/u/0sA7VQ4szsDh | Copy | View buyer page | Back to drops | /u/ status: 200 | elapsed s: 1.2
+[M2-05/UI] attestation stored: {"at":"2026-10-01T14:01:04.795Z","over18":true,"ownsRights":true,"consentOfSubjects":true}
+[M1-05] editor add-files progress samples: 2 ; 4 ; 7 ; 10 ; 12 ; 15 ; 18 ; 21 ; 23 ; 26 ; 29 ; 31 | intermediate seen: true
+[M2-18] dashboard 360x800 dashboard: sw 360 cw 360 hscroll=false
+[M2-18] dashboard 360x800 drops: sw 360 cw 360 hscroll=false
+[M2-18] dashboard 360x800 new: sw 360 cw 360 hscroll=false
+[M2-18] dashboard 360x800 editor: sw 360 cw 360 hscroll=false
+[csp] violations: 0

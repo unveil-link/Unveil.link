@@ -1,0 +1,6 @@
+[M1-02] google NOT configured (3205) /login: google control count=0 tag/href=null
+[M1-02] google NOT configured (3205) /signup: google control count=0 tag/href=null
+[M1-02] google configured with FAKE id (3207) /login: google control count=1 tag/href=/api/auth/google
+[M1-02] google configured with FAKE id (3207) /signup: google control count=1 tag/href=/api/auth/google
+[M1-02] GET /api/auth/google (fake id) -> 307 https://accounts.google.com/o/oauth2/v2/auth?client_id=<fake>&redirect_uri=http%3A%2F%2Flocalhost%3A3207%2Fapi%2Fauth%2Fgoogle%2Fcallback&response_type=code&sco
+[M1-02] GET /api/auth/google (not configured) -> 501 {"error":"Google sign-in is not configured (set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)"}

@@ -1,0 +1,5 @@
+[badge] seller verified: page status ok, 'Verified creator' present: true
+[badge] seller set to 'pending' while drop still published -> page still renders: true | 'Verified creator' badge still shown: true
+[reset] token first use: 200 | reuse: 400 {"error":"This reset link is invalid or has expired. Request a new one.","code":"invalid_token"}
+[reset-email] subject/from: Reset your Unveil password | Unveil <no-reply@unveil.link> | body neutral (no adult terms): true
+[design] /design in prod build: 200 | robots noindex meta: true | robots.txt disallow /design: false | has DownloadPanel text: true

@@ -1,0 +1,4 @@
+installability errors (persistent profile, http://localhost): []
+manifest errors: [] | url: http://localhost:3205/manifest.webmanifest
+display: standalone | icons: 192x192:any,512x512:any,512x512:maskable
+manifest linked on /dashboard (redirect to login): http://localhost:3205/login

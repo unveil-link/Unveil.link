@@ -1,0 +1,13 @@
+// signup UI: email_taken, password-contains-email/name rules, repeats/sequence rules, show/hide toggle, signin generic error. env BASE, SEED
+import { chromium } from "playwright-core"; import fs from "node:fs"; import crypto from "node:crypto";
+const BASE = process.env.BASE; const seed = JSON.parse(fs.readFileSync(process.env.SEED, "utf8")); const log = (...a) => console.log(...a); const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const b = await chromium.launch({ executablePath: "/usr/bin/google-chrome", args: ["--no-sandbox"] }); const c = await b.newContext({ viewport: { width: 1280, height: 900 }, extraHTTPHeaders: { "x-forwarded-for": `10.33.${Math.floor(Math.random()*200)}.${Math.floor(Math.random()*200)}` } }); const p = await c.newPage();
+await p.goto(BASE + "/signup"); const err = async () => (await p.locator('[id$="-error"], [role=alert]').allInnerTexts()).filter(Boolean).join(" | ");
+await p.fill('input[name="displayName"]', "Dup"); await p.fill('input[name="email"]', seed.maya.email); await p.fill('input[name="password"]', "Sunrise-Harbor-4821"); await p.locator('button[type=submit]').click(); await sleep(900); log("[signup] email_taken ->", await err(), "| focus:", await p.evaluate(() => document.activeElement?.getAttribute("name")));
+const cases = { "own email local-part": "dupuser1234xyz", "repeats": "aaaaaaaaaaaa", "sequence": "abcdefghijkl", "only digits seq": "1234567890123" };
+await p.fill('input[name="email"]', "dupuser1234xyz@example.com");
+for (const [k, v] of Object.entries(cases)) { await p.fill('input[name="password"]', v); await p.locator('input[name="password"]').blur(); await sleep(150); log(`[signup] client rule '${k}':`, await err()); }
+await p.fill('input[name="password"]', "Zebra-Quartz-9315-x"); const t = p.locator('button[aria-label*="password" i]'); await t.click(); log("[signup] show-password toggles type to:", await p.getAttribute('input[name="password"]', "type"), "| meter:", (await p.locator("main").innerText()).match(/Strength: \w[\w ]*/)?.[0]);
+await p.goto(BASE + "/login"); await p.fill('input[name="email"]', "nobody-here@example.com"); await p.fill('input[name="password"]', "Whatever-123456"); await p.locator('form button[type=submit]').click(); await sleep(900); const a = await p.locator('[data-testid=form-error]').innerText(); await p.fill('input[name="email"]', seed.maya.email); await p.fill('input[name="password"]', "Whatever-123456"); await p.locator('form button[type=submit]').click(); await sleep(900); const a2 = await p.locator('[data-testid=form-error]').innerText();
+log("[login] unknown email msg === wrong pw msg (no enumeration):", a === a2, JSON.stringify(a));
+await b.close();

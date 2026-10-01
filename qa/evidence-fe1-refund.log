@@ -1,0 +1,4 @@
+[M4-09] after adding 1 refunded + 1 charged_back ($50 each) rows: Earnings | Gross sales | $431.00 | 30 sales · $100.00 refunded | Your 90% | $366.34 | After the 10% platform fee & processing | Available | $156.34 | Ready for your next payout | Pending payouts | $60.00 | $150.00 paid out so far | You keep 90% of each sale; the 10% platform fee is shown before payment processing costs. Payouts 
+[M4-09] refund/chargeback shown anywhere: true
+[M4-10] Spring row (should still be 18 sold / $216.00): undefined
+    undefined

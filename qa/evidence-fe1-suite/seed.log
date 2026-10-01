@@ -1,0 +1,27 @@
+◇ injected env (8) from .env
+{
+  "base": "http://localhost:3205",
+  "password": "Sunrise-Harbor-4821",
+  "maya": {
+    "email": "maya+mupjvwzf@example.test",
+    "links": {
+      "spring": "cl1w9ySwXqfY",
+      "studio": "ha8nRaC_A3x3",
+      "travel": "v9VlM44GphSN",
+      "unpublished": "ForsavBBRba-",
+      "draft": "mul4nS8EHqxK"
+    },
+    "dropIds": {
+      "spring": "6af7f5ee-b1b9-4f7e-a376-e3e2f81802fc",
+      "draft": "aec875f4-bda5-44d2-9b2d-cc4018c26a64",
+      "flagged": "82d60c0f-ef20-4d06-8eff-10018a10e04c"
+    }
+  },
+  "sam": {
+    "email": "sam+mupjvwzf@example.test"
+  },
+  "jo": {
+    "email": "jo+mupjvwzf@example.test",
+    "dropId": "656fb4e3-5c34-4e08-8451-987ee25d9b44"
+  }
+}

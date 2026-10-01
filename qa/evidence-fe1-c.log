@@ -1,0 +1,59 @@
+huge.jpg bytes 20301731
+big.jpg bytes 3699720
+[M4-18] t+0.3s signup page loaded
+[auth-validation] empty submit errors: [
+  'Enter the name buyers will see.',
+  'Enter your email address.',
+  'Create a password.',
+  ''
+] | focused: displayName
+[auth-validation] bad email/short pw: [
+  'Enter a valid email address, like name@example.com.',
+  'Password must be at least 10 characters.',
+  ''
+]
+[auth-validation] weak 'password1234' client: [] | strength: 
+[auth-validation] server weak_password for 'Qwertyuiop12': [
+  'That password is too common. Choose something less predictable.',
+  ''
+] | url http://localhost:3205/signup
+[M4-18] t+2.7s account created, on /dashboard
+[M4-18] dashboard empty-state: Loading your dashboard…
+[M4-18] t+2.8s new drop form
+[M1-05/validation] empty new-drop errors: [
+  'Give your drop a title.',
+  'Enter a price.',
+  'Add at least one file.'
+]
+[validation] price '0.50': [ 'Minimum price is $1.00.' ]
+[validation] price 'abc': [ 'Enter a valid amount, e.g. 12.00.' ]
+[validation] price '600': [ 'Maximum price is $500.00.' ]
+[validation] price '-1': [ 'Use at most two decimal places.' ]
+[validation] price '12.345': [ 'Use at most two decimal places.' ]
+[validation] queue after .txt/.gif/.mp4: 0 of 10 files · 0 B of 2 GB || notes.txt | 5 B · Unsupported type. Use JPG, PNG or WebP. | anim.gif | 14 B · Unsupported type. Use JPG, PNG or WebP. | clip.mp4 | 2 KB · MP4 video uploads are coming soon — for now, add JPG, PNG or WebP images.
+[validation] oversize image: huge.jpg | 19 MB · Images can be up to 15 MB.
+[M4-18] t+5.5s files queued, submitting
+[M4-18] t+13.4s upload finished -> success
+[M1-05] progressbar aria-valuenow samples (each tick; comma = per-file): 100,100,0 ; 100,100,100,3 ; 100,100,100,6 ; 100,100,100,10 ; 100,100,100,12 ; 100,100,100,16 ; 100,100,100,19 ; 100,100,100,23 ; 100,100,100,26 ; 100,100,100,30 ; 100,100,100,33 ; 100,100,100,37 ; 100,100,100,40 ; 100,100,100,44 ; 100,100,100,46 ; 100,100,100,50 ; 100,100,100,53 ; 100,100,100,57 ; 100,100,100,60 ; 100,100,100,64 ; 100,100,100,67 ; 100,100,100,71 ; 100,100,100,74 ; 100,100,100,78 ; 100,100,100,81 ; 100,100,100,83 ; 100,100,100,87 ; 100,100,100,90 ; 100,100,100,94 ; 100,100,100,97 ; 
+[M1-05] saw intermediate % : true
+[M1-05] success: Draft saved | “<img src=x onerror=window.__x=1>"><script>window.__x=2</script>” · $12.00 · 4 files | YOUR LINK (LIVE ONCE PUBLISHED) | unveil.link/u/CZAQyOkdqygc | Copy | This drop is saved as a draft. Publishing unlocks once your identity is verified. | Open draft | Back to drops
+[M1-05] DB: {"id":"1a8f1aeb-4654-4264-a6e9-4b8691423bba","public_link_id":"CZAQyOkdqygc","status":"draft","title":"<img src=x onerror=window.__x=1>\"><scrip","description":"<b>bold</b> <img src=x onerror=window.__x=4> &amp; <a href=\"javascript:window.__x=5\">click</a>\nline2 {{7*7}} ${7*7}","nf":"4"}
+[M1-05] files in DB: [{"mime":"image/jpeg","size_bytes":"3120"},{"mime":"image/png","size_bytes":"581"},{"mime":"image/webp","size_bytes":"948"},{"mime":"image/jpeg","size_bytes":"3699720"}]
+[M4-18] draft saved, unverified: status draft
+[M4-18] editor (unverified) publish: ← All drops | <img src=x onerror=window.__x=1>"><script>window.__x=2</script> | Draft | $12.00 | <b>bold</b> <img src=x onerror=window.__x=4> &amp; <a href="javascript:window.__x=5">click</a> | line2 {{7*7}} ${7*7} | Publish | Link (inactive until published): unveil.link/u/CZAQyOkdqygc | Only you can see this. Publish it when you’re ready. | Files | 4 | Sold | 0 | Revenue | $0.00 | Publishing locked | Your identity verification is pending. This stays a draft until you’re verified. | Files (4/10)
+[M4-18] t+14.3s running npm run verify-seller (stands in for ID verification: excluded)
+[M4-18] publish dialog: Publish “<img src=x onerror=window.__x=1>"><script>window.__x=2</script>” | Publishing turns on the payment link for this drop. | Before you publish, please confirm | Everyone in this content is 18 or older | Anyone who appears in your files is an adult. | I own the rights to this content | I created it or have permission to sell it. | Everyone in it agreed to its sale | People who appear have con
+[M4-18] attestation checkboxes: 3
+[M4-18] publish without attest ->  created it or have permission to sell it. | Everyone in it agreed to its sale | People who appear have consented to it being sold. | Please confirm all three statements to publish. | Cancel | Publish
+[M4-18] t+18.5s published (db status=published); first live link http://localhost:3205/u/CZAQyOkdqygc
+[M4-18] automated elapsed signup->live (excl. verify cmd 1034ms): 17.4s
+[XSS] dashboard sidebar/main name+title text: Skip to content | Unveil | Overview | Drops | New drop | E | Eve <svg onload=window.__x=3> "&' | qa-fe-62ca50@example.com | Sign out | Hi, Eve | Here’s how your drops are doing. | New drop | Verified | Earnings | Gross sales | $0.00 | 0 sales | Your 90% | $0.00 | After the 10% platform fee & processing | Available | $0.00 | Nothing to pay out yet | Pending payouts | $0.00 | No payouts yet | You keep 90% of each sale; the 10% platform fee is shown before payment processing costs. Payouts are not 
+[XSS] dashboard window.__x: undefined dialogs: []
+[XSS] buyer status 200 | raw html has unescaped '<img src=x onerror' : false | has '&lt;img src=x onerror': true | unescaped <script>window.__x: false | unescaped <svg onload: false
+[XSS] buyer window.__x: undefined | dialogs: [] | title shown: "<img src=x onerror=window.__x=1>\"><script>window.__x=2</script>" | seller: "Eve <svg onload=window.__x=3> \"&'"
+[XSS] buyer description text: "Previews are blurred. The full files unlock after purchase.\n\nVerified creator\n<img src=x onerror=window.__x=1>\"><script>window.__x=2</script>\n\nE\nby Eve <svg onload=window.__x=3> \"&'\n\n<b>bold</b> <img src=x onerror=window.__x=4> &amp; <a href=\"javascript:window.__x=5\">click</a>\nline2 {{7*7}} ${7*7}\n\n" | js: link count: 0 | <b> elements in desc: 0
+[XSS] <title>: "Unveil · Unveil"
+[csp/console] seller session: csp 0 [] | errors 5 [
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 400 (Bad Request)'
+]

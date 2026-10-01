@@ -1,0 +1,8 @@
+[reset] short pw on submit: Password must be at least 10 characters.|
+[reset] pw containing own email local-part: Password must not be based on your email address.|
+[reset] success text: You’re all set | You’ve been signed out everywhere. Sign in with your new password. | Sign in
+[reset] reuse of used token in UI: Link expired | This reset link is invalid, already used, or has expired. Reset links are valid for 1 hour and work once. | Request a new link
+[signout] after click url: http://localhost:3206/login
+[signout] old cookie replay /api/auth/me: 401 | /dashboard w/o cookie: 307
+[signout] visiting /dashboard now -> http://localhost:3206/login
+[mobile] sign-out control visible on 390px dashboard: 1

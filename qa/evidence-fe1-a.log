@@ -1,0 +1,59 @@
+[M2-07] status 200 x-robots-tag: noindex, nofollow
+[noindex] meta robots: <meta name="robots" content="noindex, nofollow, nocache"/>
+[M2-07] title tag: Unveil · Unveil
+[M2-07] main text: Unveil | Secure payment link | 6 files: 6 images | Previews are blurred. The full files unlock after purchase. | Verified creator | Spring collection pack | M | by Maya Lin | A set of 12 original edits from this season, shot on location. Full resolution, ready to use in your own projects. | Price | $12.00 | 6 files: 6 images | I agree to the Terms and understand all sales are final. | Buy for $12.00 | Pay by card · No account needed · Instant download | All sales are final. Because files are delivered digitally right away, purchases can’t be refunded. | Secure checkout | Card payments handled by a trusted provider. | Instant download | Files unlock the moment you’ve paid. | No account needed
+[M2-07] drop-title/seller/price/summary: Spring collection pack / Maya Lin / $12.00 / 6 files: 6 images
+[originals] img srcs: [
+  '/api/files/c2c03a70-2839-404f-b741-decf5cd79d07/preview',
+  '/api/files/ca1190a8-aeda-4558-ae39-61a934e03d3f/preview',
+  '/api/files/4c69e78f-5db4-4022-b2f9-1d12c38a00f3/preview',
+  '/api/files/ad9763b9-cb8c-487c-bdf0-0354c5584bab/preview',
+  '/api/files/f6e35105-45da-4702-86a5-207edc024c0f/preview',
+  '/api/files/05cb2cdf-832e-44f2-9c4c-cc26d60af348/preview'
+]
+[originals] html contains '/original' or 'signed': false
+[originals] network reqs containing /original or signed: 0 | all /api requests: [ '/api/files/<id>/preview' ]
+[originals] preview natural sizes: [ '320x240', '320x240', '320x240', '320x240', '320x240', '320x240' ]
+[csp] violations: 0 [] | console errors: 1 [
+  'Failed to load resource: the server responded with a status of 404 (Not Found)'
+]
+[noindex] robots.txt: User-Agent: * ; Disallow: /u/ ; Disallow: /d/ ; Disallow: /api/ ; Disallow: /dashboard ;  ; 
+[M3-18] final-sale notice visible before Buy: true "All sales are final. Because files are delivered digitally right away, purchases can’t be refunded."
+[M3-01] buy button text: Buy for $12.00 | login prompts on page: 0 | card inputs: 0
+[M3-01] click Buy w/o terms -> alert: [ 'Please confirm to continue.', '' ] | notice: 0
+[M3-01] checkout API status: 501 {"error":"Checkout is not implemented yet","code":"not_implemented"}
+[M3-01] notice: Checkout is in test mode |  | Payments aren’t switched on yet, so nothing was charged. Check back soon — this link will work as soon as checkout opens. | url: http://localhost:3205/u/cl1w9ySwXqfY
+[M2-11] /u/unpublished: status 404 x-robots: noindex, nofollow | text: Unveil | Secure payment link | This link isn’t available | It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it. | Go to Unveil | © 2026 Unvei
+[M2-11] /u/draft: status 404 x-robots: noindex, nofollow | text: Unveil | Secure payment link | This link isn’t available | It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it. | Go to Unveil | © 2026 Unvei
+[M2-11] /u/bogus: status 404 x-robots: noindex, nofollow | text: Unveil | Secure payment link | This link isn’t available | It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it. | Go to Unveil | © 2026 Unvei
+[M2-11] checkout for unpublished link -> 501 {"error":"Checkout is not implemented yet","code":"not_implemented"}
+[M2-18] 390x844 buyer: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] buy button box {"x":41,"y":436,"width":308,"height":52} within width: true | height>=44: true
+[M2-18] tap Buy -> notice: Checkout is in test mode |  | Payments aren’t switched on yet, so nothing was charged. Check back soon — this link will work as soon as checkout opens.
+[M2-18] 390x844 landing: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] 390x844 signup: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] 390x844 login: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] 390x844 forgot: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] 390: csp 0 console errs 5 [
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 501 (Not Implemented)',
+  'Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR',
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 404 (Not Found)'
+]
+[M2-18] 360x800 buyer: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] buy button box {"x":41,"y":413.5,"width":278,"height":52} within width: true | height>=44: true
+[M2-18] tap Buy -> notice: Checkout is in test mode |  | Payments aren’t switched on yet, so nothing was charged. Check back soon — this link will work as soon as checkout opens.
+[M2-18] 360x800 landing: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] 360x800 signup: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] 360x800 login: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] 360x800 forgot: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] 360: csp 0 console errs 5 [
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 501 (Not Implemented)',
+  'Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR',
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 404 (Not Found)'
+]
+[M2-19] 4G (9Mbps/170ms RTT, 4x CPU): [{"buyVisibleMs":357,"loadMs":957,"fcp":620,"bytes":217057,"res":16},{"buyVisibleMs":329,"loadMs":951,"fcp":624,"bytes":217057,"res":16},{"buyVisibleMs":333,"loadMs":985,"fcp":656,"bytes":217057,"res":16}]
+[M2-19] Slow 4G (1.6Mbps/150ms): [{"buyVisibleMs":332,"loadMs":1718,"fcp":1052,"bytes":217057,"res":16},{"buyVisibleMs":403,"loadMs":1725,"fcp":1172,"bytes":217057,"res":16},{"buyVisibleMs":319,"loadMs":1733,"fcp":992,"bytes":217057,"res":16}]

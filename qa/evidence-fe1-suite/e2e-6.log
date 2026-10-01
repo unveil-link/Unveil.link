@@ -1,0 +1,63 @@
+
+> unveil@0.1.0 e2e
+> bash scripts/e2e.sh
+
+== resetting e2e database
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env
+applied 001_init.sql
+applied 002_platform_settings.sql
+applied 003_fixes_1.sql
+applied 004_fixes_2.sql
+done (4 applied)
+== building app
+== starting app on :3217
+PASS  app is up; /api/settings returns configurable limits  — max image 15728640 bytes
+PASS  signup creates seller with verification_status=pending + httpOnly session cookie
+PASS  duplicate signup rejected (409); weak password rejected (400)
+PASS  GET /api/auth/me: 401 without cookie, 200 + pending with cookie
+PASS  tampered/forged session cookie is rejected
+PASS  logout clears the cookie; login with wrong password = 401; correct = 200
+PASS  cross-origin mutation blocked (CSRF guard)
+PASS  dashboard page renders verification status 'Pending'
+PASS  create drop; price bounds enforced ($1–$500) in API and DB  — public_link_id=r4LecLeIOvXZ
+PASS  upload rejects: unauthenticated (401), non-image (415), GIF (415), spoofed MIME (415)
+PASS  upload size limit comes from platform_settings (413 when exceeded, editable without deploy)
+PASS  upload generated photo-like JPEG (with EXIF) → 201  — 1600x1067, 600078 bytes, key=originals/c24c774f-e90e-48db-85df-4b0f7a7a9457/d0d49754-d3fa-4963-9ec9-e6c9afdfca1d.jpg
+PASS  original stored PRIVATELY: byte-identical in storage dir outside public/ and outside the web root  — /workspace/fe1/.e2e/storage/originals/c24c774f-e90e-48db-85df-4b0f7a7a9457/d0d49754-d3fa-4963-9ec9-e6c9afdfca1d.jpg (mode 600)
+PASS  original NOT reachable at any public URL (guessable paths, storage key, unsigned API)  — 12 URLs × 2 clients → none returned the original
+PASS  blurred preview exists in storage under blurred_preview_key and is served (owner, while draft)  — 1607 bytes
+PASS  preview differs SUBSTANTIALLY from original (blur + downscale + EXIF stripped)  — detail ratio=0.116, upscaled-detail ratio=0.092, MAD=13.2/255, preview 320x213; wrote proof/compare.png
+PASS  owner can mint signed URL; others cannot  — expires 2026-10-02T13:49:54.000Z
+PASS  VALID signed URL → 200 and returns the exact original bytes (works without a session)
+PASS  UNSIGNED / tampered / wrong-file signed URLs denied (403)
+PASS  EXPIRED signed URL denied (410): real 2s-TTL link after waiting, and a pre-expired link
+PASS  publish BLOCKED while verification_status=pending (403 verification_required); drop stays draft and is not public
+PASS  after verification_status=verified: publish needs attestation, then succeeds; public page shows ONLY blurred
+PASS  DB has all spec tables + seller row with verification_status=pending  — tables: admins, audit_log, drop_files, drops, login_throttle, password_reset_tokens, payouts, platform_settings, rate_limits, reports, sellers, sessions, transactions
+PASS  [#1 M1-04] logout revokes the session server-side: captured cookie replayed after logout -> 401  — old cookie 401 after logout; other device still 200; no-jti / unknown-jti tokens 401
+PASS  [#2 M1-08] defaults: 10 files/drop and 2 GB/drop exposed via /api/settings  — files=10 total=2147483648
+PASS  [#2 M1-08] 15 PARALLEL uploads to one drop -> exactly 10 succeed (201), 5 rejected (400 too_many_files)  — 10/15 accepted, DB rows=10, storage files=10
+PASS  [#2 M1-08] per-drop total-size cap: sequential and parallel (setting lowered; 2 GB logic unit-tested separately)
+PASS  [#3 M2-04] publish returns /u/<id>; /u/<id> serves the page; /d/<id> 308-redirects to /u/<id>
+PASS  [#4 M2-07] public page + API show seller name, file count/types, title, price, blurred previews; no originals  — page: title, 'by E2E Seller', '1 file: 1 image', $15.00; 3-file drop shows '3 files: 3 images'
+PASS  [#5 M2-09] noindex: meta robots + X-Robots-Tag on link page / public API / previews; robots.txt disallows /u/
+PASS  [#6 M6-02] security headers on pages, API and files; no X-Powered-By  — CSP, HSTS, nosniff, XFO DENY, Referrer-Policy, Permissions-Policy present; X-Powered-By absent (strict-origin-when-cross-origin)
+PASS  [#6 M6-02] CSP does not break the app: pages still serve inline bootstrap scripts (browser-less check: policy allows 'unsafe-inline' scripts)
+PASS  [#7] bad / foreign / malformed Origin on mutating requests -> 403 JSON (never 500); same-origin still works
+PASS  [#8] signed URL default TTL = 24 h; platform_settings.download_ttl_seconds overrides; explicit short TTL still expires (410)  — default 86399s, override 120s ok
+PASS  [#9 M1-03] password policy: blocklist, email/local-part, repeated/sequential, length >= 10; clear messages; good password accepted  — 15 weak passwords + email/local-part rejected; e.g. "That password is too common. Choose something less predictable."
+PASS  [#10 M2-05] re-publishing keeps the FIRST attestation timestamp; re-attestations are appended to attestation_history  — attested_at=2026-10-01T13:49:58.877Z kept; history entries=3 (first attestation untouched)
+PASS  [#11] /api/checkout stub: 501 until the (env-configured 3/60s) limit, then 429 + Retry-After; other IPs unaffected  — Retry-After=60
+PASS  [#11] download endpoint (/api/files/:id/original) rate limited per IP: 60 allowed/min then 429 + Retry-After
+PASS  [#11] preview, public-link API, signed-url mint, login (per IP), signup are rate limited
+PASS  [#12] password reset end-to-end via dev mail transport: no enumeration, hashed single-use token, 1h expiry, all sessions revoked, newest link only  — no enumeration; 2 sessions + captured cookie revoked; token hashed, single-use, 60 min, newest-only
+PASS  [#12] reset pages render; forgot-password is rate limited (per IP 429, per email silently capped)
+PASS  [#13] attacker spamming 20 wrong passwords: first few 401, then 429 with Retry-After in 1..cap (never above); correct password DURING the delay is also refused, not evaluated  — 3x401 + 17x429 (Retry-After <= 4)
+PASS  [#13] delays escalate exponentially (1,2,4 s) and are capped at the cap; a 429 never persists past Retry-After; no permanent lock  — Retry-After sequence: 1,2,4,4,4,4
+PASS  [#13] a correct login resets the counter: next wrong passwords are free again (401,401) and only the 3rd arms the delay
+PASS  [#13] no user enumeration: an unknown email gets the identical delay behaviour (401,401,401 then 429 + Retry-After <= cap)
+PASS  [#13] password reset clears the login delay; delayed state is per email (other emails unaffected); DB bound: next_allowed_at <= last_attempt_at + 1 h
+
+46/46 checks passed
+== DB evidence written to proof/db.txt

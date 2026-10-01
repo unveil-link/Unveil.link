@@ -1,0 +1,3 @@
+[originals] /dashboard: /api/files requests: [ '/api/files/<id>/preview' ] | any /original or signed: false
+[originals] /dashboard/drops: /api/files requests: [ '/api/files/<id>/preview' ] | any /original or signed: false
+[originals] /dashboard/drops/6af7f5ee-b1b9-4f7e-a376-e3e2f81802fc: /api/files requests: [ '/api/files/<id>/preview' ] | any /original or signed: false

@@ -1,0 +1,9 @@
+no token: e by design | Originals stay locked until a purchase is complete. | Instant delivery | Share one link anywhere. Files are delivered automatically. | © 2026 Unveil · unveil.link | Invalid link | This reset link is missing its token. Reset links are valid for 1 hour and work once. | Request a new link
+bogus token: e by design | Originals stay locked until a purchase is complete. | Instant delivery | Share one link anywhere. Files are delivered automatically. | © 2026 Unveil · unveil.link | Link expired | This reset link is invalid, already used, or has expired. Reset links are valid for 1 hour and work once. | Request a new link
+short: 
+weak:  That password is too common. Choose something less predictable.|
+success:  | Private by design | Originals stay locked until a purchase is complete. | Instant delivery | Share one link anywhere. Files are delivered automatically. | © 2026 Unveil · unveil.link | Password updated | You’re all set | You’ve been signed out everywhere. Sign in with your new password. | Sign in | focus: H2
+login new: 200 old: 401
+reuse: form for a moment to keep things safe. | 3481s | New password | Strength: Strong | At least 10 characters | — met | Not your email or name | — met | No repeats or simple sequences (aaaa…, 1234…) | — met | Very common passwords are also rejected when you submit. | Try again in 3481s | Back to sign in
+csp 0
+forgot responses: 429 ra=3478 | btn: Try again in 3478s | card: 3478s

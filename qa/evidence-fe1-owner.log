@@ -1,0 +1,5 @@
+signup 201
+after 5 wrong: 401 {"error":"Invalid email or password","code":"invalid_credent | 401 {"error":"Invalid email or password","code":"invalid_credent | 401 {"error":"Invalid email or password","code":"invalid_credent | 401 {"error":"Invalid email or password","code":"invalid_credent | 401 {"error":"Invalid email or password","code":"invalid_credent
+then CORRECT immediately: 429 ra=1 {"error":"Too many failed sign-in attempts. Please wait 1 se | btn: Try again in 1s disabled: true
+re-enabled after ms: 545 | pw field value retained: "Sunrise-Harbor-4821"
+after countdown correct pw -> 200 {"seller":{"id":"c6f431df-1e6d-4503-9da5-e7cc02154be4","emai | url http://localhost:3205/dashboard
