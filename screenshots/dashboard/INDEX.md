@@ -2,12 +2,13 @@
 
 Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. Full-page unless noted (dialogs are viewport shots).
 
+- buyer-429-long-wait
 - buyer-checkout-test-mode
 - buyer-draft-not-found
 - buyer-needs-confirmation
 - buyer-not-found
-- buyer-published-3-files
 - buyer-published
+- buyer-published-3-files
 - buyer-unpublished
 - dashboard-empty-state
 - dashboard-overview
@@ -19,10 +20,10 @@ Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. F
 - drop-detail-not-found
 - drop-detail-pending-verification
 - drop-detail-published
+- drop-list
 - drop-list-empty
 - drop-list-filter-drafts
 - drop-list-filter-under-review
-- drop-list
 - drop-publish-attestation-dialog
 - drop-unpublish-confirm
 - forgot-password
@@ -37,19 +38,22 @@ Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. F
 - new-drop-success-draft
 - new-drop-success-published
 - new-drop-validation-errors
+- placeholder-privacy
+- placeholder-terms
+- reset-password
 - reset-password-invalid-token
 - reset-password-missing-token
-- reset-password
 - reset-password-weak-server
+- signin
 - signin-lockout-countdown
 - signin-lockout-countdown-ticking
-- signin
 - signin-network-error
 - signin-validation-errors
 - signin-wrong-credentials
+- signup
+- signup-429-long-wait
 - signup-429-rate-limited
 - signup-email-taken
-- signup
 - signup-pattern-rule
 - signup-strong-password
 - signup-validation-errors

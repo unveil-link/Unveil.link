@@ -99,6 +99,16 @@ const phases = {
     await page.getByRole("button", { name: /Create account|Try again/ }).click();
     await page.getByTestId("throttle-notice").waitFor();
     await snap(page, "signup-429-rate-limited", vp);
+    // long wait (FE-05): 4320 s must read "1 h 12 min", not raw seconds
+    await page.unroute("**/api/auth/signup");
+    await page.reload({ waitUntil: "load" });
+    await page.route("**/api/auth/signup", (r) => r.fulfill({ status: 429, headers: { "retry-after": "4320", "content-type": "application/json" }, body: JSON.stringify({ error: "Too many requests. Please try again later.", code: "rate_limited" }) }));
+    await page.getByLabel("Display name").fill("Alex Morgan");
+    await page.getByLabel("Email").fill("alex@example.test");
+    await page.getByLabel("Password", { exact: true }).fill("Sunrise-Harbor-4821");
+    await page.getByRole("button", { name: "Create account" }).click();
+    await page.getByTestId("throttle-notice").waitFor();
+    await snap(page, "signup-429-long-wait", vp);
     await ctx.close();
   },
   async signin(vp) {
@@ -169,10 +179,17 @@ const phases = {
     await page.getByTestId("buy-button").click();
     await page.getByTestId("checkout-notice").waitFor();
     await snap(page, "buyer-checkout-test-mode", vp);
+    // long 429 wait on the Buy button (FE-05)
+    await page.route("**/api/checkout", (r) => r.fulfill({ status: 429, headers: { "retry-after": "3481", "content-type": "application/json" }, body: JSON.stringify({ error: "Too many requests.", code: "rate_limited" }) }));
+    await page.getByTestId("buy-button").click({ force: true }).catch(() => {});
+    await page.getByRole("button", { name: /Try again in/ }).waitFor();
+    await snap(page, "buyer-429-long-wait", vp);
+    await page.unroute("**/api/checkout");
     await go(page, `/u/${seed.maya.links.studio}`); await snap(page, "buyer-published-3-files", vp);
     await go(page, `/u/${seed.maya.links.unpublished}`); await snap(page, "buyer-unpublished", vp);
     await go(page, `/u/${seed.maya.links.draft}`); await snap(page, "buyer-draft-not-found", vp);
     await go(page, `/u/doesnotexist1`); await snap(page, "buyer-not-found", vp);
+    for (const pth of ["terms", "privacy"]) { await go(page, "/" + pth); await snap(page, `placeholder-${pth}`, vp); }
     await go(page, "/design");
     const el = page.locator("#download").locator("xpath=..");
     await el.scrollIntoViewIfNeeded();

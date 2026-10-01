@@ -610,6 +610,28 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     assert(h2.includes("3 files: 3 images"), "3 files wording");
     return "page: title, 'by E2E Seller', '1 file: 1 image', $15.00; 3-file drop shows '3 files: 3 images'";
   });
+  await check("[FE-03/04/06 + placeholders] buyer title '<drop> · Unveil'; Verified badge follows sellers.verification_status; /design 404 in prod; /terms etc. are noindex 'Coming soon'", async () => {
+    const title = (h: string) => (/<title>([^<]*)<\/title>/.exec(h)?.[1] ?? "").replace(/&amp;/g, "&");
+    const h = await (await anon.req("GET", `/u/${p2Link}`)).text();
+    eq(title(h), "Trio · Unveil", "buyer title");
+    assert(h.includes("Verified creator"), "badge for a verified seller");
+    const mail = `multi+${stamp}@example.test`;
+    await db.query("UPDATE sellers SET verification_status='pending' WHERE email=$1", [mail]);
+    const h2 = await (await anon.req("GET", `/u/${p2Link}`)).text();
+    assert(!h2.includes("Verified creator"), "badge hidden once the seller is no longer verified");
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [mail]);
+    const nf = await anon.req("GET", "/u/doesnotexist1");
+    eq(nf.status, 404, "unknown link");
+    eq(title(await nf.text()), "Link unavailable · Unveil", "not-found title");
+    eq((await anon.req("GET", "/design")).status, 404, "/design hidden in production");
+    for (const path of ["/terms", "/privacy", "/dmca", "/contact"]) {
+      const r = await anon.req("GET", path);
+      eq(r.status, 200, `${path} status`);
+      const t = await r.text();
+      assert(t.includes("Coming soon") && /<meta name="robots" content="noindex/.test(t), `${path} placeholder + noindex`);
+    }
+    return "titles ok; badge toggles with verification_status; /design 404; 4 placeholder pages noindex";
+  });
   await check("[#5 M2-09] noindex: meta robots + X-Robots-Tag on link page / public API / previews; robots.txt disallows /u/", async () => {
     const r = await anon.req("GET", `/u/${publicLinkId}`);
     eq(r.headers.get("x-robots-tag"), "noindex, nofollow", "X-Robots-Tag on page");
