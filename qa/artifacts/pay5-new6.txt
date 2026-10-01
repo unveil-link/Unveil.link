@@ -1,0 +1,13 @@
+/u/%zz -> 500
+/api/public/drops/%ff -> 500
+/api/drops/%c0%af -> 500
+/admin/sellers/%25zz/transactions -> 307
+/nope/%zz -> 404
+/api/webhooks/% -> 500
+TRACE -> 405
+ls: cannot access 'src/proxy.ts': No such file or directory
+ls: cannot access 'src/middleware.ts': No such file or directory
+ls: cannot access 'middleware.ts': No such file or directory
+ls: cannot access 'proxy.ts': No such file or directory
+TRACE /api/settings -> 500
+TRACE / -> 405

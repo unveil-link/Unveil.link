@@ -1,0 +1,7 @@
+PASS    RACE-1       sale and refund webhooks delivered CONCURRENTLY (15 trials): final state always refunded, ledger nets 0, exactly 3+3 lines, no 5xx — 15/15 consistent (sale,refund outcomes: pp pp pp pp pp pp pp pp pp pp pp pp pp pp pp)
+PASS    RACE-2       sale_succeeded racing sale_failed (12 trials): final state consistent with ledger — always succeeded/3 lines (success after failure accepted; failure after success ignored)
+PASS    RACE-3       refund re-delivered under NEW event id with the same processor refund id → duplicate, not a second refund — duplicate via (provider, processor tx id, type) key
+PASS    RACE-4       two DIFFERENT partial refunds that reuse the same processor refund id (processor bug / collision): second silently dropped as duplicate → books understate refund (record) — first processed, second (different amount, same refund id) duplicate; reversed 500 — by design dedupe key; NOTE only
+PASS    LOG-1        app logs: no stack traces/secrets: PAYMENT_WEBHOOK_SECRET / SESSION_SECRET never printed; list distinct error lines — no secrets in logs; 0 distinct error-ish lines: 
+
+Saved pay5-old-races-results.json: PASS 5 FAIL 0 BLOCKED 0 NOTE 0

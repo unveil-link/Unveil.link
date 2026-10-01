@@ -1,0 +1,47 @@
+PASS    M3-11 / IDEM-1 same sale webhook 3x (identical bytes) → 1 ledger posting (3 lines), 1 succeeded tx, balance credited once — outcomes processed,duplicate,duplicate; ledger lines 3, sum 1560
+PASS    IDEM-2       12 concurrent identical deliveries → exactly one processed, 11 duplicates, 3 ledger lines, balance +1560 once — 1 processed + 11 duplicate (all 200); seller ledger delta 1560
+PASS    IDEM-3       12 concurrent deliveries with DIFFERENT event ids + different processor tx ids for the same payment → one sale posting — 200:ignored 200:processed 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored
+PASS    IDEM-4       same sale, new event id (sequential) → ignored/duplicate, not a second posting; same event id with different type isn't confused — second sale new evt: duplicate/undefined; new evt+new saleId: ignored/sale_succeeded_but_succeeded; fail-after-success: ignored/sale_failed_but_succeeded; refund reusing a sale's event id: duplicate/undefined (state succeeded/0/mocktx_e66fdc4c2aa9bdd212de900d)
+PASS    IDEM-5       amount mismatch sale (tampered amount in signed event) → rejected, tx stays pending, no ledger — mismatch→rejected/amount_mismatch; tx pending, no ledger
+PASS    IDEM-5b      after a REJECTED amount-mismatch sale event, the correct sale event for the same payment (same processor tx id, new event id) is still processed — processed
+PASS    IDEM-5c      currency mismatch (EUR) sale rejected with no state change — EUR→amount_mismatch
+PASS    IDEM-5d      a sale_succeeded for an UNKNOWN reference (ignored) does not burn the dedupe key of a later legit sale with the same processor id — early ignored; legit processed
+PASS    M3-10 / SIG-1 webhook rejected: missing header — 401 invalid_signature
+PASS    M3-10 / SIG-2 webhook rejected: empty header — 401 invalid_signature
+PASS    M3-10 / SIG-3 webhook rejected: garbage header — 401 invalid_signature
+PASS    M3-10 / SIG-4 webhook rejected: truncated v1 (63 hex) — 401 invalid_signature
+PASS    M3-10 / SIG-5 webhook rejected: truncated v1 (half) — 401 invalid_signature
+PASS    M3-10 / SIG-6 webhook rejected: empty v1 — 401 invalid_signature
+PASS    M3-10 / SIG-7 webhook rejected: no t — 401 invalid_signature
+PASS    M3-10 / SIG-8 webhook rejected: wrong secret — 401 invalid_signature
+PASS    M3-10 / SIG-9 webhook rejected: empty-string secret — 401 invalid_signature
+PASS    M3-10 / SIG-10 webhook rejected: stale (-301s) — 401 invalid_signature
+PASS    M3-10 / SIG-11 webhook rejected: stale (-1 day) — 401 invalid_signature
+PASS    M3-10 / SIG-12 webhook rejected: future (+10min) — 401 invalid_signature
+PASS    M3-10 / SIG-13 webhook rejected: t tampered after signing — 401 invalid_signature
+PASS    M3-10 / SIG-14 webhook rejected: tampered body (amount changed after signing) — 401 invalid_signature
+PASS    M3-10 / SIG-15 webhook rejected: body with trailing whitespace after signing — 401 invalid_signature
+PASS    M3-10 / SIG-16 webhook rejected: uppercase-hex + valid secret but sig over different body — 401 invalid_signature
+PASS    M3-10 / SIG-17 webhook rejected: signature of body signed w/o timestamp prefix (raw HMAC) — 401 invalid_signature
+PASS    M3-10 / SIG-18 wrong content-type (text/plain, form-urlencoded, none) with VALID signature: not processed as an exploitable bypass — text/plain→200/processed (tx now succeeded; body is HMAC-verified JSON so content-type is not security relevant)
+PASS    SIG-19       valid signature w/ OK body processes (control) and replay of the exact signed request later is duplicate — replay of byte-identical signed request inside window → duplicate
+PASS    SIG-20       stale replay: previously valid request replayed > tolerance (simulated by old t) rejected even though event id is new — 401
+PASS    SIG-21       tolerance boundary: t=-290s accepted, t=+290s accepted — both 200
+PASS    SIG-22       unknown provider paths → 404 no state change: /stripe /paypal /__proto__ /constructor /MOCK /mock%2f.. — stripe:404 paypal:404 __proto__:404 constructor:404 toString:404 MOCK:404 mock%20:404 ..%2fmock:404 segpay:404 ccbill:404
+PASS    SIG-23       timing-safe compare (code review): crypto.timingSafeEqual on equal-length buffers, always executed, constant-time candidate padding — signature.ts uses timingSafeEqual on 32-byte buffers; non-hex candidate compares against zero buffer
+PASS    SIG-24       oversized body (300 KB) → 413 and nothing stored beyond cap; GET/PUT/DELETE method not allowed — POST 413, GET 405
+FAIL    SIG-25       rejected deliveries are logged (signature_valid=false, payload truncated ≤1KiB) and log flooding is limited (60/min/IP → 429) — no 429 after 70 bad deliveries: 70x401
+PASS    SIG-26       valid-signature but malformed payloads → 400 (schema), no state change: bad JSON, wrong types, negative/float/huge amounts, missing fields — amount float:400 amount negative:400 amount string:400 amount huge:400 type unknown:400 no data:400 currency 4 chars:400 badjson:400 array:400
+PASS    SEC-1 injection SQL injection / odd values in webhook reference, ids, failure_code: stored as data; no error, no schema damage — ref(' OR '1'='1):200/ignored ref('; DROP TABL):200/ignored ref(00000000-000):200/ignored ref(${{7*7}}):200/ignored ref(5d7c44bc-b24):200/ignored ref(\):200/ignored ref(é😀):200/ignored; tx still succeeded, failure_code=null
+PASS    SEC-1b NUL byte signed event containing U+0000 in id/reference/failure_code → clean 4xx or handled (not 500 retry-storm) — reference:400 event id:400 failure_code:400
+PASS    SEC-2 mass-assign extra/unknown fields in webhook JSON (status, seller_id, platform_fee_cents, amount_cents at top-level) cannot change fee split / destination — 200 processed; split unchanged 1560/200
+PASS    OOO-5b       refund WITHOUT merchant reference (processor sale id only) before the sale → parked; when sale (with processor id) arrives → applied — parked then applied via processor id match; refunded
+PASS    M3-12 / OOO-1 refund (with reference) before sale → parked(200), then sale arrives → refund applied, final refunded & ledger nets 0 — parked→applied: [{"outcome":"processed","outcome_detail":"applied_after_sale"}]
+PASS    OOO-2        chargeback before sale → parked, then sale → charged_back, ledger nets to 0 (no chargeback fee set) — charged_back, ledger 0
+PASS    OOO-3        partial refund + chargeback + refund all arrive before sale, in order → applied in received order after sale; no over-reversal; state consistent — final succeeded reversed=1200 ledgerSum=624; events ["500:processed/applied_after_sale","700:processed/applied_after_sale","1000:rejected/over_refund"]
+PASS    OOO-4        parked over-refund: refunds exceeding gross arrive before sale → excess rejected after sale, never over-refunds — reversed 1500, status succeeded, events [{"outcome":"processed","outcome_detail":"applied_after_sale"},{"outcome":"rejected","outcome_detail":"over_refund"}]
+PASS    OOO-5        refund/chargeback for an unknown transaction uuid (ref matches nothing) → ignored, nothing created; refund w/o reference but with unknown related sale → parked (stays parked forever; note) — unknown ref: ignored/unknown_transaction; non-uuid ref: ignored/unknown_transaction
+PASS    OOO-6        failed sale then success (retry with same checkout) accepted; success then failed ignored — failed(processed) → succeeded; ledger 3 lines
+PASS    S2-05 audit  3 random transactions traceable: txn → webhook_events (claim+dups) → ledger lines linked by webhook_event_id → refund event — 5d7c44bc:succeeded wh=14 ledger=3; 3e401f12:charged_back wh=2 ledger=6; 29099ebc:succeeded wh=2 ledger=3 (no receipt record exists: receipt email not built)
+
+Saved pay5-old-webhooks-results.json: PASS 44 FAIL 1 BLOCKED 0 NOTE 0

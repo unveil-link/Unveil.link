@@ -1,0 +1,62 @@
+[
+  {
+    "id": "REUSE-1",
+    "name": "reuse after drop unpublished/flagged or seller unverified: checkout does NOT hand back the old live URL (404/409/4xx, not 200 reused)",
+    "result": "PASS",
+    "evidence": "unpublished:404 flagged:404 seller-failed:409"
+  },
+  {
+    "id": "REUSE-2",
+    "name": "reuse of a >30 min pending txn (not yet swept) creates a NEW txn (201), old one expired; reuse at 29 min returns same txn",
+    "result": "PASS",
+    "evidence": "31 min → new 201 (old session_expired); 29 min → reused 200 (hands buyer a URL with ~1 min left; INFO)"
+  },
+  {
+    "id": "REUSE-3",
+    "name": "reuse returns correct body shape & the URL pays at the txn's amount; email case/whitespace variants map to same pending",
+    "result": "PASS",
+    "evidence": "lower:200/true padded+upper:200/true"
+  },
+  {
+    "id": "REUSE-4",
+    "name": "price edit while pending: reused txn keeps OLD price (settles at old price); a different buyer sees NEW price; after reuse window a new checkout uses the new price",
+    "result": "PASS",
+    "evidence": "R3 (INFO-1 fixed): same buyer reuse=false amount=2000 (old price, drop now 9000); other buyer 9000. Buyer page shows new price on /u/<link> while hosted page charges 2000."
+  },
+  {
+    "id": "REUSE-5",
+    "name": "privacy: different client (IP/UA/cookies) with only drop+email obtains victim's live checkoutUrl & txn id (no secret needed)",
+    "result": "PASS",
+    "evidence": "R3: NEW-1 FIXED — attacker with victim email + link id gets 201 reused:false and an independent session (05710613610b ≠ victim's)"
+  },
+  {
+    "id": "REUSE-6",
+    "name": "attacker pays victim's pending session with attacker card → txn succeeded under victim email (buyer_email not verified); no cross-state leak to other drops/txns",
+    "result": "PASS",
+    "evidence": "paid txn never reused; new checkout creates new txn (repeat purchase allowed by design?)"
+  },
+  {
+    "id": "LEAK-1",
+    "name": "no idempotency_key / checkout_url / review_reason / provider_session_id / risk flag in /api/earnings, /api/checkout/status, seller dashboard APIs",
+    "result": "PASS",
+    "evidence": "status keys=amountCents,message,retryable,status,transactionId; earnings clean"
+  },
+  {
+    "id": "LEAK-2",
+    "name": "status API for another txn id / garbage / SQLi / uuid case: no enumeration, no 500",
+    "result": "PASS",
+    "evidence": "404,404,404,404,404,404"
+  },
+  {
+    "id": "IDEM-9",
+    "name": "Idempotency-Key odd values: header repeated, unicode, 0-length, 129, control, NUL via raw header; no 500; no partial rows",
+    "result": "PASS",
+    "evidence": "\"\":201 \" \":201 \"a\":201 \"AAAAAAA:201 \"AAAAAAA:400 \"k\\u0000:client-reject \"k\\r\\nX::client-reject \"ключ\":client-reject \"%00\":201 \"../../e:201 \"{{7*7}}:201 \"null\":201 \"undefin:201 \"0\":201"
+  },
+  {
+    "id": "IDEM-10",
+    "name": "same key, same email, different body (over18 false, different linkId handled, extra fields) → deterministic 4xx or reuse, never a 2nd txn",
+    "result": "PASS",
+    "evidence": "first 201; over18=false same key 400 invalid_input; tampered amount same key 200/amount 2500"
+  }
+]

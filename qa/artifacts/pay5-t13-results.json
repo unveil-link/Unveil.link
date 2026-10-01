@@ -1,0 +1,20 @@
+[
+  {
+    "id": "T13-a",
+    "name": "deterministic: 3 wrong guesses arm a 1 s delay; the CORRECT password immediately after -> 429 (not evaluated, no cookie); after the delay has elapsed -> 200",
+    "result": "PASS",
+    "evidence": "inside window: 429 (Retry-After 1); after 1.3 s: 200"
+  },
+  {
+    "id": "T13-b",
+    "name": "ARTIFACT REPRO: same sequence but the correct-password probe arrives >= 1 s after the burst (what a slow/loaded runner does) -> 200, exactly the R4 symptom 'expected 429, got 200'",
+    "result": "PASS",
+    "evidence": "probe 1.1 s after arming -> 200 (delay already elapsed: correct behaviour)"
+  },
+  {
+    "id": "T13-c",
+    "name": "INVARIANT under load: over 25 bursts of 20 parallel wrong guesses (+ extra parallel bcrypt contention from 6 other emails), every admission is >= the previous admission's armed delay later (DB clock); admitted per burst <= threshold + elapsed-delay admissions",
+    "result": "PASS",
+    "evidence": "25 bursts, 77 admissions (max 4/burst; 2 bursts evaluated >3 guesses because the burst outlasted the armed delay), 0 admissions inside an armed window (tx-start clock); wall-clock gap between consecutive admissions vs armed delay: worst shortfall 0 ms (positive = next admission came earlier than the full armed delay after the previous admission's UPDATE; caused by now() being the TX START while the row lock wait precedes the UPDATE), n=52"
+  }
+]

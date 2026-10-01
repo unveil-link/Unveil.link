@@ -1,0 +1,9 @@
+
+ RUN  v5.0.3 /workspace/qa-pay5
+
+
+ Test Files  1 passed (1)
+      Tests  124 passed (124)
+   Start at  18:07:47
+   Duration  54.94s (tests 99%)
+

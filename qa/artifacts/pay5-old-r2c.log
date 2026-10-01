@@ -1,0 +1,36 @@
+PASS    BUG-8-01     NODE_ENV unset, no flag — mockPaymentsAllowed=false
+PASS    BUG-8-02     NODE_ENV unset, flag=1, loopback — mockPaymentsAllowed=true
+PASS    BUG-8-03     NODE_ENV unset, flag=1, public APP_URL — mockPaymentsAllowed=false
+PASS    BUG-8-04     production, no flag — mockPaymentsAllowed=false
+PASS    BUG-8-05     production, flag=1, public — mockPaymentsAllowed=false
+PASS    BUG-8-06     production, flag=1, loopback (documented e2e exception) — mockPaymentsAllowed=true
+PASS    BUG-8-07     staging, no flag, loopback — mockPaymentsAllowed=false
+PASS    BUG-8-08     staging, flag=1, public — mockPaymentsAllowed=false
+PASS    BUG-8-09     'Production' (case), no flag — mockPaymentsAllowed=false
+PASS    BUG-8-10     'prod', no flag — mockPaymentsAllowed=false
+PASS    BUG-8-11     'Development' (case), no flag — mockPaymentsAllowed=false
+PASS    BUG-8-12     'development ' (trailing space) — mockPaymentsAllowed=false
+PASS    BUG-8-13     '' empty NODE_ENV — mockPaymentsAllowed=false
+PASS    BUG-8-14     development (by design) — mockPaymentsAllowed=true
+PASS    BUG-8-15     test (by design) — mockPaymentsAllowed=true
+PASS    BUG-8-16     flag='true' (not '1'), loopback — mockPaymentsAllowed=false
+PASS    BUG-8-17     flag='0' — mockPaymentsAllowed=false
+PASS    BUG-8-18     flag=' 1' — mockPaymentsAllowed=false
+PASS    BUG-8-19     OLD flag MOCK_PAYMENTS_LOCAL_BUILD=1 no longer honoured — mockPaymentsAllowed=false
+PASS    BUG-8-20     loopback 127.0.0.1 — mockPaymentsAllowed=true
+PASS    BUG-8-21     loopback [::1] — mockPaymentsAllowed=true
+PASS    BUG-8-22     deceptive localhost.evil.com — mockPaymentsAllowed=false
+PASS    BUG-8-23     deceptive localhost@evil.com — mockPaymentsAllowed=false
+PASS    BUG-8-24     deceptive 127.0.0.1.evil.com — mockPaymentsAllowed=false
+PASS    BUG-8-25     deceptive evil.com/localhost — mockPaymentsAllowed=false
+PASS    BUG-8-26     deceptive user:pass localhost:80@evil.com — mockPaymentsAllowed=false
+PASS    BUG-8-27     deceptive evil.com#@localhost — mockPaymentsAllowed=false
+PASS    BUG-8-28     deceptive evil.com?x=localhost — mockPaymentsAllowed=false
+PASS    BUG-8-29     deceptive 0.0.0.0 — mockPaymentsAllowed=false (informational)
+PASS    BUG-8-30     deceptive 127.1 (short loopback form) — mockPaymentsAllowed=true (informational)
+PASS    BUG-8-31     deceptive 127.0.0.2 — mockPaymentsAllowed=false (informational)
+PASS    BUG-8-32     APP_URL unset (default) + flag — mockPaymentsAllowed=true (informational)
+PASS    BUG-8-33     APP_URL garbage + flag — mockPaymentsAllowed=false
+PASS    BUG-8-34     APP_URL empty + flag — mockPaymentsAllowed=false (informational)
+
+Saved pay5-old-r2c-results.json: PASS 34 FAIL 0 BLOCKED 0 NOTE 0

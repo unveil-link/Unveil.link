@@ -1,0 +1,13 @@
+PASS  ADM-UI-1 redirect — anonymous → http://localhost:3917/admin/login
+PASS  ADM-UI-2 wrong pw — "Invalid email or password"
+PASS  ADM-UI-3 login — landed on http://localhost:3917/admin/sellers/flagged
+PASS  ADM-UI-4 meta — meta robots="noindex, nofollow, nocache"
+PASS  ADM-UI-5 flagged card — QA uiflag uiflag+muq29i677d26@example.test flagged 2026-10-01 21:43 UTC 3 chargebacks within 90 days <b>x</b> Sales: 0 · Chargebacks: 0 · Refunds: 0 · Verification: verified · View transactions Mark r
+PASS  ADM-UI-6 review table — 31 review transactions rendered; refund-state cells: Refund requested (2026-10-01 21:40 UTC) | Refund requested (2026-10-01 21:40 UTC) | Refund requested (2026-10-01 21:40 UTC) | Refund requested (2026-10-01 21:40 UTC)
+PASS  ADM-UI-7 note validation — 1-char note blocked by HTML minLength: valid=false
+PASS  ADM-UI-8 confirm dialog — "Mark this seller as reviewed and clear the flag? This is recorded in the audit log."
+PASS  ADM-UI-9 cleared — seller card gone after clear (page reloaded)
+PASS  ADM-UI-10 seller tx page — Unveil Admin Flagged sellers & review ui-admin-1790891003@example.test Sign out ← Flagged sellers Transactions: QA uiflag uiflag+muq29i677d2
+PASS  ADM-UI-11 unknown seller — status page text: 404 This page could not be found.
+PASS  ADM-UI-12 logout — after logout, direct URL → http://localhost:3917/admin/login
+NOTE  console — Failed to load resource: the server responded with a status of 401 (Unauthorized) | Failed to load resource: the server responded with a status of 404 (Not Found)

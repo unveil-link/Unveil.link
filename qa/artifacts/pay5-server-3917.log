@@ -1,0 +1,59 @@
+▲ Next.js 16.3.8
+- Local:         http://localhost:3917
+- Network:       http://172.30.0.2:3917
+✓ Ready in 158ms
+✓ Running next.config.ts took 35ms
+⨯ TypeError: 'TRACE' HTTP method is unsupported.
+    at new e5 (.next-qa/server/chunks/[root-of-the-server]__0l3yhx4._.js:1:60257)
+    at tr.fromNodeNextRequest (.next-qa/server/chunks/[root-of-the-server]__0l3yhx4._.js:1:61529)
+    at Module.E [as handler] (.next-qa/server/chunks/[root-of-the-server]__19p48ns._.js:1:5058)
+unhandled api error error: value "2147483648" is out of range for type integer
+    at async (.next-qa/server/chunks/[root-of-the-server]__0owtjs2._.js:19:337)
+    at async c (.next-qa/server/chunks/_1-l25y8._.js:3:1499)
+    at async d (.next-qa/server/chunks/[root-of-the-server]__0owtjs2._.js:15:3067)
+    at async u (.next-qa/server/chunks/[root-of-the-server]__0owtjs2._.js:21:393)
+    at async (.next-qa/server/chunks/[root-of-the-server]__0wvz80n._.js:1:2133)
+    at async (.next-qa/server/chunks/_0dvkn0b._.js:1:20296) {
+  length: 153,
+  severity: 'ERROR',
+  code: '22003',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $2 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '610',
+  routine: 'pg_strtoint32_safe'
+}
+unhandled api error error: value "2147483648" is out of range for type integer
+    at async (.next-qa/server/chunks/[root-of-the-server]__0owtjs2._.js:19:337)
+    at async c (.next-qa/server/chunks/_1-l25y8._.js:3:1499)
+    at async d (.next-qa/server/chunks/[root-of-the-server]__0owtjs2._.js:15:3067)
+    at async (.next-qa/server/chunks/[root-of-the-server]__0owtjs2._.js:1:2231)
+    at async (.next-qa/server/chunks/_0dvkn0b._.js:1:20296)
+    at async Z (.next-qa/server/chunks/[root-of-the-server]__0owtjs2._.js:1:6056) {
+  length: 153,
+  severity: 'ERROR',
+  code: '22003',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $2 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '610',
+  routine: 'pg_strtoint32_safe'
+}

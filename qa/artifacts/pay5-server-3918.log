@@ -1,0 +1,9 @@
+▲ Next.js 16.3.8
+- Local:         http://localhost:3918
+- Network:       http://172.30.0.2:3918
+✓ Ready in 248ms
+✓ Running next.config.ts took 52ms
+⨯ TypeError: 'TRACE' HTTP method is unsupported.
+    at new e5 (.next-qa/server/chunks/[root-of-the-server]__0l3yhx4._.js:1:60257)
+    at tr.fromNodeNextRequest (.next-qa/server/chunks/[root-of-the-server]__0l3yhx4._.js:1:61529)
+    at Module.E [as handler] (.next-qa/server/chunks/[root-of-the-server]__19p48ns._.js:1:5058)

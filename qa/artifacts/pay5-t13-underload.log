@@ -1,0 +1,2 @@
+FAIL    T13-a        deterministic: 3 wrong guesses arm a 1 s delay; the CORRECT password immediately after -> 429 (not evaluated, no cookie); after the delay has elapsed -> 200 — inside the window: expected 429, got 200
+PASS    T13-b        ARTIFACT REPRO: same sequence but the correct-password probe arrives >= 1 s after the burst (what a slow/loaded runner does) -> 200, exactly the R4 symptom 'expected 429, got 200' — probe 1.1 s after arming -> 200 (delay already elapsed: correct behaviour)

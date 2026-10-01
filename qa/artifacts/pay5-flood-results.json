@@ -1,0 +1,26 @@
+[
+  {
+    "id": "FLOOD-1",
+    "name": "A: 1500 unique-email failures, each from a rotating spoofed X-Forwarded-For (8 parallel): audit rows this hour <= 200 (+1 flood marker); responses stay 401 (uniform)",
+    "result": "PASS",
+    "evidence": "1500 requests in 483s (3.1/s), statuses {\"401\":1500}; audit_log failed-login rows this UTC hour: 1442→200 (<=200 ✓), flood markers 2→1; audit_log 3591→3899 rows (1785856→1826816 bytes); side tables: admin_login_failure_buckets 95→1596 rows (491520→655360 B), rate_limits 12622→14122, login_throttle 39→1539 => audit_log is bounded; the bucket/limiter side tables grow ~1 row per distinct (ip,email) request until pruned (24 h, 1–2 % of calls)"
+  },
+  {
+    "id": "FLOOD-2",
+    "name": "B: 1000 requests against ONE real admin email with rotating IPs (per-email delay engages): 401 then 429s; audit rows stay under the cap; the real admin's account is NOT locked out after the delay (no permanent DoS) ",
+    "result": "PASS",
+    "evidence": "statuses {\"401\":6,\"429\":994}; itemised rows this hour 200→200 (<=200 ✓); throttled rows for the victim email: 0. INFO: because the per-email delay is global per email (not per IP), a spoofing attacker can keep the victim admin's login in 429 'delay' (max cap 60 s) indefinitely = login DoS for that admin (pre-existing design, same as sellers; no lockout beyond the cap)"
+  },
+  {
+    "id": "FLOOD-3",
+    "name": "C: AT the cap, real admin work is still audited via HTTP: admin login (+ip), clear-flag (200), logout, a different attacker's failure is only counted (flood marker), not itemised",
+    "result": "PASS",
+    "evidence": "at cap (200 itemised): admin_login ✓ admin_logout ✓ seller_flag_cleared ✓ (HTTP 200); a NEW attacker failure after the cap -> 0 itemised rows (only counted; flood marker explains) — INFO: during a flood, a genuine brute-force from another source is not itemised for the rest of the clock hour"
+  },
+  {
+    "id": "FLOOD-4",
+    "name": "D: hostile X-Forwarded-For values (non-IP strings, 5 KB, empty entries, IPv6, markup) are accepted as 'ip' text but truncated to 64 chars; no 5xx",
+    "result": "PASS",
+    "evidence": "statuses 401/401/401/401/401/401/401/401; max stored ip length 64 (<=64 ✓)"
+  }
+]

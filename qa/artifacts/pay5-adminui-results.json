@@ -1,0 +1,67 @@
+[
+  {
+    "id": "ADM-UI-1 redirect",
+    "result": "PASS",
+    "evidence": "anonymous → http://localhost:3917/admin/login"
+  },
+  {
+    "id": "ADM-UI-2 wrong pw",
+    "result": "PASS",
+    "evidence": "\"Invalid email or password\""
+  },
+  {
+    "id": "ADM-UI-3 login",
+    "result": "PASS",
+    "evidence": "landed on http://localhost:3917/admin/sellers/flagged"
+  },
+  {
+    "id": "ADM-UI-4 meta",
+    "result": "PASS",
+    "evidence": "meta robots=\"noindex, nofollow, nocache\""
+  },
+  {
+    "id": "ADM-UI-5 flagged card",
+    "result": "PASS",
+    "evidence": "QA uiflag uiflag+muq29i677d26@example.test flagged 2026-10-01 21:43 UTC 3 chargebacks within 90 days <b>x</b> Sales: 0 · Chargebacks: 0 · Refunds: 0 · Verification: verified · View transactions Mark r"
+  },
+  {
+    "id": "ADM-UI-6 review table",
+    "result": "PASS",
+    "evidence": "31 review transactions rendered; refund-state cells: Refund requested (2026-10-01 21:40 UTC) | Refund requested (2026-10-01 21:40 UTC) | Refund requested (2026-10-01 21:40 UTC) | Refund requested (2026-10-01 21:40 UTC)"
+  },
+  {
+    "id": "ADM-UI-7 note validation",
+    "result": "PASS",
+    "evidence": "1-char note blocked by HTML minLength: valid=false"
+  },
+  {
+    "id": "ADM-UI-8 confirm dialog",
+    "result": "PASS",
+    "evidence": "\"Mark this seller as reviewed and clear the flag? This is recorded in the audit log.\""
+  },
+  {
+    "id": "ADM-UI-9 cleared",
+    "result": "PASS",
+    "evidence": "seller card gone after clear (page reloaded)"
+  },
+  {
+    "id": "ADM-UI-10 seller tx page",
+    "result": "PASS",
+    "evidence": "Unveil Admin Flagged sellers & review ui-admin-1790891003@example.test Sign out ← Flagged sellers Transactions: QA uiflag uiflag+muq29i677d2"
+  },
+  {
+    "id": "ADM-UI-11 unknown seller",
+    "result": "PASS",
+    "evidence": "status page text: 404 This page could not be found."
+  },
+  {
+    "id": "ADM-UI-12 logout",
+    "result": "PASS",
+    "evidence": "after logout, direct URL → http://localhost:3917/admin/login"
+  },
+  {
+    "id": "console",
+    "result": "NOTE",
+    "evidence": "Failed to load resource: the server responded with a status of 401 (Unauthorized) | Failed to load resource: the server responded with a status of 404 (Not Found)"
+  }
+]

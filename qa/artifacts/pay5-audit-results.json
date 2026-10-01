@@ -1,0 +1,104 @@
+[
+  {
+    "id": "AUD-1a",
+    "name": "append-only: UPDATE / DELETE / TRUNCATE / TRUNCATE CASCADE / MERGE / INSERT..ON CONFLICT DO UPDATE all refused as the app role (table owner, non-superuser); 0 rows changed",
+    "result": "PASS",
+    "evidence": "16 mutation paths refused (UPDATE all✓, UPDATE admin_email✓, UPDATE created_at✓, UPDATE admin_id NULL✓, DELETE all✓, DELETE one✓, DELETE USING✓, TRUNCATE✓, TRUNCATE CASCADE✓, TRUNCATE admins CASCADE (FK-cascaded truncate)✓, TRUNCATE admins RESTART IDENTITY CASCADE✓, MERGE update✓, MERGE delete✓, INSERT ON CONFLICT DO UPDATE✓, UPDATE via CTE✓, UPDATE ... FROM✓); WHERE-false no-ops: UPDATE \"ok\", DELETE \"ok\" (no row to protect); md5 of whole table before==after (2498 rows)"
+  },
+  {
+    "id": "AUD-1b",
+    "name": "bypass attempts: DISABLE/DROP TRIGGER, ALTER..DISABLE, rename/replace function, inheritance child (INHERITS), ALTER TYPE, DROP TABLE: as OWNER (the app role in the documented single-role setup) these succeed (rolled back here); session_replication_role needs superuser",
+    "result": "PASS",
+    "evidence": "app role=unveil (superuser=false, audit_log owner=unveil); triggers enabled after probes: audit_log_fill_email,audit_log_no_truncate,audit_log_no_update. ALTER TABLE .. DISABLE TRIGGER audit_log_no_update + UPDATE: ALLOWED | DROP TRIGGER audit_log_no_truncate: ALLOWED | ALTER TABLE .. DISABLE TRIGGER ALL: ALLOWED | CREATE OR REPLACE FUNCTION audit_log_append_only (neutered): ALLOWED | CREATE TABLE child INHERITS (audit_log) + forged row + UPDATE through parent: ALLOWED | SET session_replication_role = replica: DENIED (permission denied to set parameter \"session_replic) | DROP TABLE audit_log CASCADE: ALLOWED | ALTER TABLE audit_log RENAME TO x: ALLOWED | COPY audit_log TO/FROM program (needs pg_execute_server_program): DENIED (permission denied to COPY to or from an external p). => As the TABLE OWNER the immutability can be removed (documented limit (a)); superuser-only: session_replication_role (denied here); non-owner result in AUD-14"
+  },
+  {
+    "id": "AUD-2",
+    "name": "FK admin_id ON DELETE RESTRICT (no SET NULL / CASCADE); DELETE FROM admins refused when audit mentions the admin (as actor OR as admin:<uuid> subject); allowed only for an admin with zero history; disabling an admin leaves history and blocks deletion",
+    "result": "PASS",
+    "evidence": "FK confdeltype='r' only; actor-history admin delete refused, \"DELETE FROM admins\" (all) refused, subject-only (admin_id NULL, target admin:<id>) refused, disabled admin refused, zero-history admin deletable, orphan audit insert refused by FK; admin_disabled trigger row has email snapshot; 25 racing delete-vs-audit-insert pairs: 25 deleted / 0 kept, 0 orphans"
+  },
+  {
+    "id": "AUD-3",
+    "name": "admin_email snapshot: every actor row has it (login/logout/clear/create/reset), survives admin email rename (old rows keep OLD email, new rows NEW email), system rows have NULL admin_id+email, trigger fills it for raw inserts; no admin_id row lacks email",
+    "result": "PASS",
+    "evidence": "rename: 3 old rows keep \"adm-snap-muq2b6uba…\", 2 new rows carry the new email; raw INSERT gets email by trigger; 0 actor rows w/o email. admin_id-NULL rows: admin_disabled×562(email 562), admin_enabled×559(email 559), admin_login_failed×461(email 461), admin_login_flood×1(email 0), payments_janitor_run×27(email 0), qa_subject_only×1(email 0), seller_flagged_repeat_chargebacks×46(email 0). INFO: an email RENAME by plain SQL is itself not audited (0 rows), only disable/enable are"
+  },
+  {
+    "id": "AUD-4",
+    "name": "failed-login responses: unknown / wrong-pw / disabled(correct pw) / disabled(wrong pw) -> byte-identical 401 body+headers (uniform); malformed email -> 400 (schema, before any lookup); IP limiter 429; per-email delay 429 identical for real/unknown/disabled",
+    "result": "PASS",
+    "evidence": "unknown==wrong-pw==disabled==disabled+wrong-pw: status 401, body {\"error\":\"Invalid email or password\",\"code\":\"invalid_credentials\"}, 13 identical headers; malformed (9 variants incl. homoglyph/fullwidth/NUL/300 chars) -> 400/400/400/400/400/400/400/400/400; 8-attempt sequences identical for real/unknown/disabled: 401,401,401,401,401,429/Too many failed sign-in attempts. Please wait N second and try again.,429/Too many failed sign-in attempts. Please wait N second and try again.,429/Too many failed sign-in attempts. Please wait N second and try again."
+  },
+  {
+    "id": "AUD-5",
+    "name": "timing: statistical (unknown vs wrong-pw vs disabled vs disabled+wrong-pw, interleaved random order, one fresh IP per request, throttle reset between samples); medians/p95, Mann-Whitney",
+    "result": "PASS",
+    "evidence": "unknown: n=150 median 321.7ms p95 343.0ms; wrongpw: n=150 median 320.8ms p95 342.8ms; disabled: n=150 median 321.7ms p95 338.8ms; disabled_wrongpw: n=150 median 320.8ms p95 344.1ms. unknown vs wrongpw: Δmedian -0.9ms (0.3%), MWU p=0.104; unknown vs disabled: Δmedian -0.0ms (0.0%), MWU p=0.708; unknown vs disabled_wrongpw: Δmedian -0.9ms (0.3%), MWU p=0.296. not distinguishable at p<0.01. Info: audit-write path (cold) median 323.0ms vs coalesced (warm) 322.2ms (MWU p=0.977; same for every class, leaks nothing about existence)"
+  },
+  {
+    "id": "AUD-6",
+    "name": "failed-login rows: right reason/ip/email/timestamp; attempted PASSWORD never stored (grep whole table); email lower-cased, trimmed, capped at 100 chars; oversize/NUL/XSS email never reaches the table; hostile X-Forwarded-For is stored escaped-as-data (<=64 chars)",
+    "result": "PASS",
+    "evidence": "reason/ip/email/ts correct for unknown/bad_password/disabled; 3 rows; password strings (6) + bcrypt hashes absent from the entire audit_log; 213-char email stored as 100 chars; 5 markup/NUL/SQLi-looking emails -> HTTP 400/400/400/401/400 (400 by schema), 0 stored with <>\"/NUL; X-Forwarded-For is NOT validated as an IP: stored verbatim up to 64 chars (e.g. \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", len 64) -> any future audit viewer MUST escape the ip column (INFO)"
+  },
+  {
+    "id": "AUD-7",
+    "name": "coalescing: 1001 identical failures -> rows only at 1, 10, 100, 1000 (exact targets); next window's first row states folded repeats (1000); 60 concurrent identical -> exactly rows n=1 and n=10; different ip/reason/email are separate buckets",
+    "result": "PASS",
+    "evidence": "1001 calls -> 4 rows [failed admin login | repeated 10x within 600s | repeated 100x within 600s | repeated 1000x within 600s]; after window expiry the first row says \"failed admin login (+1000 repeats folded into the previous window)\"; ip/reason are separate buckets, email case/whitespace is normalised into one; 60 concurrent -> exactly 2 rows (n=1, n=10), bucket counter 60 (exact)"
+  },
+  {
+    "id": "AUD-8",
+    "name": "global cap: 400 distinct failures (30-way concurrent) -> exactly 200 itemised rows this hour + exactly ONE admin_login_flood marker; further distinct failures are not itemised; REAL admin actions (login/clear-flag/logout/create/disable) are still recorded at the cap",
+    "result": "PASS",
+    "evidence": "400 distinct failures -> 200 itemised + 1 flood marker (exact, under 30-way concurrency); +40 more -> still 200; at the cap: admin_login, seller_flag_cleared (HTTP 200), admin_logout, admin_created_cli, admin_disabled all written (cap applies ONLY to admin_login_failed). NB cap is per UTC clock hour: worst case across an hour boundary is 2x200"
+  },
+  {
+    "id": "AUD-8b",
+    "name": "HTTP-level: one IP hammering one email (default limits, 3918): evaluated failures coalesced, 'throttled' attempts audited as their own bucket, per-IP limiter (10/15min) stops writes entirely",
+    "result": "PASS",
+    "evidence": "16 requests from one IP -> statuses 401,401,429,429,429,429,429,429,429,429,429,429,429,429,429,429; audit rows 2 ({\"bad_password\":1,\"throttled\":1}) — evaluated 401s coalesce (reason bad_password), 429 delay hits log reason throttled; requests after the per-IP limiter (10th) write nothing"
+  },
+  {
+    "id": "AUD-9",
+    "name": "concurrent logins/logouts: 24 parallel valid logins (some 429 by the per-email admission design), 0x5xx, #sessions == #200s, unique tokens; 24 parallel logouts of ONE token -> exactly 1 admin_logout row; mixed login/logout storm on 3 admins leaves no live session after logout; no deadlock",
+    "result": "PASS",
+    "evidence": "24 parallel logins -> 5x200 / 19x429 / 0x5xx, sessions==200s, tokens unique; 24 parallel logouts of 1 token -> 1 audit row, token dead; 30-way login/logout storm -> 10 ok/20 429, 0 anomalies; leftover live sessions=5 (the 5 from the first burst, expected)"
+  },
+  {
+    "id": "AUD-10",
+    "name": "concurrent create/reset/disable: 6 simultaneous createAdmin(same email) -> exactly 1 created; losers fail cleanly (raw DB error text in CLI output = INFO); 10 concurrent clear-flag on one seller -> exactly one 200 + one audit row; toggling disable/enable 20x writes 20 audit rows",
+    "result": "PASS",
+    "evidence": "createAdmin x6 concurrent -> 1 created, 5 rejected (5 with raw \"duplicate key … admins_email_key\" text — the CLI prints it verbatim: INFO); clear-flag x10 -> [200,409,409,409,409,409,409,409,409,409] with exactly one audit row; 20 disable/enable toggles -> 20 audit rows"
+  },
+  {
+    "id": "AUD-11a",
+    "name": "--reset-password: live sessions revoked at once, both audit rows (admin_password_reset_cli + admin_sessions_revoked with count) carry admin_id+email, old pw dead, new pw works, password absent from argv (ps sampled), stdout/stderr, audit_log, server logs; env-var delivery visible only to same uid; weak/short/blank/oversize rejected",
+    "result": "PASS",
+    "evidence": "3 live sessions -> all 401 immediately; old pw 401, new pw 200; audit: admin_password_reset_cli + admin_sessions_revoked (\"admin:<id> sessions_revoked: 3\", reason password_reset) both with admin_id+email+timestamp; 10 ps samples during run: password never in argv; not in CLI output, audit_log or server logs. ADMIN_PASSWORD env var of the CLI process IS readable via /proc/<pid>/environ by the same uid (true) — document: run as dedicated user / prefer the hidden TTY prompt; rejected: short:1 common:1 seq:1 email-as-pw:1 blank:1; --password flag refused (exit 2)"
+  },
+  {
+    "id": "AUD-11b",
+    "name": "RACE: a login with the OLD password that is IN FLIGHT (bcrypt running) when the password reset commits still gets a session AFTER the revocation -> old credential keeps a live admin session",
+    "result": "PASS",
+    "evidence": "no survivor in 6 timings (off-150:login401→me401 off-100:login401→me401 off0:login401→me401 off60:login200→me401 off120:login200→me401 off200:login200→me401)"
+  },
+  {
+    "id": "AUD-12",
+    "name": "create-admin CLI edges: duplicate (exit!=0, nothing written, no audit), bad emails (spaces, no TLD, 255 chars, empty), unicode/homoglyph emails (accepted by CLI but cannot log in via API = INFO), NUL in email/password (in-process; argv/env cannot carry NUL), lone surrogate, uppercase normalised; failed CLI writes no audit row",
+    "result": "PASS",
+    "evidence": "duplicate refused (case-insensitive) with clean message; 8 malformed emails exit≠0 (1/1/2/1/1/1/1/1) without stack traces; in-process: nul-email→\"invalid email\"; nul-pw→\"password contains invalid charac\"; surrogate-email→\"invalid email\"; surrogate-pw→\"password contains invalid charac\"; 300-char→\"invalid email\"; audit rows added == successful creates (3); INFO: unicode email ACCEPTED by CLI but API login -> 400 (zod email is ASCII-only: such an admin can never sign in); Cyrillic-homoglyph email ACCEPTED (look-alike of an existing admin identity in audit rows)"
+  },
+  {
+    "id": "AUD-13",
+    "name": "audit completeness: one row per admin action with admin identity + timestamp: login(+ip), failed login, logout, create, disable/enable (even via SQL), reset (2 rows), clear-flag (note+previous reason), janitor, chargeback-flag; denied/unauthenticated attempts write none",
+    "result": "PASS",
+    "evidence": "table: admin_created_cli=120, admin_disabled=574, admin_enabled=569, admin_login=588, admin_login_failed=1393, admin_login_flood=2, admin_logout=19, admin_password_reset_cli=89, admin_sessions_revoked=89, payments_janitor_run=27, qa_raw=1, seller_flag_cleared=19, seller_flagged_repeat_chargebacks=46. identity: login/logout/clear/create/reset rows 100% have admin_id+admin_email, login rows 100% have ip; disable/enable via plain SQL audited by trigger; clear-flag row = seller id + previous_reason + note. INFO (not audited): 401/403 denied attempts on admin routes, 409/400 clear-flag rejections, SQL-level admin email rename/password_hash change, admin_sessions expiry"
+  },
+  {
+    "id": "AUD-14",
+    "name": "no audit read path: no API route/page exposes audit_log (viewer absent) — anonymous, seller and admin all get 404 for every plausible audit URL; admin API/page responses contain no audit fields",
+    "result": "PASS",
+    "evidence": "36 URL variants x3 principals -> only 404/401/403/redirect (anon:{404} seller:{404} admin:{404}); no response contains audit fields; source grep: no module other than admin/audit.ts reads audit_log (0). => There is NO audit viewer (M5-14 'visible to admins' remains BLOCKED; 'not editable via API' is trivially true: no write/read endpoint exists)"
+  }
+]

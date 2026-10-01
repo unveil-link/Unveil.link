@@ -1,0 +1,14 @@
+[
+  {
+    "id": "M3-12 retry",
+    "name": "event with NUL in id is now 400 (R2: was 500), leaves NO claim/partial ledger; rejected row logged; corrected retry for same payment is processed",
+    "result": "PASS",
+    "evidence": "400 → no claim, no ledger; error rows logged=0; retry processed"
+  },
+  {
+    "id": "M6-08 queue",
+    "name": "'queued with retry' is the processor's at-least-once redelivery (no internal queue/retry worker exists); parked events are re-applied inside the sale transaction; retryParkedEvents() is a service function only (no route/cron)",
+    "result": "PASS",
+    "evidence": "parked row visible; applied automatically when the sale lands (OOO-1..4); no cron for stragglers whose sale never arrives (NOTE)"
+  }
+]

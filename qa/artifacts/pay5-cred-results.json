@@ -1,0 +1,98 @@
+[
+  {
+    "id": "CV-1",
+    "name": "backfill/shape: admins.credentials_version int NOT NULL default 1; admin_sessions.credentials_version same; trigger BEFORE UPDATE OF password_hash, disabled_at",
+    "result": "PASS",
+    "evidence": "CREATE TRIGGER admins_bump_credentials_version BEFORE UPDATE OF password_hash, disabled_at ON public.admins FOR EACH ROW EXECUTE FUNCTION admins_bump_credential"
+  },
+  {
+    "id": "CV-2",
+    "name": "multiple live sessions allowed; --reset-password kills ALL of them (rows revoked AND /me 401), version +1; new password 200, old 401; audit has revoke count",
+    "result": "PASS",
+    "evidence": "3 sessions all dead after reset; v1->2; audit \"admin:2e40f50c-f0d5-406c-943d-aa63df60fbb8 sessions_revoked: 3\""
+  },
+  {
+    "id": "CV-3",
+    "name": "plain-SQL disable: old cookie 401; ENABLE again: the pre-disable cookie STAYS dead (version bumped by both), a fresh login works; version +2",
+    "result": "PASS",
+    "evidence": "v1->3; old cookie dead while disabled AND after re-enable (row revoked_at=NULL, i.e. protected by version only); fresh login 200"
+  },
+  {
+    "id": "CV-4",
+    "name": "plain-SQL password change (UPDATE admins SET password_hash=<new bcrypt>) -> old cookie 401 immediately, old pw 401, new pw 200",
+    "result": "PASS",
+    "evidence": "old cookie 401, old pw 401, new pw 200"
+  },
+  {
+    "id": "CV-5",
+    "name": "trigger fires ONLY on real changes: no-op UPDATEs (same hash, disabled NULL->NULL, disabled timestamp change while already disabled, email, last_login_at, SET password_hash=password_hash) do NOT bump or log anyone out",
+    "result": "PASS",
+    "evidence": "5 no-op UPDATEs + disabled->disabled: version stayed 1/2; session alive (/me 200)"
+  },
+  {
+    "id": "CV-6",
+    "name": "rehash behaviour: re-saving the SAME password with a new bcrypt salt (e.g. a future cost-upgrade rehash, or `--reset-password` with the same password) changes the hash -> bumps -> logs everyone out. NOTE",
+    "result": "PASS",
+    "evidence": "same-password rehash: version bumped, session ended, same password still logs in"
+  },
+  {
+    "id": "CV-6b",
+    "name": "rehash note + whether the app ever rehashes on login",
+    "result": "PASS",
+    "evidence": "app login path never rewrites password_hash (rehash-on-login present: false); an UPDATE that stores a different hash of the same password bumps the version and ends all sessions (verified CV-6) - future cost-upgrade rehash must skip the bump or accept the logout"
+  },
+  {
+    "id": "CV-7",
+    "name": "credentials_version is trigger-protected against password/disable changes: UPDATE ... SET password_hash=x, credentials_version=1 (try to keep/lower it) still yields OLD+1",
+    "result": "PASS",
+    "evidence": "direct SET to 1 during password change -> 8"
+  },
+  {
+    "id": "CV-8",
+    "name": "non-owner app role (qa_app): cannot DISABLE/DROP/REPLACE the bump trigger or its function, cannot ALTER the table/columns",
+    "result": "PASS",
+    "evidence": "8/8 denied (DISABLE TRIGGER✓ DISABLE TRIGGER ALL✓ DROP TRIGGER✓ REPLACE FUNCTION✓ DROP FUNCTION✓ DROP COLUMN✓ ALTER COLUMN DEFAULT✓ session_replication_role✓); trigger still enabled"
+  },
+  {
+    "id": "CV-9",
+    "name": "app role CAN write credentials_version directly (UPDATE admins SET credentials_version=...): characterise. It is plain DML, so an attacker with app-role SQL could LOWER the version to resurrect a version-killed (but not revoked) session. INFO: needs DB write access which already implies INSERT INTO admin_sessions",
+    "result": "PASS",
+    "evidence": "direct UPDATE credentials_version=42 -> allowed (now 42); =-5 -> allowed; app role can also INSERT admin_sessions directly -> allowed (so version-forging adds no new capability)"
+  },
+  {
+    "id": "CV-10",
+    "name": "disable mid-login x40 (random 40-420 ms into the ~300 ms bcrypt (so some logins finish BEFORE the disable)): never a 200 + live session after disable; then re-enable: no pre-disable session is alive",
+    "result": "PASS",
+    "evidence": "40 trials: 200=12 (all dead after re-enable: 0 alive), 401=28 (audit superseded=28, disabled=0), other=0"
+  },
+  {
+    "id": "CV-11",
+    "name": "superseded 401 is UNIFORM: byte-identical body+headers to bad_password/unknown; audit row reason='superseded' with admin id+email+ip, no password; timing parity (n=40 each)",
+    "result": "PASS",
+    "evidence": "superseded n=40: median 326 p95 346 ms | bad_password n=40: median 323 p95 352 | unknown n=40: median 323 p95 356; bodies+headers identical; audit row {\"admin_id\":null,\"admin_email\":\"c5-sup-8-muq1zpj18391@example.test\",\"ip\":\"10.77.28.68\",\"reason\":\"superseded\",\"target\":\"failed admin login\",\"action\":\"admin_login_failed\"}"
+  },
+  {
+    "id": "CV-12",
+    "name": "concurrent logout during login; logout of one of several sessions; logout is not affected by version; sessions of other admins untouched by a reset",
+    "result": "PASS",
+    "evidence": "logout || login: no error; other sessions fine; reset of A leaves B alive"
+  },
+  {
+    "id": "CV-13",
+    "name": "session expiry unaffected: expired row -> 401; non-expired old row at current version -> 200; revoked -> 401",
+    "result": "PASS",
+    "evidence": "expired 401, unexpired 200, revoked 401; session rows store version 1"
+  },
+  {
+    "id": "CV-14",
+    "name": "reset on a DISABLED admin re-enables + one version bump (hash and disabled change in the same UPDATE = +1, not +2); old cookies dead; audit rows",
+    "result": "PASS",
+    "evidence": "v2->3, enabled again"
+  },
+  {
+    "id": "CV-15",
+    "name": "deadlock / lock-wait stress: 6 resets + disable/enable toggles while 8 parallel login loops + logouts run on the same admins (FOR SHARE vs trigger UPDATE); pg deadlock counter, 5xx, server errors",
+    "result": "PASS",
+    "evidence": "12784 ms; codes {\"200\":3,\"401\":37,\"429\":2}; pg deadlocks +0; resets exit 0,0,0,0,0,0; cookies alive at end 3 (sessions minted after the LAST bump may legitimately be alive: 3 DB rows at current version)"
+  }
+]

@@ -1,0 +1,12 @@
+dump bytes: 4276952
+PAN 4242424242424242: dump 0 logs 0
+PAN 4000000000000002: dump 0 logs 0
+PAN 4000000000009995: dump 0 logs 1
+PAN 4000000000000069: dump 0 logs 1
+PAN 4000000000000127: dump 0 logs 1
+PAN 5555555555554444: dump 0 logs 0
+CRON_SECRET value: dump 0 server-logs 0
+SESSION_SECRET value: dump 0 server-logs 0
+PAYMENT_WEBHOOK_SECRET value: dump 0 server-logs 0
+admin password plaintext: dump 0 server-logs 0
+CVC-ish 'cvc' fields in dump: 0

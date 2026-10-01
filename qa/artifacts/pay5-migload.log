@@ -1,0 +1,20 @@
+NOTICE:  database "unveil_qa_pay5_load" does not exist, skipping
+psql:db/migrations/006_payments.sql:41: NOTICE:  constraint "transactions_reversed_range" of relation "transactions" does not exist, skipping
+psql:db/migrations/006_payments.sql:145: NOTICE:  trigger "ledger_entries_no_update" for relation "ledger_entries" does not exist, skipping
+psql:db/migrations/006_payments.sql:148: NOTICE:  trigger "ledger_entries_no_truncate" for relation "ledger_entries" does not exist, skipping
+psql:db/migrations/007_payments_hardening.sql:35: NOTICE:  constraint "transactions_idempotency_key_len" of relation "transactions" does not exist, skipping
+psql:db/migrations/008_checkout_buyer_binding.sql:6: NOTICE:  constraint "transactions_buyer_token_hash_fmt" of relation "transactions" does not exist, skipping
+psql:db/migrations/010_admin_auth.sql:8: NOTICE:  constraint "admins_email_lowercase" of relation "admins" does not exist, skipping
+psql:db/migrations/011_audit_hardening.sql:10: NOTICE:  trigger "audit_log_no_update" for relation "audit_log" does not exist, skipping
+psql:db/migrations/011_audit_hardening.sql:11: NOTICE:  trigger "audit_log_no_truncate" for relation "audit_log" does not exist, skipping
+psql:db/migrations/011_audit_hardening.sql:47: NOTICE:  trigger "audit_log_fill_email" for relation "audit_log" does not exist, skipping
+psql:db/migrations/011_audit_hardening.sql:59: NOTICE:  trigger "admins_guard_delete" for relation "admins" does not exist, skipping
+psql:db/migrations/011_audit_hardening.sql:71: NOTICE:  trigger "admins_audit_disable" for relation "admins" does not exist, skipping
+pre-migration: login with NEW code on an 011 schema:
+  HTTP 500
+  /api/admin/me with the pre-migration cookie (if any): 401
+--- applying migration mid-run
+applied 012_admin_credentials_version.sql
+done (1 applied)
+timeline of login statuses (100 ms apart; migration applied after ~3 s): 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 500 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 
+after: columns 2 (2); login: 000; me: 000
