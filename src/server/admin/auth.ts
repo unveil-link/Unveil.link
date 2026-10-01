@@ -53,15 +53,24 @@ export async function createAdmin(email: string, password: string, opts: { reset
 export async function loginAdmin(email: string, password: string, userAgent?: string | null, ip = "unknown"): Promise<{ token: string; admin: Admin } | null> {
   const fail = async (reason: LoginFailReason) => { await auditFailedAdminLogin(email, reason, ip); return null; }; // bounded + never throws; caller's response is identical for every reason
   if (hasBadText(email) || email.length > 254) return fail("unknown_email"); // defence in depth (the route already rejects these with 400)
-  const a = await queryOne<{ id: string; email: string; password_hash: string | null; disabled_at: string | null }>(
-    `SELECT id, email, password_hash, disabled_at FROM admins WHERE email = $1`, [email.trim().toLowerCase()]);
+  const a = await queryOne<{ id: string; email: string; password_hash: string | null; disabled_at: string | null; credentials_version: number }>(
+    `SELECT id, email, password_hash, disabled_at, credentials_version FROM admins WHERE email = $1`, [email.trim().toLowerCase()]);
   const ok = await verifyPassword(password, a?.password_hash ?? null); // constant-ish time even when the admin doesn't exist
   if (!a) return fail("unknown_email");
   if (!ok) return fail("bad_password");
   if (a.disabled_at) return fail("disabled");
+  // bcrypt took ~300 ms; a --reset-password / disable may have committed meanwhile (QA NEW-4). The session is therefore inserted ONLY IF the admin row
+  // still carries the credentials_version the password was checked against and is still enabled. FOR SHARE makes this atomic with a concurrent reset:
+  // if the reset's UPDATE is in flight we wait for it and re-evaluate the WHERE (-> no row); if we hold the lock first, the reset's UPDATE waits for our
+  // commit and its session revoke (a later statement) then sees and kills our row. Either order leaves no live session for the old credentials.
   const s = await queryOne<{ id: string }>(
-    `INSERT INTO admin_sessions (admin_id, expires_at, user_agent) VALUES ($1, now() + make_interval(secs => $2), $3) RETURNING id`,
-    [a.id, ADMIN_SESSION_SECONDS, userAgent?.slice(0, 300) ?? null]);
+    `INSERT INTO admin_sessions (admin_id, expires_at, user_agent, credentials_version)
+     SELECT ad.id, now() + make_interval(secs => $2), $3, ad.credentials_version
+       FROM admins ad WHERE ad.id = $1 AND ad.credentials_version = $4 AND ad.disabled_at IS NULL
+        FOR SHARE OF ad
+     RETURNING id`,
+    [a.id, ADMIN_SESSION_SECONDS, userAgent?.slice(0, 300) ?? null, a.credentials_version]);
+  if (!s) return fail("superseded"); // same uniform 401 for the client; the audit row says why
   await query(`UPDATE admins SET last_login_at = now() WHERE id = $1`, [a.id]);
   await writeAudit(null, { adminId: a.id, action: "admin_login", target: `admin:${a.id}`, ip });
   if (Math.random() < 0.02) query(`DELETE FROM admin_sessions WHERE expires_at < now() - interval '1 day'`).catch(() => {});
@@ -84,7 +93,8 @@ export async function readAdminToken(token: string): Promise<Admin | null> {
   if (!t) return null;
   return queryOne<Admin>(
     `SELECT a.id, a.email FROM admin_sessions s JOIN admins a ON a.id = s.admin_id
-      WHERE s.id = $1 AND s.admin_id = $2 AND s.revoked_at IS NULL AND s.expires_at > now() AND a.disabled_at IS NULL`,
+      WHERE s.id = $1 AND s.admin_id = $2 AND s.revoked_at IS NULL AND s.expires_at > now() AND a.disabled_at IS NULL
+        AND s.credentials_version = a.credentials_version`, // a session minted under an older password / before a disable is dead even if its row survived
     [t.sessionId, t.adminId]);
 }
 

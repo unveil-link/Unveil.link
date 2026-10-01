@@ -33,7 +33,7 @@ export async function writeAudit(run: Runner | null, e: AuditEntry): Promise<voi
 
 // ---- failed admin logins ----------------------------------------------------------------------------------------------------------
 
-export type LoginFailReason = "unknown_email" | "bad_password" | "disabled" | "throttled";
+export type LoginFailReason = "unknown_email" | "bad_password" | "disabled" | "throttled" | "superseded";
 
 /** Tunables (exported for tests). */
 export const FAILED_LOGIN_AUDIT = {
