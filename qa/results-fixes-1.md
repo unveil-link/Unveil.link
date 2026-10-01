@@ -146,3 +146,7 @@ node qa/scripts/qa-fixes-1.mjs; node qa/scripts/qa-backend-1.mjs; node qa/script
 # restart WITHOUT RATE_LIMIT_ENABLED=0, then:
 MAIL_DEV_DIR=/tmp/qa-mail node qa/scripts/qa-fixes-1-ratelimit.mjs
 ```
+
+## Status update (Sept 30, 2026, 10:20 PM ET)
+- M5-16 re-classified from FAIL to **BLOCKED-ON-LEGAL**. Legal pages are parked by the coordinator until further notice; nothing for Frontend to build without the copy.
+- Merge of `backend/fixes-1` to main approved by coordinator. Full-suite re-run on `main` to follow after the merge lands.
