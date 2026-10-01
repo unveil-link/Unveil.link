@@ -69,3 +69,6 @@ Manual (dev): `npm run dev`, publish a drop as a verified seller, open `/u/<link
 10. **CSP** will need the processors' hosted-page origins (`frame-src`/`form-action`) when real providers land.
 11. **Buyer unlock/download after purchase** and receipt email are not built; `/api/checkout/status?id=` (unguessable transaction UUID as capability) is the hook for the post-payment page.
 12. Webhook bodies are capped at 256 KiB; rejected-delivery logging is rate limited per IP (`WEBHOOK_REJECTED`).
+
+## Test results at hand-off (this branch)
+`npm run typecheck` clean · `npm run lint` clean · `npm test` 9 files / 105 tests (67 pure + 38 DB-backed) · `npm run e2e` 62/62 (46 pre-existing + 16 payments). Across 3 full e2e runs: run 1 hit an env problem (stale `unveil_e2e` DB from another agent's schema, see below), run 2 was 61/62 and run 3 was 62/62. The single failure in run 2 was the pre-existing, timing-based `[#13]` login-delay check ("exactly 3 evaluated" saw a 4th evaluated attempt) on a busy shared box; it is unrelated to payments and passed on the re-run, but I did not verify whether it also flakes on `origin/main`.
