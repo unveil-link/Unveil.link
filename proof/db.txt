@@ -1,23 +1,26 @@
 ### \dt
-              List of relations
- Schema |       Name        | Type  | Owner  
---------+-------------------+-------+--------
- public | admins            | table | unveil
- public | audit_log         | table | unveil
- public | drop_files        | table | unveil
- public | drops             | table | unveil
- public | payouts           | table | unveil
- public | platform_settings | table | unveil
- public | reports           | table | unveil
- public | schema_migrations | table | unveil
- public | sellers           | table | unveil
- public | transactions      | table | unveil
-(10 rows)
+                List of relations
+ Schema |         Name          | Type  | Owner  
+--------+-----------------------+-------+--------
+ public | admins                | table | unveil
+ public | audit_log             | table | unveil
+ public | drop_files            | table | unveil
+ public | drops                 | table | unveil
+ public | password_reset_tokens | table | unveil
+ public | payouts               | table | unveil
+ public | platform_settings     | table | unveil
+ public | rate_limits           | table | unveil
+ public | reports               | table | unveil
+ public | schema_migrations     | table | unveil
+ public | sellers               | table | unveil
+ public | sessions              | table | unveil
+ public | transactions          | table | unveil
+(13 rows)
 
 ### sellers (no secrets: password_hash shown as prefix only)
 -[ RECORD 1 ]--------+-------------------------------------
-id                   | fbecc16a-811d-4b2f-960f-bc758f862e50
-email                | seller+1790811392658@example.test
+id                   | f9ae12ab-67cf-4dd3-a89e-6aa5d42fd53b
+email                | seller+1790818262665@example.test
 password_hash_prefix | $2b$12$…
 google_id            | 
 display_name         | E2E Seller
@@ -26,10 +29,10 @@ verification_ref     |
 legal_name           | 
 dob                  | 
 payout_details       | 
-created_at           | 2026-09-30 19:36:33.057567-04
+created_at           | 2026-09-30 21:31:03.086029-04
 -[ RECORD 2 ]--------+-------------------------------------
-id                   | 5b02f5d6-ab9d-4c6e-b1ac-b8fc72a84be7
-email                | mallory+1790811392658@example.test
+id                   | 4d081eef-77be-4904-8da4-c8af9c99f4fb
+email                | mallory+1790818262665@example.test
 password_hash_prefix | $2b$12$…
 google_id            | 
 display_name         | Mallory
@@ -38,29 +41,150 @@ verification_ref     |
 legal_name           | 
 dob                  | 
 payout_details       | 
-created_at           | 2026-09-30 19:36:36.578392-04
+created_at           | 2026-09-30 21:31:07.046031-04
+-[ RECORD 3 ]--------+-------------------------------------
+id                   | 497eb427-7ed8-4419-8a2d-06805c07431c
+email                | logout+1790818262665@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User logout
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 21:31:11.13324-04
+-[ RECORD 4 ]--------+-------------------------------------
+id                   | 5637428e-39e6-4b9b-a9a4-2c145db006e8
+email                | race+1790818262665@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User race
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 21:31:11.846338-04
+-[ RECORD 5 ]--------+-------------------------------------
+id                   | d844ce26-26f0-4e39-873b-28e4da5832c3
+email                | sizecap+1790818262665@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User sizecap
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 21:31:12.349892-04
+-[ RECORD 6 ]--------+-------------------------------------
+id                   | dd8718a0-dab0-4ccc-ae88-7345e7f2387c
+email                | multi+1790818262665@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User multi
+verification_status  | verified
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 21:31:12.939631-04
+-[ RECORD 7 ]--------+-------------------------------------
+id                   | 4b9c2495-d6b2-4d2d-9798-5df5f4b76b59
+email                | pw29rkfr+1790818262665@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | Pw Test
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 21:31:16.894465-04
+-[ RECORD 8 ]--------+-------------------------------------
+id                   | 0305cb16-6c7c-47e2-bb0f-7d659c219da8
+email                | reset+1790818262665@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User reset
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 21:31:31.639079-04
+-[ RECORD 9 ]--------+-------------------------------------
+id                   | ad1e1bc5-d2e2-462a-91e0-93af3f088c7e
+email                | race2+1790818262665@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User race2
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 21:31:34.528752-04
+-[ RECORD 10 ]-------+-------------------------------------
+id                   | f747b11c-c9e8-447e-b2c1-94034055377f
+email                | capmail+1790818262665@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User capmail
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-09-30 21:31:36.112904-04
 
 ### drops
                   id                  |              seller_id               | public_link_id |   title    | price_cents |  status   |                                            attestation                                            
 --------------------------------------+--------------------------------------+----------------+------------+-------------+-----------+---------------------------------------------------------------------------------------------------
- b213933c-7383-4ab1-9b74-b9a9b26d6b15 | fbecc16a-811d-4b2f-960f-bc758f862e50 | y226WjwnXz02   | Sunset set |        1500 | published | {"at": "2026-09-30T23:36:40.233Z", "over18": true, "ownsRights": true, "consentOfSubjects": true}
-(1 row)
+ 65244723-7185-47ce-88a5-9ee49edfe29d | f9ae12ab-67cf-4dd3-a89e-6aa5d42fd53b | vvDSfX8CPyTz   | Sunset set |        1500 | published | {"at": "2026-10-01T01:31:10.752Z", "over18": true, "ownsRights": true, "consentOfSubjects": true}
+ 7d5bea9b-76d8-43be-974d-79dac0d18731 | 5637428e-39e6-4b9b-a9a4-2c145db006e8 | E4UH3t9uk1e3   | race       |         500 | draft     | 
+ 3817a567-9c6b-4eb6-9bd5-b754e6390d52 | d844ce26-26f0-4e39-873b-28e4da5832c3 | lCqxS7ldg8T9   | cap        |         500 | draft     | 
+ e9436acf-2401-4817-92d6-0fde43d4ed7a | d844ce26-26f0-4e39-873b-28e4da5832c3 | Mz9A2e48HKBu   | cap        |         500 | draft     | 
+ 9c1c9644-105e-4c6e-91d8-7a6006d053d1 | dd8718a0-dab0-4ccc-ae88-7345e7f2387c | MdJg_PIsO2Sb   | Trio       |         700 | published | {"at": "2026-10-01T01:31:13.031Z", "over18": true, "ownsRights": true, "consentOfSubjects": true}
+(5 rows)
 
 ### drop_files
                   id                  |               drop_id                |                                       storage_key                                       |  filename  |    mime    | size_bytes |                                  blurred_preview_key                                   | sort_order 
 --------------------------------------+--------------------------------------+-----------------------------------------------------------------------------------------+------------+------------+------------+----------------------------------------------------------------------------------------+------------
- ce600ea4-3c2b-4492-b64d-5751b1dafee9 | b213933c-7383-4ab1-9b74-b9a9b26d6b15 | originals/b213933c-7383-4ab1-9b74-b9a9b26d6b15/ce600ea4-3c2b-4492-b64d-5751b1dafee9.jpg | sunset.jpg | image/jpeg |     600078 | previews/b213933c-7383-4ab1-9b74-b9a9b26d6b15/ce600ea4-3c2b-4492-b64d-5751b1dafee9.jpg |          0
-(1 row)
+ 9a34f400-1181-40e8-af66-99878a8056c3 | 65244723-7185-47ce-88a5-9ee49edfe29d | originals/65244723-7185-47ce-88a5-9ee49edfe29d/9a34f400-1181-40e8-af66-99878a8056c3.jpg | sunset.jpg | image/jpeg |     600078 | previews/65244723-7185-47ce-88a5-9ee49edfe29d/9a34f400-1181-40e8-af66-99878a8056c3.jpg |          0
+ 9b8381ee-6110-475c-831f-6c958ee5e0d6 | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/9b8381ee-6110-475c-831f-6c958ee5e0d6.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/9b8381ee-6110-475c-831f-6c958ee5e0d6.jpg |          0
+ 3c1f8f1b-1f97-4dd3-b153-757f84a93f0e | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/3c1f8f1b-1f97-4dd3-b153-757f84a93f0e.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/3c1f8f1b-1f97-4dd3-b153-757f84a93f0e.jpg |          1
+ 7f182984-719f-4ad1-8c0e-4349ee8b1df3 | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/7f182984-719f-4ad1-8c0e-4349ee8b1df3.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/7f182984-719f-4ad1-8c0e-4349ee8b1df3.jpg |          2
+ bdba1b0d-8ab5-4055-8133-ec2d6ff680eb | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/bdba1b0d-8ab5-4055-8133-ec2d6ff680eb.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/bdba1b0d-8ab5-4055-8133-ec2d6ff680eb.jpg |          3
+ 5cb15beb-9e40-469b-bf14-b06229ddb4e2 | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/5cb15beb-9e40-469b-bf14-b06229ddb4e2.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/5cb15beb-9e40-469b-bf14-b06229ddb4e2.jpg |          4
+ 9d0ad967-a248-4086-baf3-6df6512a7866 | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/9d0ad967-a248-4086-baf3-6df6512a7866.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/9d0ad967-a248-4086-baf3-6df6512a7866.jpg |          5
+ 9625dae8-d8ba-42c2-9aaa-6a3b497b5d06 | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/9625dae8-d8ba-42c2-9aaa-6a3b497b5d06.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/9625dae8-d8ba-42c2-9aaa-6a3b497b5d06.jpg |          6
+ 60a48174-b365-45cf-b21c-3f62e6efe520 | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/60a48174-b365-45cf-b21c-3f62e6efe520.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/60a48174-b365-45cf-b21c-3f62e6efe520.jpg |          7
+ 10e8848e-89a7-40a9-ae00-ab7601430008 | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/10e8848e-89a7-40a9-ae00-ab7601430008.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/10e8848e-89a7-40a9-ae00-ab7601430008.jpg |          8
+ 2465ec20-f199-477a-aa7a-e5932880d2eb | 7d5bea9b-76d8-43be-974d-79dac0d18731 | originals/7d5bea9b-76d8-43be-974d-79dac0d18731/2465ec20-f199-477a-aa7a-e5932880d2eb.png | t.png      | image/png  |        174 | previews/7d5bea9b-76d8-43be-974d-79dac0d18731/2465ec20-f199-477a-aa7a-e5932880d2eb.jpg |          9
+ 8c172460-ed80-4071-92ed-10b536ea92ff | 3817a567-9c6b-4eb6-9bd5-b754e6390d52 | originals/3817a567-9c6b-4eb6-9bd5-b754e6390d52/8c172460-ed80-4071-92ed-10b536ea92ff.png | t.png      | image/png  |        237 | previews/3817a567-9c6b-4eb6-9bd5-b754e6390d52/8c172460-ed80-4071-92ed-10b536ea92ff.jpg |          0
+ 9df031fa-17aa-43ec-9002-7d156835c618 | 3817a567-9c6b-4eb6-9bd5-b754e6390d52 | originals/3817a567-9c6b-4eb6-9bd5-b754e6390d52/9df031fa-17aa-43ec-9002-7d156835c618.png | t.png      | image/png  |        237 | previews/3817a567-9c6b-4eb6-9bd5-b754e6390d52/9df031fa-17aa-43ec-9002-7d156835c618.jpg |          1
+ 98f1535b-b237-4640-9b5b-b0456ad58511 | 3817a567-9c6b-4eb6-9bd5-b754e6390d52 | originals/3817a567-9c6b-4eb6-9bd5-b754e6390d52/98f1535b-b237-4640-9b5b-b0456ad58511.png | t.png      | image/png  |        237 | previews/3817a567-9c6b-4eb6-9bd5-b754e6390d52/98f1535b-b237-4640-9b5b-b0456ad58511.jpg |          2
+ 369161d5-400b-4441-8b90-a39a549ae7d2 | e9436acf-2401-4817-92d6-0fde43d4ed7a | originals/e9436acf-2401-4817-92d6-0fde43d4ed7a/369161d5-400b-4441-8b90-a39a549ae7d2.png | t.png      | image/png  |        237 | previews/e9436acf-2401-4817-92d6-0fde43d4ed7a/369161d5-400b-4441-8b90-a39a549ae7d2.jpg |          0
+ 511071b9-0abb-4c10-b835-0a06d4318c3e | e9436acf-2401-4817-92d6-0fde43d4ed7a | originals/e9436acf-2401-4817-92d6-0fde43d4ed7a/511071b9-0abb-4c10-b835-0a06d4318c3e.png | t.png      | image/png  |        237 | previews/e9436acf-2401-4817-92d6-0fde43d4ed7a/511071b9-0abb-4c10-b835-0a06d4318c3e.jpg |          1
+ 63b8c4af-e30c-4ebc-9cdb-e78c05ddedf1 | e9436acf-2401-4817-92d6-0fde43d4ed7a | originals/e9436acf-2401-4817-92d6-0fde43d4ed7a/63b8c4af-e30c-4ebc-9cdb-e78c05ddedf1.png | t.png      | image/png  |        237 | previews/e9436acf-2401-4817-92d6-0fde43d4ed7a/63b8c4af-e30c-4ebc-9cdb-e78c05ddedf1.jpg |          2
+ d11608dc-be60-4f3e-824d-6ace1b28420f | 9c1c9644-105e-4c6e-91d8-7a6006d053d1 | originals/9c1c9644-105e-4c6e-91d8-7a6006d053d1/d11608dc-be60-4f3e-824d-6ace1b28420f.png | t.png      | image/png  |        169 | previews/9c1c9644-105e-4c6e-91d8-7a6006d053d1/d11608dc-be60-4f3e-824d-6ace1b28420f.jpg |          0
+ 72eef205-9ccd-45a9-935e-fea19e6bcb54 | 9c1c9644-105e-4c6e-91d8-7a6006d053d1 | originals/9c1c9644-105e-4c6e-91d8-7a6006d053d1/72eef205-9ccd-45a9-935e-fea19e6bcb54.png | t.png      | image/png  |        169 | previews/9c1c9644-105e-4c6e-91d8-7a6006d053d1/72eef205-9ccd-45a9-935e-fea19e6bcb54.jpg |          1
+ bc60ee72-7338-4c39-b629-e44d8e1d4900 | 9c1c9644-105e-4c6e-91d8-7a6006d053d1 | originals/9c1c9644-105e-4c6e-91d8-7a6006d053d1/bc60ee72-7338-4c39-b629-e44d8e1d4900.png | t.png      | image/png  |        169 | previews/9c1c9644-105e-4c6e-91d8-7a6006d053d1/bc60ee72-7338-4c39-b629-e44d8e1d4900.jpg |          2
+(20 rows)
 
 ### platform_settings
--[ RECORD 1 ]--------+----------------------------------
-id                   | 1
-fee_percent          | 10.00
-price_min_cents      | 100
-price_max_cents      | 50000
-max_image_size_bytes | 15728640
-max_video_size_bytes | 524288000
-max_files_per_drop   | 20
-allowed_image_mimes  | {image/jpeg,image/png,image/webp}
-updated_at           | 2026-09-30 19:36:18.111053-04
+-[ RECORD 1 ]------------+----------------------------------
+id                       | 1
+fee_percent              | 10.00
+price_min_cents          | 100
+price_max_cents          | 50000
+max_image_size_bytes     | 15728640
+max_video_size_bytes     | 524288000
+max_files_per_drop       | 10
+allowed_image_mimes      | {image/jpeg,image/png,image/webp}
+updated_at               | 2026-09-30 21:30:51.544551-04
+max_total_bytes_per_drop | 2147483648
+download_ttl_seconds     | 
 

@@ -8,3 +8,5 @@ storage-data
 next-env.d.ts
 .e2e
 .next-e2e
+.next-*
+.dev-mail

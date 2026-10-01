@@ -5,14 +5,20 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a; [ -f .env ] && . ./.env; set +a
 
+# Default 3100; if something else already listens there (e.g. a stale server from an earlier run, which would make the
+# suite test the WRONG code), fall back to the next free port instead of silently talking to it.
 PORT="${E2E_PORT:-3100}"
+if [ -z "${E2E_PORT:-}" ]; then
+  while (exec 3<>/dev/tcp/127.0.0.1/"$PORT") 2>/dev/null; do PORT=$((PORT+1)); done
+fi
 BASE_DB="${DATABASE_URL:?DATABASE_URL must be set (.env)}"
 export E2E_DATABASE_URL="${E2E_DATABASE_URL:-$(echo "$BASE_DB" | sed -E 's#/[^/?]+(\?.*)?$#/unveil_e2e\1#')}"
 export E2E_STORAGE_DIR="$PWD/.e2e/storage"
 export E2E_BASE_URL="http://localhost:$PORT"
 export NEXT_DIST_DIR=".next-e2e"
+export E2E_MAIL_DIR="$PWD/.e2e/mail"
 mkdir -p .e2e proof
-rm -rf "$E2E_STORAGE_DIR"
+rm -rf "$E2E_STORAGE_DIR" "$E2E_MAIL_DIR"
 
 echo "== resetting e2e database"
 npx tsx scripts/e2e-setup.ts
@@ -20,11 +26,17 @@ npx tsx scripts/e2e-setup.ts
 echo "== building app"
 DATABASE_URL="$E2E_DATABASE_URL" STORAGE_LOCAL_DIR="$E2E_STORAGE_DIR" APP_URL="$E2E_BASE_URL" npx next build > .e2e/build.log 2>&1 || { tail -40 .e2e/build.log; exit 1; }
 
+if (exec 3<>/dev/tcp/127.0.0.1/"$PORT") 2>/dev/null; then
+  echo "port $PORT is already in use (a stale server would make the e2e run test the wrong code). Stop it or set E2E_PORT." >&2
+  exit 1
+fi
 echo "== starting app on :$PORT"
 DATABASE_URL="$E2E_DATABASE_URL" STORAGE_DRIVER=local STORAGE_LOCAL_DIR="$E2E_STORAGE_DIR" APP_URL="$E2E_BASE_URL" \
-  NODE_ENV=production npx next start -p "$PORT" > .e2e/server.log 2>&1 &
+  MAIL_TRANSPORT=file MAIL_DEV_DIR="$E2E_MAIL_DIR" RATE_LIMIT_CHECKOUT="3/60" \
+  NODE_ENV=production setsid npx next start -p "$PORT" > .e2e/server.log 2>&1 &
 SERVER_PID=$!
-trap 'kill $SERVER_PID 2>/dev/null || true; wait $SERVER_PID 2>/dev/null || true' EXIT
+# setsid => own process group; kill the whole group so no orphaned next-server keeps the port (it used to leak).
+trap 'kill -- -$SERVER_PID 2>/dev/null || kill $SERVER_PID 2>/dev/null || true; wait $SERVER_PID 2>/dev/null || true' EXIT
 for i in $(seq 1 60); do
   curl -fs "$E2E_BASE_URL/api/settings" >/dev/null 2>&1 && break
   kill -0 $SERVER_PID 2>/dev/null || { echo "server died"; tail -30 .e2e/server.log; exit 1; }
@@ -32,7 +44,7 @@ for i in $(seq 1 60); do
 done
 
 set +e
-DATABASE_URL="$E2E_DATABASE_URL" STORAGE_LOCAL_DIR="$E2E_STORAGE_DIR" APP_URL="$E2E_BASE_URL" npx tsx scripts/e2e.ts
+DATABASE_URL="$E2E_DATABASE_URL" STORAGE_LOCAL_DIR="$E2E_STORAGE_DIR" APP_URL="$E2E_BASE_URL" MAIL_DEV_DIR="$E2E_MAIL_DIR" npx tsx scripts/e2e.ts
 RC=$?
 set -e
 

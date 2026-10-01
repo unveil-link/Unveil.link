@@ -7,6 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import { Client } from "pg";
+import { SignJWT } from "jose";
 import { signOriginalUrl } from "../src/server/services/signing";
 
 const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3100";
@@ -35,10 +36,13 @@ function eq<T>(a: T, b: T, what: string) {
 }
 
 // ---------- http client with cookie jar ----------
+let ipCounter = 0;
 class Client_ {
   cookies = new Map<string, string>();
+  /** Every client gets its own (fake) client IP so rate-limit state never bleeds between checks. */
+  ip = `10.99.${Math.floor(++ipCounter / 250)}.${(ipCounter % 250) + 1}`;
   async req(method: string, url: string, init: { json?: unknown; form?: FormData; headers?: Record<string, string> } = {}) {
-    const headers: Record<string, string> = { ...(init.headers ?? {}) };
+    const headers: Record<string, string> = { "x-forwarded-for": this.ip, ...(init.headers ?? {}) };
     let body: BodyInit | undefined;
     if (init.json !== undefined) {
       headers["content-type"] = "application/json";
@@ -183,7 +187,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     eq((await bad.req("GET", "/api/auth/me")).status, 401, "alg none");
   });
 
-  await check("logout clears session; login with wrong password = 401; correct = 200", async () => {
+  await check("logout clears the cookie; login with wrong password = 401; correct = 200", async () => {
     const c = new Client_();
     eq((await c.req("POST", "/api/auth/login", { json: { email, password: "wrong-password" } })).status, 401, "wrong pw");
     eq((await c.req("POST", "/api/auth/login", { json: { email: "nobody@example.test", password } })).status, 401, "unknown user");
@@ -418,7 +422,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     eq((await r.json()).code, "verification_required", "code");
     const st = (await db.query("SELECT status FROM drops WHERE id=$1", [dropId])).rows[0].status;
     eq(st, "draft", "DB drop status");
-    eq((await anon.req("GET", `/d/${publicLinkId}`)).status, 404, "public page hidden");
+    eq((await anon.req("GET", `/u/${publicLinkId}`)).status, 404, "public page hidden");
     eq((await anon.req("GET", `/api/public/drops/${publicLinkId}`)).status, 404, "public API hidden");
     eq((await anon.req("GET", `/api/files/${fileId}/preview`)).status, 404, "preview hidden");
     for (const s of ["failed", "manual_review"]) {
@@ -439,7 +443,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     eq(pub.status, 200, "public API");
     const txt = await pub.text();
     assert(!txt.includes(storageKey) && !txt.includes("original") && !txt.includes("storage_key"), "public API leaks no original key/URL");
-    const page = await (await anon.req("GET", `/d/${publicLinkId}`)).text();
+    const page = await (await anon.req("GET", `/u/${publicLinkId}`)).text();
     assert(page.includes(`/api/files/${fileId}/preview`), "public page references preview");
     assert(!page.includes("/original") && !page.includes(storageKey), "public page never references originals");
     const pr = await anon.req("GET", `/api/files/${fileId}/preview`);
@@ -456,6 +460,417 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const s = (await db.query("SELECT verification_status FROM sellers WHERE email=$1", [email])).rows[0];
     eq(s.verification_status, "pending", "seller row");
     return `tables: ${t.filter((x) => x !== "schema_migrations").sort().join(", ")}`;
+  });
+
+
+  // =====================================================================================
+  // backend/fixes-1 regression checks
+  // =====================================================================================
+  const MAIL_DIR = path.resolve(process.env.MAIL_DEV_DIR ?? ".e2e/mail");
+  const stripComments = (h: string) => h.replace(/<!-- -->/g, "");
+  const att = { over18: true, ownsRights: true, consentOfSubjects: true };
+  const tinyPng = (rgb: string, size = 48) => sharp({ create: { width: size, height: size, channels: 3, background: rgb } }).png().toBuffer();
+  const uploadForm = (buf: Buffer, name = "t.png") => { const f = new FormData(); f.append("file", new Blob([new Uint8Array(buf)], { type: "image/png" }), name); return f; };
+  const signupClient = async (label: string, pw = password) => {
+    const c = new Client_();
+    const em = `${label}+${stamp}@example.test`;
+    const r = await c.req("POST", "/api/auth/signup", { json: { email: em, password: pw, displayName: `User ${label}` } });
+    eq(r.status, 201, `signup ${label} (${r.status})`);
+    return { c, email: em };
+  };
+  const readMails = (to: string) =>
+    fs.existsSync(MAIL_DIR)
+      ? fs.readdirSync(MAIL_DIR).filter((f) => f.endsWith(".json")).sort()
+          .map((f) => JSON.parse(fs.readFileSync(path.join(MAIL_DIR, f), "utf8")) as { to: string; subject: string; text: string })
+          .filter((m) => m.to === to)
+      : [];
+  const waitForMails = async (to: string, n: number, ms = 8000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) { const m = readMails(to); if (m.length >= n) return m; await new Promise((r) => setTimeout(r, 150)); }
+    throw new Error(`expected ${n} mail(s) to ${to}, found ${readMails(to).length}`);
+  };
+  const tokenFrom = (m: { text: string }) => m.text.match(/reset-password\?token=([A-Za-z0-9_-]+)/)![1];
+
+  // ---- #1 M1-04 server-side logout ----
+  await check("[#1 M1-04] logout revokes the session server-side: captured cookie replayed after logout -> 401", async () => {
+    const { c, email: em } = await signupClient("logout");
+    const captured = c.cookies.get("unveil_session")!;
+    eq((await c.req("GET", "/api/auth/me")).status, 200, "me before logout");
+    // a second device (own login) must survive this logout
+    const other = new Client_();
+    eq((await other.req("POST", "/api/auth/login", { json: { email: em, password } })).status, 200, "second login");
+    eq((await c.req("POST", "/api/auth/logout")).status, 200, "logout");
+    const replay = new Client_();
+    replay.cookies.set("unveil_session", captured);
+    eq((await replay.req("GET", "/api/auth/me")).status, 401, "replayed old cookie after logout");
+    eq((await replay.req("GET", "/api/drops")).status, 401, "replayed cookie on another authed endpoint");
+    eq((await other.req("GET", "/api/auth/me")).status, 200, "other session still valid");
+    const sid = JSON.parse(Buffer.from(captured.split(".")[1], "base64url").toString()).jti;
+    const row = (await db.query("SELECT revoked_at FROM sessions WHERE id=$1", [sid])).rows[0];
+    assert(row?.revoked_at, "sessions.revoked_at set in DB");
+    // validly signed tokens that are not backed by a live sessions row are refused
+    const key = new TextEncoder().encode(process.env.SESSION_SECRET!);
+    const sub = (await db.query("SELECT id FROM sellers WHERE email=$1", [em])).rows[0].id;
+    const nojti = await new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(sub).setIssuedAt().setExpirationTime("1h").sign(key);
+    const fakejti = await new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(sub).setJti(crypto.randomUUID()).setIssuedAt().setExpirationTime("1h").sign(key);
+    for (const t of [nojti, fakejti]) { const x = new Client_(); x.cookies.set("unveil_session", t); eq((await x.req("GET", "/api/auth/me")).status, 401, "forged-but-signed token"); }
+    return "old cookie 401 after logout; other device still 200; no-jti / unknown-jti tokens 401";
+  });
+
+  // ---- #2 M1-08 limits + race ----
+  await check("[#2 M1-08] defaults: 10 files/drop and 2 GB/drop exposed via /api/settings", async () => {
+    const s = await (await anon.req("GET", "/api/settings")).json();
+    eq(s.maxFilesPerDrop, 10, "maxFilesPerDrop");
+    eq(s.maxTotalBytesPerDrop, 2147483648, "maxTotalBytesPerDrop");
+    const ps = (await db.query("SELECT max_files_per_drop, max_total_bytes_per_drop, max_video_size_bytes FROM platform_settings")).rows[0];
+    eq(Number(ps.max_video_size_bytes), 524288000, "video per-file cap unchanged (500 MiB, video later)");
+    return `files=${ps.max_files_per_drop} total=${ps.max_total_bytes_per_drop}`;
+  });
+  await check("[#2 M1-08] 15 PARALLEL uploads to one drop -> exactly 10 succeed (201), 5 rejected (400 too_many_files)", async () => {
+    const { c } = await signupClient("race");
+    const d = (await (await c.req("POST", "/api/drops", { json: { title: "race", priceCents: 500 } })).json()).drop;
+    const buf = await tinyPng("#336699");
+    const rs = await Promise.all(Array.from({ length: 15 }, () => c.req("POST", `/api/drops/${d.id}/files`, { form: uploadForm(buf) })));
+    const codes = rs.map((r) => r.status);
+    const ok = codes.filter((x) => x === 201).length;
+    const bodies = await Promise.all(rs.filter((r) => r.status !== 201).map((r) => r.json()));
+    eq(ok, 10, `201 count (codes: ${codes.join(",")})`);
+    assert(bodies.every((b) => b.code === "too_many_files"), "rejections are too_many_files");
+    eq(Number((await db.query("SELECT count(*) FROM drop_files WHERE drop_id=$1", [d.id])).rows[0].count), 10, "rows in DB");
+    const leftovers = walk(path.join(STORAGE_DIR, "originals", d.id)).length;
+    eq(leftovers, 10, "no orphaned original files in storage for rejected uploads");
+    return `${ok}/15 accepted, DB rows=10, storage files=${leftovers}`;
+  });
+  await check("[#2 M1-08] per-drop total-size cap: sequential and parallel (setting lowered; 2 GB logic unit-tested separately)", async () => {
+    const { c } = await signupClient("sizecap");
+    const buf = await tinyPng("#aa5522", 64);
+    const mk = async () => (await (await c.req("POST", "/api/drops", { json: { title: "cap", priceCents: 500 } })).json()).drop.id as string;
+    try {
+      await db.query("UPDATE platform_settings SET max_total_bytes_per_drop = $1 WHERE id=1", [buf.length * 3 + 10]);
+      const a = await mk();
+      const seq: number[] = [];
+      for (let i = 0; i < 4; i++) seq.push((await c.req("POST", `/api/drops/${a}/files`, { form: uploadForm(buf) })).status);
+      eq(seq.join(","), "201,201,201,413", "sequential statuses");
+      const last = await c.req("POST", `/api/drops/${a}/files`, { form: uploadForm(buf) });
+      eq((await last.json()).code, "drop_too_large", "error code");
+      const b = await mk();
+      const par = await Promise.all(Array.from({ length: 8 }, () => c.req("POST", `/api/drops/${b}/files`, { form: uploadForm(buf) })));
+      eq(par.filter((r) => r.status === 201).length, 3, `parallel accepted (${par.map((r) => r.status).join(",")})`);
+      const tot = Number((await db.query("SELECT COALESCE(sum(size_bytes),0) t FROM drop_files WHERE drop_id=$1", [b])).rows[0].t);
+      assert(tot <= buf.length * 3 + 10, "stored total within cap");
+    } finally {
+      await db.query("UPDATE platform_settings SET max_total_bytes_per_drop = 2147483648 WHERE id=1");
+    }
+  });
+
+  // ---- #3/#4/#5 public page ----
+  let p2Link = "";
+  await check("[#3 M2-04] publish returns /u/<id>; /u/<id> serves the page; /d/<id> 308-redirects to /u/<id>", async () => {
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [email]);
+    const r = await alice.req("POST", `/api/drops/${dropId}/publish`, { json: { attestation: att } });
+    eq(r.status, 200, "publish");
+    const j = await r.json();
+    eq(j.url, `/u/${publicLinkId}`, "url field");
+    eq((await anon.req("GET", `/u/${publicLinkId}`)).status, 200, "/u/ page");
+    const old = await anon.req("GET", `/d/${publicLinkId}`);
+    eq(old.status, 308, "/d/ status");
+    assert((old.headers.get("location") ?? "").endsWith(`/u/${publicLinkId}`), `location ${old.headers.get("location")}`);
+    const pub = await (await anon.req("GET", `/api/public/drops/${publicLinkId}`)).json();
+    eq(pub.drop.url, `/u/${publicLinkId}`, "public API url");
+    const dash = stripComments(await (await alice.req("GET", `/dashboard/drops/${dropId}`)).text());
+    assert(dash.includes(`href="/u/${publicLinkId}"`) && !dash.includes(`href="/d/`), "dashboard links use /u/");
+  });
+  await check("[#4 M2-07] public page + API show seller name, file count/types, title, price, blurred previews; no originals", async () => {
+    const html = stripComments(await (await anon.req("GET", `/u/${publicLinkId}`)).text());
+    assert(html.includes("Sunset set"), "title");
+    assert(html.includes("E2E Seller"), "seller display name");
+    assert(html.includes("1 file: 1 image"), "file count + types");
+    assert(html.includes("$15.00"), "price");
+    assert(html.includes(`/api/files/${fileId}/preview`), "blurred preview img");
+    assert(!html.includes("/original") && !html.includes(storageKey), "no original references");
+    const api = await (await anon.req("GET", `/api/public/drops/${publicLinkId}`)).json();
+    eq(api.seller.displayName, "E2E Seller", "api seller.displayName");
+    eq(api.summary.fileCount, 1, "api fileCount");
+    eq(api.summary.imageCount, 1, "api imageCount");
+    eq(api.summary.label, "1 file: 1 image", "api label");
+    eq(api.drop.priceCents, 1500, "api price");
+    assert(!JSON.stringify(api).includes("original") && !JSON.stringify(api).includes(storageKey) && !JSON.stringify(api).includes("storage_key"), "api leaks no originals");
+    // multi-file wording on a real drop: 3 images
+    const { c } = await signupClient("multi");
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [`multi+${stamp}@example.test`]);
+    const d = (await (await c.req("POST", "/api/drops", { json: { title: "Trio", priceCents: 700 } })).json()).drop;
+    const b = await tinyPng("#00aa00");
+    for (let i = 0; i < 3; i++) eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: uploadForm(b) })).status, 201, "upload");
+    eq((await c.req("POST", `/api/drops/${d.id}/publish`, { json: { attestation: att } })).status, 200, "publish");
+    p2Link = d.public_link_id;
+    const h2 = stripComments(await (await anon.req("GET", `/u/${p2Link}`)).text());
+    assert(h2.includes("3 files: 3 images"), "3 files wording");
+    return "page: title, 'by E2E Seller', '1 file: 1 image', $15.00; 3-file drop shows '3 files: 3 images'";
+  });
+  await check("[#5 M2-09] noindex: meta robots + X-Robots-Tag on link page / public API / previews; robots.txt disallows /u/", async () => {
+    const r = await anon.req("GET", `/u/${publicLinkId}`);
+    eq(r.headers.get("x-robots-tag"), "noindex, nofollow", "X-Robots-Tag on page");
+    const html = await r.text();
+    assert(/<meta name="robots" content="noindex, ?nofollow[^"]*"/.test(html), "meta robots noindex,nofollow");
+    eq((await anon.req("GET", `/api/public/drops/${publicLinkId}`)).headers.get("x-robots-tag"), "noindex, nofollow", "public API header");
+    eq((await anon.req("GET", `/api/files/${fileId}/preview`)).headers.get("x-robots-tag"), "noindex, nofollow", "preview header");
+    const rb = await anon.req("GET", "/robots.txt");
+    eq(rb.status, 200, "robots.txt");
+    const txt = await rb.text();
+    assert(/User-Agent: \*/i.test(txt) && /Disallow: \/u\//.test(txt), `robots.txt disallows /u/ (${txt.replace(/\n/g, " | ")})`);
+    eq((await anon.req("GET", "/sitemap.xml")).status, 404, "no sitemap");
+  });
+
+  // ---- #6 security headers ----
+  await check("[#6 M6-02] security headers on pages, API and files; no X-Powered-By", async () => {
+    for (const u of ["/", "/login", `/u/${publicLinkId}`, "/api/settings", `/api/files/${fileId}/preview`, "/api/auth/me", "/robots.txt"]) {
+      const r = await anon.req("GET", u);
+      const h = (n: string) => r.headers.get(n) ?? "";
+      const csp = h("content-security-policy");
+      assert(/default-src 'self'/.test(csp) && /frame-ancestors 'none'/.test(csp) && /object-src 'none'/.test(csp) && /base-uri 'self'/.test(csp), `${u} CSP: ${csp}`);
+      assert(/max-age=\d{7,}/.test(h("strict-transport-security")), `${u} HSTS`);
+      eq(h("x-content-type-options"), "nosniff", `${u} nosniff`);
+      eq(h("x-frame-options"), "DENY", `${u} XFO`);
+      assert(h("referrer-policy") !== "", `${u} Referrer-Policy`);
+      assert(/camera=\(\)/.test(h("permissions-policy")), `${u} Permissions-Policy`);
+      assert(r.headers.get("x-powered-by") === null, `${u} X-Powered-By absent`);
+    }
+    const page = await anon.req("GET", "/");
+    return "CSP, HSTS, nosniff, XFO DENY, Referrer-Policy, Permissions-Policy present; X-Powered-By absent (" + page.headers.get("referrer-policy") + ")";
+  });
+  await check("[#6 M6-02] CSP does not break the app: pages still serve inline bootstrap scripts (browser-less check: policy allows 'unsafe-inline' scripts)", async () => {
+    const r = await anon.req("GET", "/login");
+    const csp = r.headers.get("content-security-policy")!;
+    const html = await r.text();
+    const inline = /<script(?![^>]*\bsrc=)[^>]*>/.test(html);
+    assert(!inline || /script-src[^;]*'unsafe-inline'/.test(csp), "inline scripts present but not permitted by CSP");
+    assert(!/script-src[^;]*\*|https?:\/\//.test(csp.split(";").find((d) => d.trim().startsWith("script-src")) ?? ""), "no third-party script origins");
+  });
+
+  // ---- #7 Origin handling ----
+  await check("[#7] bad / foreign / malformed Origin on mutating requests -> 403 JSON (never 500); same-origin still works", async () => {
+    const c = new Client_();
+    for (const o of ["null", "garbage", "http://evil.example", "https://evil.example:3100", "javascript:alert(1)", "://", " ", "http://localhost:3100.evil.example", "file:///etc/passwd"]) {
+      for (const m of ["POST"]) {
+        const r = await c.req(m, "/api/auth/logout", { headers: { origin: o } });
+        assert(r.status === 403, `${m} Origin=${JSON.stringify(o)} -> ${r.status}`);
+        const j = await r.json();
+        assert(j.code === "bad_origin" && typeof j.error === "string", `JSON error body for ${o}`);
+        assert(/application\/json/.test(r.headers.get("content-type") ?? ""), "content-type json");
+      }
+    }
+    eq((await c.req("POST", "/api/auth/login", { json: { email: "nobody@example.test", password: "whatever-whatever" }, headers: { origin: BASE } })).status, 401, "same-origin Origin allowed");
+    eq((await c.req("POST", "/api/auth/login", { json: { email: "nobody@example.test", password: "whatever-whatever" } })).status, 401, "no Origin allowed (non-browser client)");
+    const srv = fs.readFileSync(".e2e/server.log", "utf8");
+    assert(!/Invalid URL/.test(srv), "no 'Invalid URL' errors in server log");
+  });
+
+  // ---- #8 download TTL ----
+  await check("[#8] signed URL default TTL = 24 h; platform_settings.download_ttl_seconds overrides; explicit short TTL still expires (410)", async () => {
+    const left = async () => { const j = await (await alice.req("POST", `/api/files/${fileId}/signed-url`)).json(); return (Date.parse(j.expiresAt) - Date.now()) / 1000; };
+    const d = await left();
+    assert(d > 86400 - 30 && d <= 86400 + 5, `default TTL ${d}s ≈ 86400`);
+    try {
+      await db.query("UPDATE platform_settings SET download_ttl_seconds = 120 WHERE id=1");
+      const o = await left();
+      assert(o > 90 && o <= 125, `override TTL ${o}s ≈ 120`);
+    } finally { await db.query("UPDATE platform_settings SET download_ttl_seconds = NULL WHERE id=1"); }
+    const short = signOriginalUrl(fileId, 1);
+    await new Promise((r) => setTimeout(r, 2500));
+    eq((await anon.req("GET", short.path)).status, 410, "expired short-TTL link");
+    return `default ${Math.round(d)}s, override 120s ok`;
+  });
+
+  // ---- #9 password policy ----
+  await check("[#9 M1-03] password policy: blocklist, email/local-part, repeated/sequential, length >= 10; clear messages; good password accepted", async () => {
+    const tryPw = async (pw: string, em = `pw${Math.random().toString(36).slice(2, 8)}+${stamp}@example.test`) => {
+      const r = await new Client_().req("POST", "/api/auth/signup", { json: { email: em, password: pw, displayName: "Pw Test" } });
+      return { status: r.status, body: await r.json() };
+    };
+    const bad: [string, string?][] = [["short1!"], ["123456789"], ["password123"], ["password1234"], ["qwertyuiop"], ["letmein123"], ["iloveyou12"], ["sunshine2024!"], ["Password123"], ["1234567890"], ["aaaaaaaaaaaa"], ["abababababab"], ["abcdefghijkl"], ["9876543210"], ["monkeymonkey"]];
+    for (const [pw] of bad) {
+      const r = await tryPw(pw);
+      assert(r.status === 400 && r.body.code !== undefined && /password|Password/.test(r.body.error), `"${pw}" -> ${r.status} ${JSON.stringify(r.body)}`);
+    }
+    const em = `jane.doe${stamp}@example.test`;
+    let r = await tryPw(em, em);
+    assert(r.status === 400 && /email/i.test(r.body.error), `password == email -> ${JSON.stringify(r.body)}`);
+    r = await tryPw(`jane.doe${stamp}`, em);
+    assert(r.status === 400 && /email/i.test(r.body.error), `password == local-part -> ${JSON.stringify(r.body)}`);
+    const msg = (await tryPw("password123")).body.error as string;
+    assert(msg.length > 15, "message is human readable: " + msg);
+    r = await tryPw("correct-horse-battery-staple");
+    eq(r.status, 201, `strong passphrase accepted (${JSON.stringify(r.body)})`);
+    return `${bad.length} weak passwords + email/local-part rejected; e.g. "${msg}"`;
+  });
+
+  // ---- #10 attestation ----
+  await check("[#10 M2-05] re-publishing keeps the FIRST attestation timestamp; re-attestations are appended to attestation_history", async () => {
+    const q = async () => (await db.query("SELECT attested_at, attestation, attestation_history, last_republished_at, status FROM drops WHERE id=$1", [dropId])).rows[0];
+    const a0 = await q();   // published once by the [#3] check
+    assert(a0.attested_at, "attested_at set on first publish");
+    eq(new Date(a0.attestation.at).getTime(), new Date(a0.attested_at).getTime(), "attestation.at == attested_at");
+    const h0 = a0.attestation_history.length; // the foundation check above already published once, [#3] re-published once
+    await new Promise((r) => setTimeout(r, 1100));
+    eq((await alice.req("POST", `/api/drops/${dropId}/publish`, { json: { attestation: att } })).status, 200, "publish again");
+    const a1 = await q();
+    eq(new Date(a1.attested_at).getTime(), new Date(a0.attested_at).getTime(), "attested_at unchanged after repeat publish");
+    eq(a1.attestation.at, a0.attestation.at, "attestation.at unchanged");
+    eq(a1.attestation_history.length, h0 + 1, "history grows by one");
+    assert(a1.last_republished_at, "last_republished_at set");
+    eq((await alice.req("POST", `/api/drops/${dropId}/unpublish`)).status, 200, "unpublish");
+    await new Promise((r) => setTimeout(r, 1100));
+    eq((await alice.req("POST", `/api/drops/${dropId}/publish`, { json: { attestation: att } })).status, 200, "republish after unpublish");
+    const a2 = await q();
+    eq(a2.attestation.at, a0.attestation.at, "attestation.at still the original");
+    eq(a2.attestation_history.length, h0 + 2, "history grows again");
+    assert(new Date(a2.attestation_history[h0 + 1].at) > new Date(a2.attestation_history[h0].at), "history ordered");
+    assert(new Date(a2.last_republished_at) > new Date(a0.attested_at), "last_republished_at is later than first attestation");
+    eq(a2.status, "published", "published");
+    await db.query("UPDATE sellers SET verification_status='pending' WHERE email=$1", [email]);
+    return `attested_at=${new Date(a0.attested_at).toISOString()} kept; history entries=${a2.attestation_history.length} (first attestation untouched)`;
+  });
+
+  // ---- #11 rate limiting ----
+  await check("[#11] /api/checkout stub: 501 until the (env-configured 3/60s) limit, then 429 + Retry-After; other IPs unaffected", async () => {
+    const c = new Client_(), other = new Client_();
+    const codes: number[] = [];
+    for (let i = 0; i < 3; i++) codes.push((await c.req("POST", "/api/checkout", { json: { dropId } })).status);
+    eq(codes.join(","), "501,501,501", "first three");
+    const r = await c.req("POST", "/api/checkout", { json: { dropId } });
+    eq(r.status, 429, "4th");
+    const ra = Number(r.headers.get("retry-after"));
+    assert(Number.isInteger(ra) && ra >= 1 && ra <= 60, `Retry-After ${r.headers.get("retry-after")}`);
+    eq((await r.json()).code, "rate_limited", "body code");
+    eq((await other.req("POST", "/api/checkout", { json: { dropId } })).status, 501, "different IP still allowed");
+    return `Retry-After=${ra}`;
+  });
+  await check("[#11] download endpoint (/api/files/:id/original) rate limited per IP: 60 allowed/min then 429 + Retry-After", async () => {
+    const c = new Client_();
+    const rs: Response[] = [];
+    for (let b = 0; b < 7; b++) rs.push(...(await Promise.all(Array.from({ length: 10 }, () => c.req("GET", `/api/files/${fileId}/original?exp=1&sig=x`)))));
+    const n403 = rs.filter((r) => r.status === 403).length, n429 = rs.filter((r) => r.status === 429);
+    eq(n403, 60, `403 count (limit 60/min)`);
+    eq(n429.length, 10, "429 count");
+    assert(Number(n429[0].headers.get("retry-after")) >= 1, "Retry-After present");
+    // a valid signed URL from the same limited IP is also throttled; from another IP it works
+    const good = await alice.req("POST", `/api/files/${fileId}/signed-url`);
+    const p = (await good.json()).path;
+    eq((await c.req("GET", p)).status, 429, "limited IP cannot download even with a valid link");
+    eq((await new Client_().req("GET", p)).status, 200, "fresh IP downloads fine");
+  });
+  await check("[#11] preview, public-link API, signed-url mint, login (per IP + per email), signup are rate limited", async () => {
+    const c = new Client_();
+    const rs: Response[] = [];
+    const ghost = crypto.randomUUID();
+    for (let b = 0; b < 31; b++) rs.push(...(await Promise.all(Array.from({ length: 10 }, () => c.req("GET", `/api/files/${ghost}/preview`)))));
+    eq(rs.filter((r) => r.status === 404).length, 300, "preview 404s up to limit (300/min)");
+    eq(rs.filter((r) => r.status === 429).length, 10, "preview 429s");
+    const c2 = new Client_();
+    const pub: number[] = [];
+    for (let i = 0; i < 122; i++) pub.push((await c2.req("GET", `/api/public/drops/nonexistent01`)).status);
+    eq(pub.filter((s) => s === 429).length, 2, "public API 429s after 120/min");
+    // login: per-email limit holds even when the attacker rotates IPs
+    const victim = `victim+${stamp}@example.test`;
+    const st: number[] = [];
+    for (let i = 0; i < 11; i++) st.push((await new Client_().req("POST", "/api/auth/login", { json: { email: victim, password: "wrong-password-x" } })).status);
+    eq(st.slice(0, 10).every((s) => s === 401) && st[10] === 429, true, `login per-email: ${st.join(",")}`);
+    // login per-IP
+    const c3 = new Client_();
+    const li: number[] = [];
+    for (let i = 0; i < 21; i++) li.push((await c3.req("POST", "/api/auth/login", { json: { email: `u${i}+${stamp}@example.test`, password: "wrong-password-x" } })).status);
+    eq(li[19] === 401 && li[20] === 429, true, `login per-IP: last=${li.slice(-2).join(",")}`);
+    const rl = await c3.req("POST", "/api/auth/login", { json: { email: "a@b.co", password: "x" } });
+    eq(rl.status, 429, "still limited");
+    assert(Number(rl.headers.get("retry-after")) > 0, "login Retry-After");
+    // signup per-IP (weak passwords are rejected before bcrypt, so this is fast)
+    const c4 = new Client_();
+    const su: number[] = [];
+    for (let i = 0; i < 11; i++) su.push((await c4.req("POST", "/api/auth/signup", { json: { email: `s${i}+${stamp}@example.test`, password: "short", displayName: "x" } })).status);
+    eq(su.slice(0, 10).every((s) => s === 400) && su[10] === 429, true, `signup per-IP: ${su.join(",")}`);
+    // signed-url mint
+    const mint: number[] = [];
+    const lim = new Client_();
+    lim.cookies = new Map(alice.cookies);
+    for (let i = 0; i < 61; i++) mint.push((await lim.req("POST", `/api/files/${fileId}/signed-url`)).status);
+    eq(mint[59] === 200 && mint[60] === 429, true, `signed-url mint limited: ${mint[59]},${mint[60]}`);
+  });
+
+  // ---- #12 password reset ----
+  await check("[#12] password reset end-to-end via dev mail transport: no enumeration, hashed single-use token, 1h expiry, all sessions revoked, newest link only", async () => {
+    const { c: b1, email: bem } = await signupClient("reset");
+    const b2 = new Client_();
+    eq((await b2.req("POST", "/api/auth/login", { json: { email: bem, password } })).status, 200, "second session");
+    const before = b1.cookies.get("unveil_session")!;
+    const fc = new Client_();
+    const known = await fc.req("POST", "/api/auth/forgot-password", { json: { email: bem } });
+    const unknownEmail = `ghost+${stamp}@example.test`;
+    const unknown = await fc.req("POST", "/api/auth/forgot-password", { json: { email: unknownEmail } });
+    eq(known.status, 200, "known status"); eq(unknown.status, 200, "unknown status");
+    eq(JSON.stringify(await known.json()), JSON.stringify(await unknown.json()), "identical response bodies (no enumeration)");
+    const mails1 = await waitForMails(bem, 1);
+    await new Promise((r) => setTimeout(r, 800));
+    eq(readMails(unknownEmail).length, 0, "no mail for unknown address");
+    const t1 = tokenFrom(mails1[0]);
+    // second request invalidates the first link
+    await fc.req("POST", "/api/auth/forgot-password", { json: { email: bem } });
+    const mails2 = await waitForMails(bem, 2);
+    const t2 = tokenFrom(mails2[1]);
+    assert(t1 !== t2 && t1.length >= 40, "random distinct tokens");
+    const stored = (await db.query("SELECT t.token_hash, t.expires_at, t.created_at FROM password_reset_tokens t JOIN sellers s ON s.id=t.seller_id WHERE s.email=$1", [bem])).rows;
+    assert(stored.length === 2 && stored.every((r) => r.token_hash !== t1 && r.token_hash !== t2 && /^[0-9a-f]{64}$/.test(r.token_hash)), "only SHA-256 hashes stored");
+    const life = (new Date(stored[0].expires_at).getTime() - new Date(stored[0].created_at).getTime()) / 60000;
+    assert(Math.abs(life - 60) < 1, `token lifetime ${life} min`);
+    const rc = new Client_();
+    eq((await rc.req("POST", "/api/auth/reset-password", { json: { token: t1, password: "a-brand-new-passphrase" } })).status, 400, "older link no longer valid");
+    eq((await rc.req("POST", "/api/auth/reset-password", { json: { token: "x".repeat(43), password: "a-brand-new-passphrase" } })).status, 400, "garbage token");
+    const weak = await rc.req("POST", "/api/auth/reset-password", { json: { token: t2, password: "password123" } });
+    eq(weak.status, 400, "weak new password rejected"); eq((await weak.json()).code, "weak_password", "weak code");
+    const ok = await rc.req("POST", "/api/auth/reset-password", { json: { token: t2, password: "a-brand-new-passphrase" } });
+    eq(ok.status, 200, "reset ok");
+    eq((await b1.req("GET", "/api/auth/me")).status, 401, "session 1 revoked");
+    eq((await b2.req("GET", "/api/auth/me")).status, 401, "session 2 revoked");
+    const old = new Client_(); old.cookies.set("unveil_session", before);
+    eq((await old.req("GET", "/api/auth/me")).status, 401, "captured pre-reset cookie dead");
+    eq((await rc.req("POST", "/api/auth/reset-password", { json: { token: t2, password: "another-new-passphrase" } })).status, 400, "token is single-use");
+    eq((await new Client_().req("POST", "/api/auth/login", { json: { email: bem, password } })).status, 401, "old password rejected");
+    eq((await new Client_().req("POST", "/api/auth/login", { json: { email: bem, password: "a-brand-new-passphrase" } })).status, 200, "new password works");
+    // expiry: third link, force-expire it
+    await fc.req("POST", "/api/auth/forgot-password", { json: { email: bem } });
+    const t3 = tokenFrom((await waitForMails(bem, 3))[2]);
+    await db.query("UPDATE password_reset_tokens SET expires_at = now() - interval '1 second' WHERE token_hash = encode(sha256($1::bytea),'hex')", [t3]);
+    const exp = await rc.req("POST", "/api/auth/reset-password", { json: { token: t3, password: "yet-another-passphrase" } });
+    eq(exp.status, 400, "expired token rejected"); eq((await exp.json()).code, "invalid_token", "expired code");
+    // concurrent use of one fresh token: exactly one wins
+    const e4 = `race2+${stamp}@example.test`;
+    await signupClient("race2");
+    await new Client_().req("POST", "/api/auth/forgot-password", { json: { email: e4 } });
+    const t4 = tokenFrom((await waitForMails(e4, 1))[0]);
+    const par = await Promise.all(Array.from({ length: 4 }, (_, i) => new Client_().req("POST", "/api/auth/reset-password", { json: { token: t4, password: `parallel-passphrase-${i}` } })));
+    eq(par.filter((r) => r.status === 200).length, 1, `exactly one concurrent reset wins (${par.map((r) => r.status).join(",")})`);
+    return "no enumeration; 2 sessions + captured cookie revoked; token hashed, single-use, 60 min, newest-only";
+  });
+  await check("[#12] reset pages render; forgot-password is rate limited (per IP 429, per email silently capped)", async () => {
+    eq((await anon.req("GET", "/forgot-password")).status, 200, "forgot page");
+    eq((await anon.req("GET", "/reset-password?token=abc")).status, 200, "reset page");
+    const login = await (await anon.req("GET", "/login")).text();
+    assert(login.includes("/forgot-password"), "login links to forgot-password");
+    const c = new Client_();
+    const st: number[] = [];
+    for (let i = 0; i < 6; i++) st.push((await c.req("POST", "/api/auth/forgot-password", { json: { email: `nobody${i}+${stamp}@example.test` } })).status);
+    eq(st.slice(0, 5).every((s) => s === 200) && st[5] === 429, true, `forgot per-IP: ${st.join(",")}`);
+    const r = await c.req("POST", "/api/auth/forgot-password", { json: { email: "x@example.test" } });
+    assert(Number(r.headers.get("retry-after")) > 0, "Retry-After");
+    // per-email cap: 4th request for the same address (from fresh IPs) still answers 200 but sends no 4th mail
+    const { email: capEm } = await signupClient("capmail");
+    for (let i = 0; i < 4; i++) eq((await new Client_().req("POST", "/api/auth/forgot-password", { json: { email: capEm } })).status, 200, "same 200 each time");
+    await waitForMails(capEm, 3);
+    await new Promise((r2) => setTimeout(r2, 1000));
+    eq(readMails(capEm).length, 3, "only 3 mails/hour per address");
+    const rst = new Client_();
+    const rr: number[] = [];
+    for (let i = 0; i < 11; i++) rr.push((await rst.req("POST", "/api/auth/reset-password", { json: { token: "y".repeat(43), password: "some-long-passphrase" } })).status);
+    eq(rr.slice(0, 10).every((s) => s === 400) && rr[10] === 429, true, `reset per-IP: ${rr.join(",")}`);
   });
 
   await db.end();
