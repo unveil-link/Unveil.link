@@ -1,8 +1,15 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createTestDb, dbReachable } from "./helpers";
 
 const SECRET = "db-test-webhook-secret-db-test-webhook-secret-123";
 const available = await dbReachable();
+
+// Test seam for the NEW-4 race tests: lets a test park a login AFTER its (real) bcrypt comparison and BEFORE the session insert. Inert unless a gate is set.
+const gate: { hold: (() => Promise<void>) | null } = { hold: null };
+vi.mock("../../src/server/auth/password", async (orig) => {
+  const a = await orig<typeof import("../../src/server/auth/password")>();
+  return { ...a, verifyPassword: async (pw: string, hash: string | null) => { const r = await a.verifyPassword(pw, hash); if (gate.hold) await gate.hold(); return r; } };
+});
 let dropDb: (() => Promise<void>) | null = null;
 
 // Lazily imported after env is set (config reads env on access, the pg Pool is created on first query).
@@ -1585,4 +1592,123 @@ describe.skipIf(!available)("AH-3 input hygiene (NUL / lone surrogates / oversiz
   it("dev simulator: NUL / oversize / unknown session ids are a clean 404", async () => {
     for (const id of ["a\u0000b", "x".repeat(101), "\uD800", "nope"]) await expect(m.sim.simulatePayment(id, "4242424242424242")).rejects.toMatchObject({ status: 404 });
   });
+});
+
+// =====================================================================================================================
+// QA round 4: NEW-4 (reset-password vs in-flight login race), NEW-5 (login throttle 500 under concurrency)
+// =====================================================================================================================
+describe.skipIf(!available)("R4 NEW-4: no live admin session survives a password reset / disable that commits mid-login", () => {
+  const live = async (adminId: string) => Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM admin_sessions WHERE admin_id=$1 AND revoked_at IS NULL AND expires_at > now()`, [adminId]))!.n);
+  /** Parks the next loginAdmin after its bcrypt check; returns {parked, release}. */
+  function park() {
+    let release!: () => void; let parked!: () => void;
+    const p = new Promise<void>((r) => (parked = r)); const rel = new Promise<void>((r) => (release = r));
+    gate.hold = async () => { gate.hold = null; parked(); await rel; };
+    return { parked: p, release };
+  }
+  it("DETERMINISTIC: password check passes, reset commits, THEN the session insert runs -> login fails with the uniform null, zero live sessions, audited as 'superseded'", async () => {
+    const a = await mkAdmin();
+    const { parked, release } = park();
+    const login = m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.7.0.1"); // old password: bcrypt succeeds, then parks
+    await parked;
+    await m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true }); // commits (revokes everything that exists NOW)
+    release();
+    expect(await login).toBeNull();
+    expect(await live(a.id)).toBe(0);
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW)).toBeNull();
+    const row = await m.db.queryOne<{ reason: string; ip: string }>(`SELECT reason, ip FROM audit_log WHERE action='admin_login_failed' AND admin_email=$1 AND reason='superseded'`, [a.email]);
+    expect(row).toMatchObject({ reason: "superseded", ip: "10.7.0.1" });
+    expect(await m.adm.loginAdmin(a.email, "A-totally-different-passphrase-1")).not.toBeNull(); // the new password works
+  });
+  it("DETERMINISTIC: an admin disabled between the password check and the session insert cannot get a session either", async () => {
+    const a = await mkAdmin();
+    const { parked, release } = park();
+    const login = m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.7.0.2");
+    await parked;
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [a.id]);
+    release();
+    expect(await login).toBeNull();
+    expect(await live(a.id)).toBe(0);
+    expect((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='admin_login_failed' AND admin_email=$1 AND reason='superseded'`, [a.email]))!.n).toBe("1");
+  });
+  it("DETERMINISTIC (other order): the login's insert holds the row first, the reset waits for it and then revokes the fresh session", async () => {
+    const a = await mkAdmin();
+    // hold the admin row with FOR SHARE in a side transaction, exactly what the session insert takes
+    const c = await m.db.pool().connect();
+    try {
+      await c.query("BEGIN");
+      await c.query(`SELECT 1 FROM admins WHERE id=$1 FOR SHARE`, [a.id]);
+      const reset = m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true }); // must block on our lock
+      const early = await Promise.race([reset.then(() => "done"), new Promise((r) => setTimeout(() => r("blocked"), 400))]);
+      expect(early).toBe("blocked");
+      await c.query(`INSERT INTO admin_sessions (admin_id, expires_at, credentials_version) SELECT id, now() + interval '1 hour', credentials_version FROM admins WHERE id=$1`, [a.id]);
+      await c.query("COMMIT");
+      await reset;
+    } finally { c.release(); }
+    expect(await live(a.id)).toBe(0); // the session minted just before the reset committed was revoked by it
+  });
+  it("STRESS: 12 rounds of an old-password login loop racing a reset; afterwards NO session minted for the old credentials is live", async () => {
+    for (let round = 0; round < 12; round++) {
+      const a = await mkAdmin();
+      let stop = false; const tokens: string[] = [];
+      const attacker = (async () => { while (!stop) { const r = await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", `10.8.${round}.1`); if (r) tokens.push(r.token); } })();
+      const attacker2 = (async () => { while (!stop) { const r = await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", `10.8.${round}.2`); if (r) tokens.push(r.token); } })();
+      await new Promise((r) => setTimeout(r, 150 + round * 40)); // sweep the reset across the bcrypt window
+      await m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true });
+      await new Promise((r) => setTimeout(r, 700));
+      stop = true; await Promise.all([attacker, attacker2]);
+      expect(await live(a.id)).toBe(0);
+      for (const t of tokens) expect(await m.adm.readAdminToken(t)).toBeNull();
+    }
+  }, 120_000);
+  it("sessions are bound to the credentials version: a surviving pre-reset row is rejected even if it was never revoked; disable/enable and password change bump the version", async () => {
+    const a = await mkAdmin();
+    const v0 = (await m.db.queryOne<{ credentials_version: number }>(`SELECT credentials_version FROM admins WHERE id=$1`, [a.id]))!.credentials_version;
+    const { token } = (await m.adm.loginAdmin(a.email, ADMIN_PW))!;
+    expect(await m.adm.readAdminToken(token)).not.toBeNull();
+    await m.db.query(`UPDATE admins SET last_login_at = now() WHERE id=$1`, [a.id]); // unrelated column: no bump
+    expect((await m.db.queryOne<{ credentials_version: number }>(`SELECT credentials_version FROM admins WHERE id=$1`, [a.id]))!.credentials_version).toBe(v0);
+    await m.db.query(`UPDATE admins SET password_hash = password_hash || '' , disabled_at = NULL WHERE id=$1`, [a.id]); // same values: no bump
+    expect(await m.adm.readAdminToken(token)).not.toBeNull();
+    const h = await (await import("../../src/server/auth/password")).hashPassword("Another-Long-Passphrase-77");
+    await m.db.query(`UPDATE admins SET password_hash = $2 WHERE id=$1`, [a.id, h]); // plain SQL password change, sessions NOT revoked
+    expect((await m.db.queryOne<{ revoked_at: string | null }>(`SELECT revoked_at FROM admin_sessions WHERE admin_id=$1`, [a.id]))!.revoked_at).toBeNull();
+    expect(await m.adm.readAdminToken(token)).toBeNull(); // dead anyway
+    expect((await m.db.queryOne<{ credentials_version: number }>(`SELECT credentials_version FROM admins WHERE id=$1`, [a.id]))!.credentials_version).toBe(v0 + 1);
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [a.id]);
+    await m.db.query(`UPDATE admins SET disabled_at = NULL WHERE id=$1`, [a.id]);
+    expect((await m.db.queryOne<{ credentials_version: number }>(`SELECT credentials_version FROM admins WHERE id=$1`, [a.id]))!.credentials_version).toBe(v0 + 3);
+  });
+});
+
+describe.skipIf(!available)("R4 NEW-5: login throttle never throws under concurrency", () => {
+  it("30 concurrent admissions racing 30 successful-login resets for ONE email: no exception, every result is admitted or delayed", async () => {
+    const lt = await import("../../src/server/ratelimit/login-throttle");
+    const cfg = { threshold: 3, baseSec: 1, capSec: 4, decaySec: 600 };
+    for (let round = 0; round < 5; round++) {
+      const email = `conc${round}-${Date.now()}@example.test`;
+      const jobs: Promise<unknown>[] = [];
+      for (let i = 0; i < 30; i++) {
+        jobs.push(lt.admitLoginAttempt(email, cfg));
+        jobs.push(lt.resetLoginThrottle(email));
+      }
+      const res = await Promise.allSettled(jobs);
+      const bad = res.filter((r) => r.status === "rejected");
+      expect(bad.map((r) => String((r as PromiseRejectedResult).reason))).toEqual([]);
+    }
+  }, 60_000);
+  it("admin and seller login flows (service level): 30 parallel correct-password admin logins -> all succeed or are cleanly refused, none throw", async () => {
+    const a = await mkAdmin();
+    const lt = await import("../../src/server/ratelimit/login-throttle");
+    const one = async () => {
+      const adm = await lt.admitLoginAttempt(`admin:${a.email}`, { threshold: 3, baseSec: 1, capSec: 4, decaySec: 600 });
+      if (!adm.admitted) return "delayed";
+      const r = await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.9.0.1");
+      if (r) await lt.resetLoginThrottle(`admin:${a.email}`);
+      return r ? "ok" : "fail";
+    };
+    const out = await Promise.allSettled(Array.from({ length: 30 }, one));
+    expect(out.filter((o) => o.status === "rejected")).toHaveLength(0);
+    expect(out.some((o) => o.status === "fulfilled" && o.value === "ok")).toBe(true);
+  }, 120_000);
 });
