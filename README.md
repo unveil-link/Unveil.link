@@ -112,6 +112,9 @@ curl -s localhost:3000/api/earnings               # (signed-in seller) pending/a
 ```
 DB tests create and drop a throwaway database `unveil_paytest_payments` next to your `DATABASE_URL` (or `TEST_DATABASE_URL`).
 
+## Production database roles
+`docker-compose.yml` creates `unveil` as superuser **and** owner of every table - fine for local dev, **not** for production: the owner can disable the append-only triggers on `audit_log` / `ledger_entries`. In production run `npm run migrate` as an owner role and give the app a separate login with only DML: `CREATE ROLE unveil_app LOGIN PASSWORD '...' NOSUPERUSER; GRANT USAGE ON SCHEMA public TO unveil_app; GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO unveil_app; GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO unveil_app;` (repeat the grants after each migration that adds tables, or use `ALTER DEFAULT PRIVILEGES`), and point the app's `DATABASE_URL` at it. See PAYMENTS-NOTES.md "Deployment requirements".
+
 ## Environment
 See `.env.example`. Key vars: `DATABASE_URL`, `SESSION_SECRET`, `SIGNED_URL_SECRET`, `STORAGE_DRIVER` (`local`|`s3`), `STORAGE_LOCAL_DIR`, `S3_*`, `GOOGLE_CLIENT_ID/SECRET`, `APP_URL`. `.env` is gitignored.
 
