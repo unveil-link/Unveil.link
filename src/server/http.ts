@@ -4,6 +4,7 @@ import { HttpError } from "./errors";
 import { getSessionSellerId } from "./auth/session";
 import { getSellerById, type Seller } from "./services/sellers";
 import { config } from "./config";
+import { assertCleanJson } from "./input";
 
 type Handler<C> = (req: Request, ctx: C) => Promise<Response>;
 
@@ -68,9 +69,12 @@ export async function optionalSellerId(): Promise<string | null> {
 }
 
 export async function jsonBody(req: Request): Promise<unknown> {
+  let v: unknown;
   try {
-    return await req.json();
+    v = await req.json();
   } catch {
     throw new HttpError(400, "Invalid JSON body", "invalid_json");
   }
+  assertCleanJson(v); // NUL / lone surrogates / absurd nesting -> 400 here instead of a Postgres error (500) later
+  return v;
 }

@@ -1,8 +1,15 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createTestDb, dbReachable } from "./helpers";
 
 const SECRET = "db-test-webhook-secret-db-test-webhook-secret-123";
 const available = await dbReachable();
+
+// Test seam for the NEW-4 race tests: lets a test park a login AFTER its (real) bcrypt comparison and BEFORE the session insert. Inert unless a gate is set.
+const gate: { hold: (() => Promise<void>) | null } = { hold: null };
+vi.mock("../../src/server/auth/password", async (orig) => {
+  const a = await orig<typeof import("../../src/server/auth/password")>();
+  return { ...a, verifyPassword: async (pw: string, hash: string | null) => { const r = await a.verifyPassword(pw, hash); if (gate.hold) await gate.hold(); return r; } };
+});
 let dropDb: (() => Promise<void>) | null = null;
 
 // Lazily imported after env is set (config reads env on access, the pg Pool is created on first query).
@@ -20,6 +27,7 @@ type Mods = {
   payouts: typeof import("../../src/server/payments/payouts");
   refunds: typeof import("../../src/server/payments/refunds");
   sim: typeof import("../../src/server/payments/dev/simulator");
+  auditMod: typeof import("../../src/server/admin/audit");
 };
 let m!: Mods;
 
@@ -46,6 +54,7 @@ beforeAll(async () => {
     payouts: await import("../../src/server/payments/payouts"),
     refunds: await import("../../src/server/payments/refunds"),
     sim: await import("../../src/server/payments/dev/simulator"),
+    auditMod: await import("../../src/server/admin/audit"),
   };
 });
 afterAll(async () => {
@@ -1388,4 +1397,318 @@ describe.skipIf(!available)("FU-3 admin queries and the audited 'clear flag' act
     await cb("n3");
     expect(await isFlagged()).toBe(true);
   });
+});
+
+// =====================================================================================================================
+// Audit hardening (migration 011): append-only audit_log, attribution survives, failed-login auditing, input hygiene
+// =====================================================================================================================
+describe.skipIf(!available)("AH-1 audit_log is append-only and attribution is permanent", () => {
+  const anyRow = async () => {
+    const a = await mkAdmin();
+    await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.1.1.1");
+    return a;
+  };
+  it("UPDATE, DELETE and TRUNCATE on audit_log are refused for the app role (restrict_violation, 'append-only'), rows unchanged", async () => {
+    const a = await anyRow();
+    const before = await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log`);
+    await expect(m.db.query(`UPDATE audit_log SET target = 'tampered'`)).rejects.toThrow(/audit_log is append-only/);
+    await expect(m.db.query(`UPDATE audit_log SET admin_email = 'x@y.z' WHERE admin_id = $1`, [a.id])).rejects.toMatchObject({ code: "23001" });
+    await expect(m.db.query(`DELETE FROM audit_log WHERE admin_id = $1`, [a.id])).rejects.toThrow(/append-only/);
+    await expect(m.db.query(`DELETE FROM audit_log`)).rejects.toThrow(/append-only/);
+    await expect(m.db.query(`TRUNCATE audit_log`)).rejects.toThrow(/append-only/);
+    await expect(m.db.query(`TRUNCATE audit_log, admins CASCADE`)).rejects.toThrow(/append-only/);
+    expect((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log`))!.n).toBe(before!.n);
+    // zero-row statements are still refused where the trigger is statement-level (TRUNCATE); row triggers only fire per row, so also check none leaked:
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE target='tampered'`))!.n)).toBe(0);
+  });
+  it("INSERT still works for every existing writer (cli create, login, logout, clear-flag, chargeback flag, janitor) and fills the email snapshot", async () => {
+    const a = await mkAdmin();
+    const t = (await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.1.1.2"))!.token;
+    await m.adm.revokeAdminToken(t);
+    const rows = await m.db.query<{ action: string; admin_email: string | null; admin_id: string | null }>(
+      `SELECT action, admin_email, admin_id FROM audit_log WHERE admin_email = $1 ORDER BY created_at, action`, [a.email]);
+    expect(rows.map((r) => r.action).sort()).toEqual(["admin_created_cli", "admin_login", "admin_logout"]);
+    expect(rows.every((r) => r.admin_email === a.email)).toBe(true);
+    // a raw writer that only sets admin_id (the pre-011 shape) gets the snapshot from the DB trigger
+    await m.db.query(`INSERT INTO audit_log (admin_id, action, target) VALUES ($1, 'x_legacy_shape', 't')`, [a.id]);
+    expect((await m.db.queryOne<{ admin_email: string }>(`SELECT admin_email FROM audit_log WHERE action='x_legacy_shape' AND admin_id=$1`, [a.id]))!.admin_email).toBe(a.email);
+  });
+  it("an admin with audit history cannot be deleted (FK RESTRICT + guard trigger); the audit rows and the actor survive; disabling is the supported path and is itself audited", async () => {
+    const a = await anyRow();
+    await expect(m.db.query(`DELETE FROM admins WHERE id = $1`, [a.id])).rejects.toThrow();
+    await expect(m.db.query(`DELETE FROM admins`)).rejects.toThrow();
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM admins WHERE id=$1`, [a.id]))!.n)).toBe(1);
+    const still = await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE admin_id=$1 AND admin_email=$2`, [a.id, a.email]);
+    expect(Number(still!.n)).toBeGreaterThanOrEqual(2); // created (has admin_id via snapshot-less CLI row too) + login
+    // a CLI-created-only admin (row has admin_id NULL in legacy data) is protected via its admin:<uuid> target as well
+    const legacy = await m.db.queryOne<{ id: string }>(`INSERT INTO admins (email, password_hash) VALUES ($1, 'x') RETURNING id`, [`legacy${Date.now()}@example.test`]);
+    await m.db.query(`INSERT INTO audit_log (admin_id, action, target) VALUES (NULL, 'admin_created_cli', $1)`, [`admin:${legacy!.id}`]);
+    await expect(m.db.query(`DELETE FROM admins WHERE id=$1`, [legacy!.id])).rejects.toThrow(/audit history/);
+    // disable instead
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [a.id]);
+    const dis = await m.db.query<{ action: string; admin_email: string }>(`SELECT action, admin_email FROM audit_log WHERE action='admin_disabled' AND target=$1`, [`admin:${a.id}`]);
+    expect(dis).toEqual([{ action: "admin_disabled", admin_email: a.email }]);
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW)).toBeNull();
+  });
+  it("an admin with NO audit history can still be deleted (no pointless lock-in), and nothing else cascades into audit_log", async () => {
+    const r = await m.db.queryOne<{ id: string }>(`INSERT INTO admins (email, password_hash) VALUES ($1, 'x') RETURNING id`, [`clean${Date.now()}@example.test`]);
+    await m.db.query(`DELETE FROM admins WHERE id=$1`, [r!.id]);
+    const fks = await m.db.query<{ def: string }>(`SELECT pg_get_constraintdef(oid) def FROM pg_constraint WHERE conrelid='audit_log'::regclass AND contype='f'`);
+    expect(fks).toHaveLength(1);
+    expect(fks[0].def).toMatch(/ON DELETE RESTRICT/);
+    expect(fks[0].def).not.toMatch(/SET NULL|CASCADE/);
+  });
+  it("re-enabling via --reset-password is audited (enable + reset + sessions revoked) with the actor email", async () => {
+    const a = await mkAdmin();
+    const t = (await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.1.1.3"))!.token;
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [a.id]);
+    await m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true });
+    expect(await m.adm.readAdminToken(t)).toBeNull();
+    const acts = (await m.db.query<{ action: string }>(`SELECT action FROM audit_log WHERE admin_email=$1 ORDER BY created_at, action`, [a.email])).map((r) => r.action);
+    expect(acts).toEqual(expect.arrayContaining(["admin_created_cli", "admin_login", "admin_disabled", "admin_enabled", "admin_password_reset_cli", "admin_sessions_revoked"]));
+    const rev = await m.db.queryOne<{ target: string; reason: string }>(`SELECT target, reason FROM audit_log WHERE action='admin_sessions_revoked' AND admin_email=$1`, [a.email]);
+    expect(rev!.reason).toBe("password_reset");
+    expect(rev!.target).toMatch(/sessions_revoked: 1/);
+  });
+  it("the migration is idempotent: re-running 011 on a populated DB succeeds, keeps rows and keeps the triggers", async () => {
+    const fs = await import("node:fs");
+    const sql = fs.readFileSync("db/migrations/011_audit_hardening.sql", "utf8");
+    const before = await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log`);
+    await m.db.pool().query(sql);
+    await m.db.pool().query(sql);
+    expect((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log`))!.n).toBe(before!.n);
+    await expect(m.db.query(`DELETE FROM audit_log`)).rejects.toThrow(/append-only/);
+  });
+});
+
+describe.skipIf(!available)("AH-2 failed admin logins are audited, bounded, and invisible to the client", () => {
+  const failures = (extra = "") => m.db.query<{ admin_email: string; ip: string; reason: string; target: string; created_at: string }>(
+    `SELECT admin_email, ip, reason, target, created_at FROM audit_log WHERE action='admin_login_failed' ${extra} ORDER BY created_at`);
+  it("unknown email, wrong password and disabled account each write a row with attempted email, ip, reason code, timestamp; every call returns the same null", async () => {
+    const a = await mkAdmin();
+    const dis = await mkAdmin();
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [dis.id]);
+    const ghost = `ghost${Date.now()}@example.test`;
+    const r = await Promise.all([
+      m.adm.loginAdmin(ghost, ADMIN_PW, "ua", "10.2.0.1"), m.adm.loginAdmin(a.email, "wrong-wrong-wrong-1", "ua", "10.2.0.2"), m.adm.loginAdmin(dis.email, ADMIN_PW, "ua", "10.2.0.3"),
+    ]);
+    expect(r).toEqual([null, null, null]); // identical outcome whatever the reason
+    const rows = await failures(`AND admin_email IN ('${ghost}','${a.email}','${dis.email}')`);
+    const by = Object.fromEntries(rows.map((x) => [x.admin_email, x]));
+    expect(by[ghost]).toMatchObject({ reason: "unknown_email", ip: "10.2.0.1" });
+    expect(by[a.email]).toMatchObject({ reason: "bad_password", ip: "10.2.0.2" });
+    expect(by[dis.email]).toMatchObject({ reason: "disabled", ip: "10.2.0.3" });
+    expect(rows.every((x) => !!x.created_at)).toBe(true);
+    // a failed attempt does not create or link to an admin; no admin_id on the row
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='admin_login_failed' AND admin_id IS NOT NULL`))!.n)).toBe(0);
+  });
+  it("no password or hash ever lands in audit_log (any column), for failures and successes", async () => {
+    const a = await mkAdmin();
+    const pw = "Wrong-Secret-Passphrase-ZZZ-9";
+    await m.adm.loginAdmin(a.email, pw, "ua", "10.2.1.1");
+    await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.2.1.1");
+    const hash = (await m.db.queryOne<{ password_hash: string }>(`SELECT password_hash FROM admins WHERE id=$1`, [a.id]))!.password_hash;
+    const all = JSON.stringify(await m.db.query(`SELECT * FROM audit_log`));
+    expect(all).not.toContain(pw);
+    expect(all).not.toContain(ADMIN_PW);
+    expect(all).not.toContain(hash);
+    expect(all).not.toMatch(/\$2[aby]\$/);
+  });
+  it("flooding is bounded: 60 identical failures from one ip+email write 1 row + a milestone row at 10 (not 60); next window folds the count", async () => {
+    const email = `flood${Date.now()}@example.test`;
+    for (let i = 0; i < 60; i++) await m.auditMod.auditFailedAdminLogin(email, "bad_password", "10.3.0.1"); // the audit step in isolation (bcrypt per call would just slow the loop)
+    const rows = await failures(`AND admin_email='${email}'`);
+    expect(rows.length).toBe(2);
+    expect(rows[0].target).toBe("failed admin login");
+    expect(rows[1].target).toMatch(/repeated 10x/);
+    // new window: age the bucket, the first row of the new window states how many were folded
+    await m.db.query(`UPDATE admin_login_failure_buckets SET window_start = now() - interval '1 hour' WHERE bucket LIKE 'f:%'`);
+    await m.auditMod.auditFailedAdminLogin(email, "bad_password", "10.3.0.1");
+    const rows2 = await failures(`AND admin_email='${email}'`);
+    expect(rows2.length).toBe(3);
+    expect(rows2[2].target).toMatch(/\+59 repeats folded/);
+  });
+  it("many DIFFERENT emails/ips are capped by the global hourly limit: bounded rows plus exactly one 'admin_login_flood' marker", async () => {
+    await m.db.query(`DELETE FROM admin_login_failure_buckets`); // the side table is operational state (not the trail)
+    const cap = m.auditMod.FAILED_LOGIN_AUDIT.globalPerHour;
+    const before = Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action IN ('admin_login_failed','admin_login_flood')`))!.n);
+    const N = cap + 40;
+    for (let i = 0; i < N; i += 20) await Promise.all(Array.from({ length: Math.min(20, N - i) }, (_, k) => m.auditMod.auditFailedAdminLogin(`spray${i + k}-${Date.now()}@example.test`, "unknown_email", `10.4.${(i + k) % 250}.1`)));
+    const after = Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action IN ('admin_login_failed','admin_login_flood')`))!.n);
+    expect(after - before).toBeLessThanOrEqual(cap + 1);
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='admin_login_flood'`))!.n)).toBeLessThanOrEqual(2); // 1 per hour (a test straddling the hour boundary may see 2)
+  });
+  it("hostile attempted emails are sanitised and truncated, never fail the request, never reach SQL raw", async () => {
+    await m.db.query(`DELETE FROM admin_login_failure_buckets`);
+    const nul = `nul\u0000byte${Date.now()}@example.test`;
+    expect(await m.adm.loginAdmin(nul, "bad-bad-bad-bad-1", "ua", "10.5.0.1")).toBeNull();
+    const long = "L".repeat(5000) + "@example.test";
+    expect(await m.adm.loginAdmin(long, "bad-bad-bad-bad-1", "ua", "10.5.0.2")).toBeNull();
+    const lone = `lone\uD800${Date.now()}@example.test`;
+    expect(await m.adm.loginAdmin(lone, "x", "ua", "x".repeat(500))).toBeNull();
+    const rows = await failures(`AND ip IN ('10.5.0.1','10.5.0.2') OR ip LIKE 'xxxx%'`);
+    expect(rows.length).toBe(3);
+    for (const r of rows) { expect(r.admin_email.length).toBeLessThanOrEqual(100); expect(r.admin_email).not.toContain("\u0000"); expect(r.ip.length).toBeLessThanOrEqual(64); }
+  });
+  it("a successful login after failures is audited as admin_login (with ip) and logout as admin_logout", async () => {
+    const a = await mkAdmin();
+    await m.adm.loginAdmin(a.email, "bad-bad-bad-bad-1", "ua", "10.6.0.1");
+    const ok = (await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.6.0.1"))!;
+    await m.adm.revokeAdminToken(ok.token);
+    await m.adm.revokeAdminToken(ok.token); // second revoke is a no-op and writes nothing
+    const rows = await m.db.query<{ action: string; ip: string | null }>(`SELECT action, ip FROM audit_log WHERE admin_email=$1 AND action IN ('admin_login','admin_logout','admin_login_failed') ORDER BY created_at`, [a.email]);
+    expect(rows.map((r) => r.action)).toEqual(["admin_login_failed", "admin_login", "admin_logout"]);
+    expect(rows[1].ip).toBe("10.6.0.1");
+  });
+});
+
+describe.skipIf(!available)("AH-3 input hygiene (NUL / lone surrogates / oversize / malformed ids) never becomes a 500", () => {
+  it("createAdmin / loginAdmin reject or null out NUL, lone surrogate and oversize text without touching SQL errors", async () => {
+    await expect(m.adm.createAdmin("a\u0000@example.test", ADMIN_PW)).rejects.toThrow(/invalid email/);
+    await expect(m.adm.createAdmin("a@example.test", "pw\u0000" + ADMIN_PW)).rejects.toThrow(/invalid characters/);
+    await expect(m.adm.createAdmin("a@example.test", "\uD800" + ADMIN_PW)).rejects.toThrow(/invalid characters/);
+    await expect(m.adm.createAdmin("a".repeat(300) + "@example.test", ADMIN_PW)).rejects.toThrow(/invalid email/);
+    expect(await m.adm.loginAdmin("a\u0000@example.test", "x")).toBeNull();
+    expect(await m.adm.loginAdmin("a@example.test", "p\u0000w")).toBeNull();
+    expect(await m.adm.loginAdmin("a".repeat(300) + "@example.test", "x")).toBeNull();
+  });
+  it("malformed ids (incl. 36 dashes, which the old regex accepted) -> clean not-found, never a Postgres error", async () => {
+    const dashes = "-".repeat(36);
+    const bad = [dashes, "garbage", "00000000-0000-0000-0000-00000000000g", "0".repeat(36), "\u0000", " ", "' OR 1=1 --"];
+    const a = await mkAdmin();
+    for (const id of bad) {
+      await expect(m.admq.clearSellerFlag(a.id, id, "valid note")).rejects.toMatchObject({ status: 404 });
+      expect((await m.admq.listSellerTransactions(id)).seller).toBeNull();
+      expect(await m.co.getCheckoutStatus(id)).toBeNull();
+    }
+    const imgs = await import("../../src/server/services/images");
+    const drops = await import("../../src/server/services/drops");
+    const s = await seed();
+    for (const id of bad) {
+      expect(await imgs.getFileRow(id)).toBeNull();
+      await expect(drops.getOwnedDrop(s.sellerId, id)).rejects.toMatchObject({ status: 404 });
+    }
+  }, 30_000);
+  it("dev simulator: NUL / oversize / unknown session ids are a clean 404", async () => {
+    for (const id of ["a\u0000b", "x".repeat(101), "\uD800", "nope"]) await expect(m.sim.simulatePayment(id, "4242424242424242")).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+// =====================================================================================================================
+// QA round 4: NEW-4 (reset-password vs in-flight login race), NEW-5 (login throttle 500 under concurrency)
+// =====================================================================================================================
+describe.skipIf(!available)("R4 NEW-4: no live admin session survives a password reset / disable that commits mid-login", () => {
+  const live = async (adminId: string) => Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM admin_sessions WHERE admin_id=$1 AND revoked_at IS NULL AND expires_at > now()`, [adminId]))!.n);
+  /** Parks the next loginAdmin after its bcrypt check; returns {parked, release}. */
+  function park() {
+    let release!: () => void; let parked!: () => void;
+    const p = new Promise<void>((r) => (parked = r)); const rel = new Promise<void>((r) => (release = r));
+    gate.hold = async () => { gate.hold = null; parked(); await rel; };
+    return { parked: p, release };
+  }
+  it("DETERMINISTIC: password check passes, reset commits, THEN the session insert runs -> login fails with the uniform null, zero live sessions, audited as 'superseded'", async () => {
+    const a = await mkAdmin();
+    const { parked, release } = park();
+    const login = m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.7.0.1"); // old password: bcrypt succeeds, then parks
+    await parked;
+    await m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true }); // commits (revokes everything that exists NOW)
+    release();
+    expect(await login).toBeNull();
+    expect(await live(a.id)).toBe(0);
+    expect(await m.adm.loginAdmin(a.email, ADMIN_PW)).toBeNull();
+    const row = await m.db.queryOne<{ reason: string; ip: string }>(`SELECT reason, ip FROM audit_log WHERE action='admin_login_failed' AND admin_email=$1 AND reason='superseded'`, [a.email]);
+    expect(row).toMatchObject({ reason: "superseded", ip: "10.7.0.1" });
+    expect(await m.adm.loginAdmin(a.email, "A-totally-different-passphrase-1")).not.toBeNull(); // the new password works
+  });
+  it("DETERMINISTIC: an admin disabled between the password check and the session insert cannot get a session either", async () => {
+    const a = await mkAdmin();
+    const { parked, release } = park();
+    const login = m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.7.0.2");
+    await parked;
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [a.id]);
+    release();
+    expect(await login).toBeNull();
+    expect(await live(a.id)).toBe(0);
+    expect((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='admin_login_failed' AND admin_email=$1 AND reason='superseded'`, [a.email]))!.n).toBe("1");
+  });
+  it("DETERMINISTIC (other order): the login's insert holds the row first, the reset waits for it and then revokes the fresh session", async () => {
+    const a = await mkAdmin();
+    // hold the admin row with FOR SHARE in a side transaction, exactly what the session insert takes
+    const c = await m.db.pool().connect();
+    try {
+      await c.query("BEGIN");
+      await c.query(`SELECT 1 FROM admins WHERE id=$1 FOR SHARE`, [a.id]);
+      const reset = m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true }); // must block on our lock
+      const early = await Promise.race([reset.then(() => "done"), new Promise((r) => setTimeout(() => r("blocked"), 400))]);
+      expect(early).toBe("blocked");
+      await c.query(`INSERT INTO admin_sessions (admin_id, expires_at, credentials_version) SELECT id, now() + interval '1 hour', credentials_version FROM admins WHERE id=$1`, [a.id]);
+      await c.query("COMMIT");
+      await reset;
+    } finally { c.release(); }
+    expect(await live(a.id)).toBe(0); // the session minted just before the reset committed was revoked by it
+  });
+  it("STRESS: 12 rounds of an old-password login loop racing a reset; afterwards NO session minted for the old credentials is live", async () => {
+    for (let round = 0; round < 12; round++) {
+      const a = await mkAdmin();
+      let stop = false; const tokens: string[] = [];
+      const attacker = (async () => { while (!stop) { const r = await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", `10.8.${round}.1`); if (r) tokens.push(r.token); } })();
+      const attacker2 = (async () => { while (!stop) { const r = await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", `10.8.${round}.2`); if (r) tokens.push(r.token); } })();
+      await new Promise((r) => setTimeout(r, 150 + round * 40)); // sweep the reset across the bcrypt window
+      await m.adm.createAdmin(a.email, "A-totally-different-passphrase-1", { resetIfExists: true });
+      await new Promise((r) => setTimeout(r, 700));
+      stop = true; await Promise.all([attacker, attacker2]);
+      expect(await live(a.id)).toBe(0);
+      for (const t of tokens) expect(await m.adm.readAdminToken(t)).toBeNull();
+    }
+  }, 120_000);
+  it("sessions are bound to the credentials version: a surviving pre-reset row is rejected even if it was never revoked; disable/enable and password change bump the version", async () => {
+    const a = await mkAdmin();
+    const v0 = (await m.db.queryOne<{ credentials_version: number }>(`SELECT credentials_version FROM admins WHERE id=$1`, [a.id]))!.credentials_version;
+    const { token } = (await m.adm.loginAdmin(a.email, ADMIN_PW))!;
+    expect(await m.adm.readAdminToken(token)).not.toBeNull();
+    await m.db.query(`UPDATE admins SET last_login_at = now() WHERE id=$1`, [a.id]); // unrelated column: no bump
+    expect((await m.db.queryOne<{ credentials_version: number }>(`SELECT credentials_version FROM admins WHERE id=$1`, [a.id]))!.credentials_version).toBe(v0);
+    await m.db.query(`UPDATE admins SET password_hash = password_hash || '' , disabled_at = NULL WHERE id=$1`, [a.id]); // same values: no bump
+    expect(await m.adm.readAdminToken(token)).not.toBeNull();
+    const h = await (await import("../../src/server/auth/password")).hashPassword("Another-Long-Passphrase-77");
+    await m.db.query(`UPDATE admins SET password_hash = $2 WHERE id=$1`, [a.id, h]); // plain SQL password change, sessions NOT revoked
+    expect((await m.db.queryOne<{ revoked_at: string | null }>(`SELECT revoked_at FROM admin_sessions WHERE admin_id=$1`, [a.id]))!.revoked_at).toBeNull();
+    expect(await m.adm.readAdminToken(token)).toBeNull(); // dead anyway
+    expect((await m.db.queryOne<{ credentials_version: number }>(`SELECT credentials_version FROM admins WHERE id=$1`, [a.id]))!.credentials_version).toBe(v0 + 1);
+    await m.db.query(`UPDATE admins SET disabled_at = now() WHERE id=$1`, [a.id]);
+    await m.db.query(`UPDATE admins SET disabled_at = NULL WHERE id=$1`, [a.id]);
+    expect((await m.db.queryOne<{ credentials_version: number }>(`SELECT credentials_version FROM admins WHERE id=$1`, [a.id]))!.credentials_version).toBe(v0 + 3);
+  });
+});
+
+describe.skipIf(!available)("R4 NEW-5: login throttle never throws under concurrency", () => {
+  it("30 concurrent admissions racing 30 successful-login resets for ONE email: no exception, every result is admitted or delayed", async () => {
+    const lt = await import("../../src/server/ratelimit/login-throttle");
+    const cfg = { threshold: 3, baseSec: 1, capSec: 4, decaySec: 600 };
+    for (let round = 0; round < 5; round++) {
+      const email = `conc${round}-${Date.now()}@example.test`;
+      const jobs: Promise<unknown>[] = [];
+      for (let i = 0; i < 30; i++) {
+        jobs.push(lt.admitLoginAttempt(email, cfg));
+        jobs.push(lt.resetLoginThrottle(email));
+      }
+      const res = await Promise.allSettled(jobs);
+      const bad = res.filter((r) => r.status === "rejected");
+      expect(bad.map((r) => String((r as PromiseRejectedResult).reason))).toEqual([]);
+    }
+  }, 60_000);
+  it("admin and seller login flows (service level): 30 parallel correct-password admin logins -> all succeed or are cleanly refused, none throw", async () => {
+    const a = await mkAdmin();
+    const lt = await import("../../src/server/ratelimit/login-throttle");
+    const one = async () => {
+      const adm = await lt.admitLoginAttempt(`admin:${a.email}`, { threshold: 3, baseSec: 1, capSec: 4, decaySec: 600 });
+      if (!adm.admitted) return "delayed";
+      const r = await m.adm.loginAdmin(a.email, ADMIN_PW, "ua", "10.9.0.1");
+      if (r) await lt.resetLoginThrottle(`admin:${a.email}`);
+      return r ? "ok" : "fail";
+    };
+    const out = await Promise.allSettled(Array.from({ length: 30 }, one));
+    expect(out.filter((o) => o.status === "rejected")).toHaveLength(0);
+    expect(out.some((o) => o.status === "fulfilled" && o.value === "ok")).toBe(true);
+  }, 120_000);
 });

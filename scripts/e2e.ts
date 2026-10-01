@@ -885,16 +885,25 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     void _o;
     // 20 concurrent wrong guesses, each from its own (fake) IP = distributed attacker. Admission is serialised per email in the DB,
     // so exactly `threshold` (3) are evaluated; the other 17 are refused without being evaluated.
+    // TIMING NOTE (QA INFO-F "flake 3/5"): the first delay is only BASE = 1 s and is armed at ADMISSION time. bcryptjs runs on the server's event loop, so the 3
+    // evaluated guesses (~300 ms each, ~1 s when three run together) can take about as long as the delay itself. Requests handled late may then be legitimately
+    // admitted again (4 x 401), and the "correct password during the delay" probe below may arrive after the 1 s delay has elapsed (200). That is the throttle
+    // working as designed, not a race in it (admission is one row-locked statement), so the test no longer depends on wall-clock luck.
+    const t0 = Date.now();
     const rs = await Promise.all(Array.from({ length: 20 }, (_, i) => attempt(owner, `wrong-guess-${i}-xyz`)));
+    const burstMs = Date.now() - t0;
     const st = rs.map((r) => r.status);
-    eq(st.filter((s) => s === 401).length, 3, `exactly 3 evaluated (${st.join(",")})`);
-    eq(st.filter((s) => s === 429).length, 17, `the rest are delayed (${st.join(",")})`);
+    const evaluated = st.filter((s) => s === 401).length;
+    assert(evaluated === 3 || (evaluated === 4 && burstMs >= 1000), `3 evaluated (4 only if the burst outlasted the 1 s first delay: ${burstMs} ms) (${st.join(",")})`);
+    eq(st.filter((s) => s === 429).length, 20 - evaluated, `the rest are delayed (${st.join(",")})`);
     for (const r of rs.filter((r) => r.status === 429)) {
       const ra = retryAfter(r);
       assert(Number.isInteger(ra) && ra >= 1 && ra <= CAP, `Retry-After ${ra} within 1..${CAP}`);
       eq((await r.json()).code, "login_delayed", "error code");
     }
     // the owner's CORRECT password during the active delay is not evaluated (no bypass by guessing during the delay)
+    // make "during the delay" deterministic: arm a 3 s delay window explicitly (within the DB bound), then use the real password
+    await db.query("UPDATE login_throttle SET next_allowed_at = now() + interval '3 seconds', last_attempt_at = now() WHERE key = $1", ["login:" + crypto.createHash("sha256").update(owner.trim().toLowerCase()).digest("hex").slice(0, 24)]);
     const dur = await attempt(owner, password);
     eq(dur.status, 429, "correct password during the delay -> 429");
     assert(!dur.headers.get("set-cookie"), "no session issued while delayed");
@@ -903,7 +912,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const ok = await attempt(owner, password);
     eq(ok.status, 200, "owner logs in after waiting out the delay");
     eq(await throttleRow(owner), undefined, "counter reset on success");
-    return `3x401 + 17x429 (Retry-After <= ${CAP})`;
+    return `${evaluated}x401 + ${20 - evaluated}x429 in ${burstMs} ms (Retry-After <= ${CAP})`;
   });
   await check("[#13] delays escalate exponentially (1,2,4 s) and are capped at the cap; a 429 never persists past Retry-After; no permanent lock", async () => {
     const { email: v } = await signupClient("esc13");
@@ -1616,6 +1625,140 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     eq((await admin.req("POST", `/api/admin/sellers/${sid}/clear-flag`, { json: { note: "second try" } })).status, 409, "already cleared -> 409");
     assert(!(await (await admin.req("GET", "/api/admin/sellers/flagged")).json()).sellers.some((x: { id: string }) => x.id === sid), "no longer listed");
     assert((await (await admin.req("GET", "/admin/sellers/flagged")).text()).includes("No flagged sellers") || true, "page renders after clear");
+  });
+
+  await check("[ah] input hygiene over HTTP: NUL / lone surrogate / oversize / malformed ids never 500 (QA NEW-2 + audit of all text inputs)", async () => {
+    const admin = new Client_();
+    eq((await adminLogin(admin, ADMIN_EMAIL, ADMIN_PW)).status, 200, "login");
+    const sid = (await db.query("SELECT id FROM sellers WHERE email=$1", [sellerEmail])).rows[0].id;
+    // NEW-2: NUL in the clear-flag note -> clean 400 (the raw body carries the JSON escape \u0000)
+    const post = (path: string, bodyText: string, who: Client_ = admin) => fetch(BASE + path, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": who.ip, cookie: [...who.cookies].map(([k, v]) => `${k}=${v}`).join("; ") }, body: bodyText });
+    for (const [label, body] of [["NUL", '{"note":"bad\\u0000note"}'], ["lone surrogate", '{"note":"bad\\ud800note"}'], ["NUL in key", '{"no\\u0000te":"x"}'], ["oversize", JSON.stringify({ note: "n".repeat(1001) })]] as const) {
+      const r = await post(`/api/admin/sellers/${sid}/clear-flag`, body);
+      eq(r.status, 400, `clear-flag ${label} -> 400 (got ${r.status})`);
+      assert(!/postgres|invalid byte sequence|stack/i.test(await r.text()), `no internals in the ${label} error`);
+    }
+    // malformed ids: 36 dashes used to reach Postgres
+    const dashes = "-".repeat(36);
+    eq((await post(`/api/admin/sellers/${dashes}/clear-flag`, '{"note":"valid note"}')).status, 404, "clear-flag 36 dashes -> 404");
+    eq((await post(`/api/admin/sellers/not-a-uuid/clear-flag`, '{"note":"valid note"}')).status, 404, "clear-flag garbage id -> 404");
+    eq((await admin.req("GET", `/admin/sellers/${dashes}/transactions`)).status, 404, "admin page 36 dashes -> 404");
+    eq((await new Client_().req("GET", `/api/checkout/status?id=${dashes}`)).status, 404, "checkout status 36 dashes -> 404");
+    const pv = (await new Client_().req("GET", `/api/files/${dashes}/preview`)).status;
+    assert(pv >= 400 && pv < 500, `file preview 36 dashes -> 4xx (got ${pv})`);
+    const dv = (await new Client_().req("GET", `/api/drops/${dashes}`)).status;
+    assert(dv >= 400 && dv < 500, `drop 36 dashes -> 4xx (got ${dv})`);
+    // admin login: NUL in email / password -> 400, oversize -> 400, nothing logged as a login attempt
+    const lc = new Client_();
+    eq((await post("/api/admin/login", '{"email":"a\\u0000@example.test","password":"x"}', lc)).status, 400, "login NUL email");
+    eq((await post("/api/admin/login", `{"email":"${ADMIN_EMAIL}","password":"p\\u0000w"}`, lc)).status, 400, "login NUL password");
+    eq((await post("/api/admin/login", JSON.stringify({ email: "a@example.test", password: "p".repeat(5000) }), lc)).status, 400, "login oversize password");
+    // other text inputs: signup displayName NUL, checkout NUL, dev pay NUL session
+    eq((await post("/api/auth/signup", '{"email":"nul' + stamp + '@example.test","password":"Correct-horse-battery-9","displayName":"a\\u0000b"}', new Client_())).status, 400, "signup NUL displayName");
+    eq((await post("/api/dev/payments/pay", '{"sessionId":"a\\u0000b","card":"4242424242424242"}', new Client_())).status, 400, "dev pay NUL session -> 400 (jsonBody guard)");
+    eq((await post("/api/dev/payments/pay", JSON.stringify({ sessionId: "s".repeat(101), card: "4242424242424242" }), new Client_())).status, 400, "dev pay oversize session -> 400 (schema max length)");
+    eq((await new Client_().req("GET", "/pay/mock/" + encodeURIComponent("a\u0000b"))).status, 404, "mock hosted page NUL session -> 404");
+    // create-admin CLI: garbage / oversize input fails cleanly (exit 1, readable message, no stack, no row)
+    for (const bad of ["not an email", `${"a".repeat(300)}@example.test`]) {
+      const r = await runCli([bad], { ADMIN_PASSWORD: ADMIN_PW });
+      assert(r.code === 1 && /invalid email/.test(r.out) && !/at .*\.ts:\d+/.test(r.out), `cli bad email refused cleanly: ${r.out.slice(-160)}`);
+    }
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='admin_login_failed' AND ip=$1", [lc.ip])).rows[0].n, 0, "400s are not 'failed logins'");
+  });
+
+  await check("[ah] audit_log is append-only for the app's own DB role; admin with history cannot be deleted; disable is audited", async () => {
+    for (const sql of [`UPDATE audit_log SET target='tampered'`, `DELETE FROM audit_log`, `TRUNCATE audit_log`, `UPDATE audit_log SET admin_email='x@y.z'`]) {
+      let err = ""; try { await db.query(sql); } catch (e) { err = (e as Error).message; }
+      assert(/audit_log is append-only/.test(err), `${sql} -> ${err}`);
+    }
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE target='tampered'")).rows[0].n, 0, "no row tampered");
+    let derr = ""; try { await db.query("DELETE FROM admins WHERE email=$1", [ADMIN_EMAIL]); } catch (e) { derr = (e as Error).message; }
+    assert(/audit history|violates foreign key/.test(derr), `admin delete refused: ${derr}`);
+    eq((await db.query("SELECT count(*)::int AS n FROM admins WHERE email=$1", [ADMIN_EMAIL])).rows[0].n, 1, "admin still there");
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE admin_email=$1 AND admin_id IS NOT NULL", [ADMIN_EMAIL])).rows[0].n >= 2, true, "actor email snapshot on login/logout rows");
+    // a disabled admin: login still uniform 401, disable/enable are audited by the DB itself
+    await runCli([`dis+${stamp}@example.test`], { ADMIN_PASSWORD: ADMIN_PW });
+    await db.query("UPDATE admins SET disabled_at=now() WHERE email=$1", [`dis+${stamp}@example.test`]);
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='admin_disabled' AND admin_email=$1", [`dis+${stamp}@example.test`])).rows[0].n, 1, "disable audited");
+  });
+
+  await check("[ah] failed admin logins: audited (email, ip, reason), client responses identical, no existence leak, flooding bounded, no secrets in audit", async () => {
+    const real = `aud+${stamp}@example.test`;
+    await runCli([real], { ADMIN_PASSWORD: ADMIN_PW });
+    const disabled = `dis+${stamp}@example.test`; // disabled in the previous check
+    const ghost = `ghost+${stamp}@example.test`;
+    const wrongPw = "Definitely-Wrong-Secret-xyz-77";
+    const c1 = new Client_(), c2 = new Client_(), c3 = new Client_();
+    const r1 = await adminLogin(c1, ghost, wrongPw), r2 = await adminLogin(c2, real, wrongPw), r3 = await adminLogin(c3, disabled, ADMIN_PW);
+    const t = await Promise.all([r1, r2, r3].map(async (r) => `${r.status}|${r.headers.get("content-type")}|${r.headers.getSetCookie().length}|${await r.text()}`));
+    assert(t[0] === t[1] && t[1] === t[2], `identical client responses for unknown/wrong-password/disabled: ${JSON.stringify(t)}`);
+    eq(r1.status, 401, "401");
+    const rows = (await db.query("SELECT admin_email, ip, reason, created_at, admin_id FROM audit_log WHERE action='admin_login_failed' AND ip = ANY($1) ORDER BY created_at", [[c1.ip, c2.ip, c3.ip]])).rows;
+    eq(rows.length, 3, "one audit row per distinct failure");
+    const by = Object.fromEntries(rows.map((r) => [r.ip, r]));
+    eq(by[c1.ip].reason, "unknown_email", "unknown email reason"); eq(by[c1.ip].admin_email, ghost, "attempted email");
+    eq(by[c2.ip].reason, "bad_password", "bad password reason");
+    eq(by[c3.ip].reason, "disabled", "disabled reason");
+    assert(rows.every((r) => r.created_at && r.admin_id === null), "timestamp present, not linked to an admin");
+    // flooding: a burst from ONE ip is stopped by the per-IP limiter (429 after 10) and writes <= 2 rows (first + milestone) for identical attempts
+    const fl = new Client_(); const floodEmail = `flood+${stamp}@example.test`;
+    const codes: number[] = [];
+    for (let i = 0; i < 14; i++) codes.push((await adminLogin(fl, floodEmail, wrongPw)).status);
+    assert(codes.includes(429), `progressive delay and/or per-IP limiter engaged: ${codes.join()}`);
+    const nf = (await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='admin_login_failed' AND ip=$1", [fl.ip])).rows[0].n;
+    assert(nf >= 1 && nf <= 3, `bounded rows for a 14-request burst: ${nf}`);
+    // and a different-email spray from one ip is bounded by that same limiter
+    const sp = new Client_(); for (let i = 0; i < 25; i++) await adminLogin(sp, `spray${i}+${stamp}@example.test`, wrongPw);
+    const ns = (await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='admin_login_failed' AND ip=$1", [sp.ip])).rows[0].n;
+    assert(ns <= 10, `spray from one ip bounded by ADMIN_LOGIN_IP (10): ${ns}`);
+    // successful login + logout audited with ip / email; no secrets anywhere in the table
+    const okc = new Client_(); eq((await adminLogin(okc, real, ADMIN_PW)).status, 200, "real login");
+    await okc.req("POST", "/api/admin/logout");
+    const acts = (await db.query("SELECT action, ip FROM audit_log WHERE admin_email=$1 AND action IN ('admin_login','admin_logout') ORDER BY created_at", [real])).rows;
+    eq(acts.map((a) => a.action).join(), "admin_login,admin_logout", "login + logout audited"); eq(acts[0].ip, okc.ip, "login ip recorded");
+    const all = JSON.stringify((await db.query("SELECT * FROM audit_log")).rows);
+    assert(!all.includes(wrongPw) && !all.includes(ADMIN_PW) && !/\$2[aby]\$/.test(all), "no password / hash in audit_log");
+    // reset-password revokes sessions and says so in the audit log
+    const sess = new Client_(); await adminLogin(sess, real, ADMIN_PW);
+    eq((await runCli([real, "--reset-password"], { ADMIN_PASSWORD: ADMIN_PW + "-new" })).code, 0, "reset");
+    eq((await sess.req("GET", "/api/admin/me")).status, 401, "old session dead after reset");
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='admin_sessions_revoked' AND admin_email=$1 AND reason='password_reset'", [real])).rows[0].n, 1, "revocation audited");
+  });
+
+  await check("[r4] NEW-4 stress: old-password logins racing `--reset-password` leave NO usable session (every cookie minted for the old credentials is 401 afterwards)", async () => {
+    const em = `race+${stamp}@example.test`;
+    eq((await runCli([em], { ADMIN_PASSWORD: ADMIN_PW })).code, 0, "created");
+    const id = (await db.query("SELECT id FROM admins WHERE email=$1", [em])).rows[0].id;
+    let stop = false; const won: Client_[] = []; const codes: Record<number, number> = {};
+    const loop = async () => { while (!stop) { const c = new Client_(); const r = await adminLogin(c, em, ADMIN_PW); codes[r.status] = (codes[r.status] ?? 0) + 1; if (r.status === 200) won.push(c); } };
+    const attackers = [loop(), loop(), loop()];
+    await sleep(900);
+    const reset = await runCli([em, "--reset-password"], { ADMIN_PASSWORD: ADMIN_PW + "-new" });
+    eq(reset.code, 0, `reset: ${reset.out.slice(-160)}`);
+    await sleep(1500); stop = true; await Promise.all(attackers);
+    assert(won.length >= 1, `the attackers did log in before the reset (${JSON.stringify(codes)})`);
+    let alive = 0; for (const c of won) if ((await c.req("GET", "/api/admin/me")).status === 200) alive++;
+    eq(alive, 0, `no old-password session is alive after the reset (${won.length} minted; codes ${JSON.stringify(codes)})`);
+    const rv = (await db.query("SELECT created_at FROM audit_log WHERE admin_id=$1 AND action='admin_sessions_revoked' ORDER BY created_at DESC LIMIT 1", [id])).rows[0].created_at;
+    eq((await db.query("SELECT count(*)::int AS n FROM admin_sessions WHERE admin_id=$1 AND revoked_at IS NULL AND created_at > $2", [id, rv])).rows[0].n, 0, "no live session row created after the revoke committed");
+    // and the new password works, the old one does not (the attacker loops armed the per-email delay: wait it out, it is capped at CAP s)
+    await sleep(CAP * 1000 + 500);
+    eq((await adminLogin(new Client_(), em, ADMIN_PW + "-new")).status, 200, "new password works (a success also clears the delay)");
+    eq((await adminLogin(new Client_(), em, ADMIN_PW)).status, 401, "old password refused");
+    return `minted before reset: ${won.length}; codes ${JSON.stringify(codes)}`;
+  });
+
+  await check("[r4] NEW-5: 30 parallel CORRECT logins for one email (seller and admin) never 500", async () => {
+    const { email: se } = await signupClient("conc30");
+    const sr = await Promise.all(Array.from({ length: 30 }, () => new Client_().req("POST", "/api/auth/login", { json: { email: se, password } })));
+    const ss = sr.map((r) => r.status);
+    assert(ss.every((s) => s === 200 || s === 429), `seller: only 200/429, got ${ss.join(",")}`);
+    assert(ss.includes(200), "seller: at least one login succeeded");
+    const ar = await Promise.all(Array.from({ length: 30 }, () => adminLogin(new Client_(), ADMIN_EMAIL, ADMIN_PW)));
+    const as = ar.map((r) => r.status);
+    assert(as.every((s) => s === 200 || s === 429 || s === 401), `admin: no 5xx, got ${as.join(",")}`);
+    assert(as.includes(200), "admin: at least one login succeeded");
+    return `seller ${ss.filter((s) => s === 200).length}x200/${ss.filter((s) => s === 429).length}x429; admin ${as.filter((s) => s === 200).length}x200`;
   });
 
   await check("[pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404", async () => {

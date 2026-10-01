@@ -8,6 +8,7 @@ import { OverRefundError } from "./money";
 import { postReversal, postSale, TX_COLS, type TxRow } from "./ledger";
 import { voidCharge } from "./refunds";
 import { findProvider } from "./registry";
+import { writeAudit } from "../admin/audit";
 import type { NormalizedPaymentEvent } from "./types";
 
 /**
@@ -307,7 +308,7 @@ async function flagSellerIfRepeatChargebacks(c: PoolClient, sellerId: string, ct
   const up = await c.query(
     `UPDATE sellers SET risk_flagged_at = now(), risk_flag_reason = $2 WHERE id = $1 AND risk_flagged_at IS NULL`, [sellerId, reason]);
   if (!up.rowCount) return false;
-  await c.query(`INSERT INTO audit_log (admin_id, action, target) VALUES (NULL, 'seller_flagged_repeat_chargebacks', $1)`, [`seller:${sellerId} ${reason}`]);
+  await writeAudit(c, { action: "seller_flagged_repeat_chargebacks", target: `seller:${sellerId} ${reason}` });
   return true;
 }
 

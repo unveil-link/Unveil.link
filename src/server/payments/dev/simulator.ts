@@ -1,3 +1,4 @@
+import { hasBadText } from "../../input";
 import { config } from "../../config";
 import { HttpError } from "../../errors";
 import { query, queryOne } from "../../db";
@@ -31,6 +32,7 @@ interface SessionTx {
   seller_verified: boolean; drop_published: boolean;
 }
 async function txForSession(sessionId: string): Promise<SessionTx> {
+  if (hasBadText(sessionId) || sessionId.length > 100) throw new HttpError(404, "Unknown checkout session", "unknown_session");
   const tx = await queryOne<SessionTx>(
     `SELECT t.id, t.amount_cents, t.currency, t.status, t.failure_code, t.review_reason,
             (s.verification_status = 'verified') AS seller_verified, (d.status = 'published') AS drop_published

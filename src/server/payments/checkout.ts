@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import type { PoolClient } from "pg";
 import { pool, queryOne, withTx } from "../db";
 import { HttpError } from "../errors";
+import { isUuid } from "../input";
 import { config } from "../config";
 import { getDropByPublicLink, type Drop } from "../services/drops";
 import { getSettings } from "../services/settings";
@@ -43,7 +44,7 @@ const KEY_RE = /^[\x21-\x7e]{1,128}$/;
 
 async function loadDrop(input: CheckoutInput): Promise<Drop | null> {
   if (input.linkId) return getDropByPublicLink(input.linkId);
-  if (input.dropId && /^[0-9a-f-]{36}$/i.test(input.dropId)) {
+  if (input.dropId && isUuid(input.dropId)) {
     return queryOne<Drop>(`SELECT ${DROP_COLS} FROM drops WHERE id = $1`, [input.dropId]);
   }
   return null;
@@ -174,7 +175,7 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutOutc
 
 /** Buyer-facing status (the unguessable transaction uuid is the capability). Never exposes fees, seller or email. */
 export async function getCheckoutStatus(transactionId: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(transactionId)) return null;
+  if (!isUuid(transactionId)) return null;
   await expirePendingCheckouts({ transactionId });
   const r = await queryOne<{ id: string; status: string; amount_cents: number; failure_code: string | null }>(
     `SELECT id, status, amount_cents, failure_code FROM transactions WHERE id = $1`, [transactionId]);
