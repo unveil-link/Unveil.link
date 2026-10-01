@@ -1,0 +1,7 @@
+[signup] email_taken -> An account with this email already exists. | focus: email
+[signup] client rule 'own email local-part': Choose a different password — not your email or name.
+[signup] client rule 'repeats': Choose a different password — no repeats or simple sequences (aaaa…, 1234…).
+[signup] client rule 'sequence': Choose a different password — no repeats or simple sequences (aaaa…, 1234…).
+[signup] client rule 'only digits seq': Choose a different password — no repeats or simple sequences (aaaa…, 1234…).
+[signup] show-password toggles type to: text | meter: Strength: Strong
+[login] unknown email msg === wrong pw msg (no enumeration): true "That email and password don’t match. Check them and try again, or reset your password."

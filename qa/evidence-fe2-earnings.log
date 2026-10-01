@@ -1,0 +1,100 @@
+== A. maya (seed-demo): expected gross $506.00 net $366.34 available $156.34 pending $60.00 paid $150.00
+[maya] DB truth: gross $506.00 plat $43.10 proc $21.56 refunded $50.00 cb $25.00 net $366.34 avail $156.34 pend $60.00 paid $150.00
+[maya] UI: gross $506.00 plat $43.10 proc $21.56 net $366.34 avail $156.34 pend $60.00 paid $150.00
+[maya] line: $506.00 gross − $43.10 platform fee − $21.56 processing fees − $50.00 refunded − $25.00 charged back = $366.34 | reversals: Reversed sales: $50.00 refunded · $25.00 charged back. Fees on reversed sales are returned, so they are not counted above.
+   OK   gross
+   OK   platform fee
+   OK   processing fees
+   OK   net
+   OK   pending payouts
+   OK   paid out
+   OK   net == SUM(seller_net_cents of succeeded) (36634 vs 36634)
+   OK   gross == net + platform + processing + refunded + charged back
+   OK   reconciliation line text exact
+   OK   line arithmetic reconciles to the cent (50600 − 13966 = 36634)
+   OK   matches the task's expected totals
+   OK   'Your 90%' label gone
+   OK   refund and chargeback shown separately
+   OK   chargeback not lumped into refunded
+   cards: {"Gross sales":"$506.00 | 30 sales · 2 reversed","Platform fee":"$43.10 | 10% of completed sales","Processing fees":"$21.56 | 5% of completed sales · card processor","Your earnings (net)":"$366.34 | 85% of completed sales, after fees"}
+   OK   available = net − paid − pending = $156.34
+== B. zero sales
+[zero] DB truth: gross $0.00 plat $0.00 proc $0.00 refunded $0.00 cb $0.00 net $0.00 avail $0.00 pend $0.00 paid $0.00
+[zero] UI: gross $0.00 plat $0.00 proc $0.00 net $0.00 avail $0.00 pend $0.00 paid $0.00
+[zero] line: $0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00 | reversals: null
+   OK   gross
+   OK   platform fee
+   OK   processing fees
+   OK   net
+   OK   pending payouts
+   OK   paid out
+   OK   net == SUM(seller_net_cents of succeeded) (0 vs 0)
+   OK   gross == net + platform + processing + refunded + charged back
+   OK   reconciliation line text exact
+   OK   line arithmetic reconciles to the cent (0 − 0 = 0)
+   OK   available $0.00
+   hints: {"Gross sales":"$0.00 | 0 sales","Platform fee":"$0.00 | Charged on each sale","Processing fees":"$0.00 | Paid to the card processor","Your earnings (net)":"$0.00 | After fees"}
+   OK   no NaN/Infinity/undefined
+== C. many sales, odd cents
+[many] DB truth: gross $1,257,801.65 plat $125,777.36 proc $36,571.27 refunded $13.34 cb $7.77 net $1,095,431.91 avail $1,082,086.23 pend $1,000.01 paid $12,345.67
+[many] UI: gross $1,257,801.65 plat $125,777.36 proc $36,571.27 net $1,095,431.91 avail $1,082,086.23 pend $1,000.01 paid $12,345.67
+[many] line: $1,257,801.65 gross − $125,777.36 platform fee − $36,571.27 processing fees − $13.34 refunded − $7.77 charged back = $1,095,431.91 | reversals: Reversed sales: $13.34 refunded · $7.77 charged back. Fees on reversed sales are returned, so they are not counted above.
+   OK   gross
+   OK   platform fee
+   OK   processing fees
+   OK   net
+   OK   pending payouts
+   OK   paid out
+   OK   net == SUM(seller_net_cents of succeeded) (109543191 vs 109543191)
+   OK   gross == net + platform + processing + refunded + charged back
+   OK   reconciliation line text exact
+   OK   line arithmetic reconciles to the cent (125780165 − 16236974 = 109543191)
+   OK   available ($1,082,086.23)
+   failed payout ($0.05) ignored: true
+   hints: {"Gross sales":"$1,257,801.65 | 401 sales · 3 reversed","Platform fee":"$125,777.36 | 10% of completed sales","Processing fees":"$36,571.27 | 2.9% of completed sales · card processor","Your earnings (net)":"$1,095,431.91 | 87.1% of completed sales, after fees"}
+== D. negative balance (payout already larger than remaining net, e.g. refund after payout)
+[negative] DB truth: gross $150.00 plat $10.00 proc $3.20 refunded $50.00 cb $0.00 net $86.80 avail -$3.20 pend $0.00 paid $90.00
+[negative] UI: gross $150.00 plat $10.00 proc $3.20 net $86.80 avail $0.00 pend $0.00 paid $90.00
+[negative] line: $150.00 gross − $10.00 platform fee − $3.20 processing fees − $50.00 refunded = $86.80 | reversals: Reversed sales: $50.00 refunded. Fees on reversed sales are returned, so they are not counted above.
+   OK   gross
+   OK   platform fee
+   OK   processing fees
+   OK   net
+   OK   pending payouts
+   OK   paid out
+   OK   net == SUM(seller_net_cents of succeeded) (8680 vs 8680)
+   OK   gross == net + platform + processing + refunded + charged back
+   OK   reconciliation line text exact
+   OK   line arithmetic reconciles to the cent (15000 − 6320 = 8680)
+   true available = -$3.20 ; UI Available = $0.00 ; UI card text: Available |  | $0.00
+   FAIL UI shows the true negative balance (payments ledger semantics: available may be negative)
+== E. isolation: two sellers with different data see only their own
+[isoa] DB truth: gross $111.11 plat $11.11 proc $3.52 refunded $0.00 cb $0.00 net $96.48 avail $96.48 pend $0.00 paid $0.00
+[isoa] UI: gross $111.11 plat $11.11 proc $3.52 net $96.48 avail $96.48 pend $0.00 paid $0.00
+[isoa] line: $111.11 gross − $11.11 platform fee − $3.52 processing fees = $96.48 | reversals: null
+   OK   gross
+   OK   platform fee
+   OK   processing fees
+   OK   net
+   OK   pending payouts
+   OK   paid out
+   OK   net == SUM(seller_net_cents of succeeded) (9648 vs 9648)
+   OK   gross == net + platform + processing + refunded + charged back
+   OK   reconciliation line text exact
+   OK   line arithmetic reconciles to the cent (11111 − 1463 = 9648)
+[isob] DB truth: gross $222.22 plat $22.22 proc $6.74 refunded $0.00 cb $0.00 net $193.26 avail $193.26 pend $0.00 paid $0.00
+[isob] UI: gross $222.22 plat $22.22 proc $6.74 net $193.26 avail $193.26 pend $0.00 paid $0.00
+[isob] line: $222.22 gross − $22.22 platform fee − $6.74 processing fees = $193.26 | reversals: null
+   OK   gross
+   OK   platform fee
+   OK   processing fees
+   OK   net
+   OK   pending payouts
+   OK   paid out
+   OK   net == SUM(seller_net_cents of succeeded) (19326 vs 19326)
+   OK   gross == net + platform + processing + refunded + charged back
+   OK   reconciliation line text exact
+   OK   line arithmetic reconciles to the cent (22222 − 2896 = 19326)
+   OK   no cross-seller leakage in text
+== F. formatting: UI uses Intl currency (thousands separators): large sale shown as $1,234,567.89
+RESULT fails=1

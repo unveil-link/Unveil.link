@@ -1,0 +1,13 @@
+
+> unveil@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.3 /workspace/fe2
+
+
+ Test Files  8 passed (8)
+      Tests  61 passed (61)
+   Start at  11:00:44
+   Duration  1.29s (import 56%, transform 38%, tests 5%, worker 2%)
+

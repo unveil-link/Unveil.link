@@ -1,0 +1,10 @@
+[M2-11] before unpublish /u/ status: 200
+[M2-11] copy link clipboard: https://unveil.link/u/v8rwfE5r09CQ | button label now: 1
+[M2-11] after UI unpublish: /u/ status 404 | db status unpublished | editor badge: ← All drops | <img src=x onerror=window.__x=1>"><script>window.__x=2</script> | Unpublished | $12.00 | <b>bold</b> <img src=x onerror=window.__x=4> &amp; <a hre
+[M2-11] unavailable page copy present: true | Buy button present: false
+[M2-11] republish via UI: /u/ status 200
+[M1-05] editor add-files: files before 4 after 4 | UI: fake.jpg | 20 B · Ready to upload | Upload 2 files
+[M2-10] editable fields in editor (inputs/textarea excluding file/checkbox): 0
+[mobile] new-drop flow done; hscroll: false | text: Draft saved | “Mobile drop” · $9.99 · 1 file | YOUR LINK (LIVE ONCE PUBLISHED) | unveil.link/u/kDsgQdTE4SHD | Copy | This drop is a draft. Open it to confirm the publishing statements and switch the l
+[mobile] bottom tab nav links: ["Overview","Drops","New drop"]
+[csp/console] G: csp 0 errors 0 []

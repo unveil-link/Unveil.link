@@ -1,0 +1,102 @@
+== login (/api/auth/login)
+   OK   Retry-After 1s -> button 'Try again in 1s' countdown "1s" (want '1s')
+   OK   Retry-After 45s -> button 'Try again in 45s' countdown "45s" (want '45s')
+   OK   Retry-After 59s -> button 'Try again in 59s' countdown "59s" (want '59s') | SR text has '59 seconds': true
+   OK   Retry-After 60s -> button 'Try again in 60s' countdown "60s" (want '60s')
+   OK   Retry-After 61s -> button 'Try again in 61s' countdown "61s" (want '61s')
+   OK   Retry-After 120s -> button 'Try again in 120s' countdown "120s" (want '120s')
+   OK   Retry-After 121s -> button 'Try again in 3 min' countdown "3 min" (want '3 min') | SR text has '3 minutes': true
+   OK   Retry-After 300s -> button 'Try again in 5 min' countdown "5 min" (want '5 min')
+   OK   Retry-After 3480s -> button 'Try again in 58 min' countdown "58 min" (want '58 min') | SR text has '58 minutes': true
+   OK   Retry-After 3481s -> button 'Try again in 59 min' countdown "59 min" (want '59 min')
+   OK   Retry-After 3540s -> button 'Try again in 59 min' countdown "59 min" (want '59 min')
+   OK   Retry-After 3599s -> button 'Try again in 1 h' countdown "1 h" (want '1 h')
+   OK   Retry-After 3600s -> button 'Try again in 1 h' countdown "1 h" (want '1 h') | SR text has '1 hour': true
+   OK   Retry-After 3601s -> button 'Try again in 1 h 1 min' countdown "1 h 1 min" (want '1 h 1 min')
+   OK   Retry-After 3661s -> button 'Try again in 1 h 2 min' countdown "1 h 2 min" (want '1 h 2 min')
+   OK   Retry-After 4320s -> button 'Try again in 1 h 12 min' countdown "1 h 12 min" (want '1 h 12 min') | SR text has '1 hour 12 minutes': true
+   OK   Retry-After 7200s -> button 'Try again in 2 h' countdown "2 h" (want '2 h') | SR text has '2 hours': true
+   OK   Retry-After 86399s -> button 'Try again in 24 h' countdown "24 h" (want '24 h')
+   OK   Retry-After 86400s -> button 'Try again in 24 h' countdown "24 h" (want '24 h')
+   OK   Retry-After 86401s -> button 'Try again in 24 h 1 min' countdown "24 h 1 min" (want '24 h 1 min')
+   OK   Retry-After 172800s -> button 'Try again in 48 h' countdown "48 h" (want '48 h')
+   OK   Retry-After 999999s -> button 'Try again in 277 h 47 min' countdown "277 h 47 min" (want '277 h 47 min')
+== forgot-password
+   OK   Retry-After 1s -> button 'Try again in 1s' countdown "1s" (want '1s')
+   OK   Retry-After 45s -> button 'Try again in 45s' countdown "45s" (want '45s')
+   OK   Retry-After 59s -> button 'Try again in 59s' countdown "59s" (want '59s') | SR text has '59 seconds': true
+   OK   Retry-After 60s -> button 'Try again in 60s' countdown "60s" (want '60s')
+   OK   Retry-After 61s -> button 'Try again in 61s' countdown "61s" (want '61s')
+   OK   Retry-After 120s -> button 'Try again in 120s' countdown "120s" (want '120s')
+   OK   Retry-After 121s -> button 'Try again in 3 min' countdown "3 min" (want '3 min') | SR text has '3 minutes': true
+   OK   Retry-After 300s -> button 'Try again in 5 min' countdown "5 min" (want '5 min')
+   OK   Retry-After 3480s -> button 'Try again in 58 min' countdown "58 min" (want '58 min') | SR text has '58 minutes': true
+   OK   Retry-After 3481s -> button 'Try again in 59 min' countdown "59 min" (want '59 min')
+   OK   Retry-After 3540s -> button 'Try again in 59 min' countdown "59 min" (want '59 min')
+   OK   Retry-After 3599s -> button 'Try again in 1 h' countdown "1 h" (want '1 h')
+   OK   Retry-After 3600s -> button 'Try again in 1 h' countdown "1 h" (want '1 h') | SR text has '1 hour': true
+   OK   Retry-After 3601s -> button 'Try again in 1 h 1 min' countdown "1 h 1 min" (want '1 h 1 min')
+   OK   Retry-After 3661s -> button 'Try again in 1 h 2 min' countdown "1 h 2 min" (want '1 h 2 min')
+   OK   Retry-After 4320s -> button 'Try again in 1 h 12 min' countdown "1 h 12 min" (want '1 h 12 min') | SR text has '1 hour 12 minutes': true
+   OK   Retry-After 7200s -> button 'Try again in 2 h' countdown "2 h" (want '2 h') | SR text has '2 hours': true
+   OK   Retry-After 86399s -> button 'Try again in 24 h' countdown "24 h" (want '24 h')
+   OK   Retry-After 86400s -> button 'Try again in 24 h' countdown "24 h" (want '24 h')
+   OK   Retry-After 86401s -> button 'Try again in 24 h 1 min' countdown "24 h 1 min" (want '24 h 1 min')
+   OK   Retry-After 172800s -> button 'Try again in 48 h' countdown "48 h" (want '48 h')
+   OK   Retry-After 999999s -> button 'Try again in 277 h 47 min' countdown "277 h 47 min" (want '277 h 47 min')
+== signup
+   OK   Retry-After 1s -> button 'Try again in 1s' countdown "1s" (want '1s')
+   OK   Retry-After 45s -> button 'Try again in 45s' countdown "45s" (want '45s')
+   OK   Retry-After 59s -> button 'Try again in 59s' countdown "59s" (want '59s') | SR text has '59 seconds': true
+   OK   Retry-After 60s -> button 'Try again in 60s' countdown "60s" (want '60s')
+   OK   Retry-After 61s -> button 'Try again in 61s' countdown "61s" (want '61s')
+   OK   Retry-After 120s -> button 'Try again in 120s' countdown "120s" (want '120s')
+   OK   Retry-After 121s -> button 'Try again in 3 min' countdown "3 min" (want '3 min') | SR text has '3 minutes': true
+   OK   Retry-After 300s -> button 'Try again in 5 min' countdown "5 min" (want '5 min')
+   OK   Retry-After 3480s -> button 'Try again in 58 min' countdown "58 min" (want '58 min') | SR text has '58 minutes': true
+   OK   Retry-After 3481s -> button 'Try again in 59 min' countdown "59 min" (want '59 min')
+   OK   Retry-After 3540s -> button 'Try again in 59 min' countdown "59 min" (want '59 min')
+   OK   Retry-After 3599s -> button 'Try again in 1 h' countdown "1 h" (want '1 h')
+   OK   Retry-After 3600s -> button 'Try again in 1 h' countdown "1 h" (want '1 h') | SR text has '1 hour': true
+   OK   Retry-After 3601s -> button 'Try again in 1 h 1 min' countdown "1 h 1 min" (want '1 h 1 min')
+   OK   Retry-After 3661s -> button 'Try again in 1 h 2 min' countdown "1 h 2 min" (want '1 h 2 min')
+   OK   Retry-After 4320s -> button 'Try again in 1 h 12 min' countdown "1 h 12 min" (want '1 h 12 min') | SR text has '1 hour 12 minutes': true
+   OK   Retry-After 7200s -> button 'Try again in 2 h' countdown "2 h" (want '2 h') | SR text has '2 hours': true
+   OK   Retry-After 86399s -> button 'Try again in 24 h' countdown "24 h" (want '24 h')
+   OK   Retry-After 86400s -> button 'Try again in 24 h' countdown "24 h" (want '24 h')
+   OK   Retry-After 86401s -> button 'Try again in 24 h 1 min' countdown "24 h 1 min" (want '24 h 1 min')
+   OK   Retry-After 172800s -> button 'Try again in 48 h' countdown "48 h" (want '48 h')
+   OK   Retry-After 999999s -> button 'Try again in 277 h 47 min' countdown "277 h 47 min" (want '277 h 47 min')
+== reset-password
+   OK   Retry-After 1s -> button 'Try again in 1s' countdown "1s" (want '1s')
+   OK   Retry-After 45s -> button 'Try again in 45s' countdown "45s" (want '45s')
+   OK   Retry-After 59s -> button 'Try again in 59s' countdown "59s" (want '59s') | SR text has '59 seconds': true
+   OK   Retry-After 60s -> button 'Try again in 60s' countdown "60s" (want '60s')
+   OK   Retry-After 61s -> button 'Try again in 61s' countdown "61s" (want '61s')
+   OK   Retry-After 120s -> button 'Try again in 120s' countdown "120s" (want '120s')
+   OK   Retry-After 121s -> button 'Try again in 3 min' countdown "3 min" (want '3 min') | SR text has '3 minutes': true
+   OK   Retry-After 300s -> button 'Try again in 5 min' countdown "5 min" (want '5 min')
+   OK   Retry-After 3480s -> button 'Try again in 58 min' countdown "58 min" (want '58 min') | SR text has '58 minutes': true
+   OK   Retry-After 3481s -> button 'Try again in 59 min' countdown "59 min" (want '59 min')
+   OK   Retry-After 3540s -> button 'Try again in 59 min' countdown "59 min" (want '59 min')
+   OK   Retry-After 3599s -> button 'Try again in 1 h' countdown "1 h" (want '1 h')
+   OK   Retry-After 3600s -> button 'Try again in 1 h' countdown "1 h" (want '1 h') | SR text has '1 hour': true
+   OK   Retry-After 3601s -> button 'Try again in 1 h 1 min' countdown "1 h 1 min" (want '1 h 1 min')
+   OK   Retry-After 3661s -> button 'Try again in 1 h 2 min' countdown "1 h 2 min" (want '1 h 2 min')
+   OK   Retry-After 4320s -> button 'Try again in 1 h 12 min' countdown "1 h 12 min" (want '1 h 12 min') | SR text has '1 hour 12 minutes': true
+   OK   Retry-After 7200s -> button 'Try again in 2 h' countdown "2 h" (want '2 h') | SR text has '2 hours': true
+   OK   Retry-After 86399s -> button 'Try again in 24 h' countdown "24 h" (want '24 h')
+   OK   Retry-After 86400s -> button 'Try again in 24 h' countdown "24 h" (want '24 h')
+   OK   Retry-After 86401s -> button 'Try again in 24 h 1 min' countdown "24 h 1 min" (want '24 h 1 min')
+   OK   Retry-After 172800s -> button 'Try again in 48 h' countdown "48 h" (want '48 h')
+   OK   Retry-After 999999s -> button 'Try again in 277 h 47 min' countdown "277 h 47 min" (want '277 h 47 min')
+== buyer checkout (/api/checkout)
+   OK   Retry-After 59s -> buy button 'Try again in 59s', notice has '59 seconds': true
+   OK   Retry-After 3480s -> buy button 'Try again in 58 min', notice has '58 minutes': true
+   OK   Retry-After 4320s -> buy button 'Try again in 1 h 12 min', notice has '1 hour 12 minutes': true
+   OK   Retry-After 3600s -> buy button 'Try again in 1 h', notice has '1 hour': true
+   OK   Retry-After 86400s -> buy button 'Try again in 24 h', notice has '24 hours': true
+== NewDropFlow / upload 429 text (not part of FE-05 scope; informational)
+   upload.ts: case "rate_limited": return `Too many requests — try again in ${r.retryAfter ?? 30}s.`;
+   NewDropFlow.tsx: else if (res.status === 429) setBanner(`Too many requests. Please try again in ${res.retryAfter ?? 30} seconds.`);
+RESULT fails=0

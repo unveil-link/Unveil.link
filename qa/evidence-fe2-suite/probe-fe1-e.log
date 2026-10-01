@@ -1,0 +1,39 @@
+[a11y] signup: {"unlabeled":[],"noAlt":[],"h1":1,"lang":"en","landmarks":"main:1 nav:0 header:1 footer:0","skip":false,"buttonsNoName":[]}
+[a11y] login: {"unlabeled":[],"noAlt":[],"h1":1,"lang":"en","landmarks":"main:1 nav:0 header:1 footer:0","skip":false,"buttonsNoName":[]}
+[a11y] forgot: {"unlabeled":[],"noAlt":[],"h1":1,"lang":"en","landmarks":"main:1 nav:0 header:1 footer:0","skip":false,"buttonsNoName":[]}
+[a11y] buyer: {"unlabeled":[],"noAlt":[],"h1":1,"lang":"en","landmarks":"main:1 nav:0 header:1 footer:1","skip":false,"buttonsNoName":[]}
+[a11y] landing: {"unlabeled":[],"noAlt":[],"h1":1,"lang":"en","landmarks":"main:1 nav:2 header:1 footer:1","skip":true,"buttonsNoName":[]}
+[a11y] tab order /login: a:Unveil|outline=solid/2px  →  input[email]:|outline=solid/2px|shadow  →  input[password]:|outline=solid/2px|shadow  →  button:Show password|outline=solid/2px  →  a:Forgot your passwo|outline=solid/2px  →  button:Sign in|outline=solid/2px|shadow  →  a:Create an account|outline=solid/2px  →  body:Unveil
+Sell your f|outline=none/3px  →  a:Unveil|outline=solid/2px
+[a11y] Enter submits & shows validation: true | focus moved to: email
+[a11y] password toggle: 1 Show password false
+[a11y] buyer keyboard-only: focus after checkbox+Tab: A | notice shown: 0 | focus on notice: null
+[a11y] Unpublish confirm modal open: 0 | focus inside dialog: false
+[a11y] Esc closes modal: true
+[a11y] visible a/button with height < 24px on drops list: 1
+[a11y] contrast spot-check (dashboard/drops):
+    h1: 17.34 (rgb(20, 18, 31) on rgb(248, 247, 252), 30px)
+    main p: 6.14 (rgb(94, 91, 112) on rgb(248, 247, 252), 16px)
+    main td: 18.49 (rgb(20, 18, 31) on rgb(255, 255, 255), 14px)
+    table th: 3.20 (rgb(94, 91, 112) on oklab(0.956834 0.00616762 -0.0134389 / 0.6), 12px)
+    button: 18.49 (rgb(20, 18, 31) on rgb(255, 255, 255), 14px)
+    .text-muted: 6.55 (rgb(94, 91, 112) on rgb(255, 255, 255), 14px)
+    span.rounded-full: 6.72 (rgb(255, 255, 255) on rgb(79, 59, 232), 14px)
+[a11y] contrast below WCAG AA on buyer: ["span \"6 files: 6 images\" 1.13<4.5 (rgb(20, 18, 31) on oklab(0.999994 0.0000455678 0.0000200868 / 0.9), 12px)","p \"© 2026 Unveil · unveil.link\" 3.20<4.5 (rgb(94, 91, 112) on oklab(0.999994 0.0000455677 0.0000200868 / 0.7), 12px)"]
+[a11y] contrast below WCAG AA on login: ["p \"Buyers check out in seconds — \" 1.13<4.5 (oklab(0.999994 0.0000455677 0.0000200868 / 0.7) on rgb(20, 18, 31), 14px)","p \"© 2026 Unveil · unveil.link\" 1.13<4.5 (oklab(0.999994 0.0000455678 0.0000200868 / 0.55) on rgb(20, 18, 31), 14px)"]
+[a11y] contrast below WCAG AA on signup: ["p \"Buyers check out in seconds — \" 1.13<4.5 (oklab(0.999994 0.0000455677 0.0000200868 / 0.7) on rgb(20, 18, 31), 14px)","p \"© 2026 Unveil · unveil.link\" 1.13<4.5 (oklab(0.999994 0.0000455678 0.0000200868 / 0.55) on rgb(20, 18, 31), 14px)"]
+[M6-07] manifest: {"name":"Unveil","short_name":"Unveil","description":"Sell your files with a simple payment link.","start_url":"/","scope":"/","display":"standalone","orientation":"portrait","background_color":"#f8f7fc","theme_color":"#4f3be8","categories":["business","productivity"],"icons":[{"src":"/icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"/icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"/icons/icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
+[M6-07] icon /icons/icon-192.png 200 image/png 16470
+[M6-07] icon /icons/icon-512.png 200 image/png 97773
+[M6-07] icon /icons/icon-maskable-512.png 200 image/png 72757
+[M6-07] <head> link/meta: <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#4f3be8"/>
+  <meta name="description" content="Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."/>
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <meta name="apple-mobile-web-app-title" content="Unveil"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta property="og:description" content="Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts."/>
+  <meta name="twitter:description" content="Sell your files with a simple payment link."/>
+  <link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png"/>
+  <link rel="icon" href="/icons/icon-512.png" sizes="512x512" type="image/png"/>
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180"/>

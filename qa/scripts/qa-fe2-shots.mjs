@@ -1,0 +1,15 @@
+import { chromium } from "playwright-core"; import fs from "node:fs";
+const BASE = process.env.BASE; const seed = JSON.parse(fs.readFileSync(process.env.SEED, "utf8")); const O = "qa/artifacts/frontend-dashboard-r2/";
+const b = await chromium.launch({ executablePath: "/usr/bin/google-chrome", args: ["--no-sandbox"] });
+const c = await b.newContext({ viewport: { width: 1280, height: 900 }, extraHTTPHeaders: { "x-forwarded-for": "10.64.1.1" } }); const p = await c.newPage();
+await p.goto(BASE + "/"); await p.screenshot({ path: O + "landing-footer-desktop.png", fullPage: true });
+await p.goto(BASE + "/terms"); await p.screenshot({ path: O + "placeholder-terms-desktop.png" });
+await p.goto(BASE + "/u/bmCoZTUqlSQz"); await p.screenshot({ path: O + "buyer-desktop.png", fullPage: true });
+await p.goto(BASE + "/login"); await p.fill('input[name="email"]', seed.maya.email); await p.fill('input[name="password"]', seed.password); await Promise.all([p.waitForURL("**/dashboard**"), p.locator("form button[type=submit]").click()]); await p.waitForTimeout(700);
+await p.screenshot({ path: O + "dashboard-maya-desktop-final.png", fullPage: true });
+await p.locator('button:text-is("Unpublish")').first().click(); await p.waitForTimeout(300).catch(()=>{});
+await b.close();
+const b2 = await chromium.launch({ executablePath: "/usr/bin/google-chrome", args: ["--no-sandbox"] });
+const m = await b2.newContext({ viewport: { width: 390, height: 844 }, extraHTTPHeaders: { "x-forwarded-for": "10.64.1.2" } }); const q = await m.newPage();
+await q.goto(BASE + "/login"); await q.fill('input[name="email"]', seed.maya.email); await q.fill('input[name="password"]', seed.password); await Promise.all([q.waitForURL("**/dashboard**"), q.locator("form button[type=submit]").click()]); await q.waitForTimeout(700);
+await q.screenshot({ path: O + "dashboard-maya-mobile-390.png", fullPage: true }); await b2.close();

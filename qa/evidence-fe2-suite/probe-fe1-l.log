@@ -1,0 +1,8 @@
+[headers] / 200: CSP=true XCTO=nosniff XFO=DENY HSTS=true RP=strict-origin-when-cross-origin PP=true unsafe-eval=false
+[headers] /login 200: CSP=true XCTO=nosniff XFO=DENY HSTS=true RP=strict-origin-when-cross-origin PP=true unsafe-eval=false
+[headers] /u/bmCoZTUqlSQz 200: CSP=true XCTO=nosniff XFO=DENY HSTS=true RP=strict-origin-when-cross-origin PP=true unsafe-eval=false
+[headers] /dashboard 307: CSP=true XCTO=nosniff XFO=DENY HSTS=true RP=strict-origin-when-cross-origin PP=true unsafe-eval=false
+[headers] /design 404: CSP=true XCTO=nosniff XFO=DENY HSTS=true RP=strict-origin-when-cross-origin PP=true unsafe-eval=false
+[M3-01] checkout responses: 501, 501, 501, 501, 501, 501, 501, 501, 501, 501, 429 ra=58
+[M3-01] after limiter: button: Try again in 58s | disabled: true | notice: Please slow down | Too many attempts. You can try again in 58 seconds.
+[M3-01] countdown ticks: Try again in 58s -> Try again in 57s -> Try again in 56s

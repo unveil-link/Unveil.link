@@ -1,0 +1,5 @@
+[M1-05] editor upload result UI: Add files | JPG, PNG or WebP. They’re added to this drop right away. | Drag & drop files here, or choose files | JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop | 6 of 10 files · 3.5 MB of 2 GB | fake.jpg | 20 B · We couldn’t read this image. Try re-exporting it as JPG or PNG. | Retry | Upload 1 file
+[M1-05] files in DB now: a.jpg:image/jpeg, b.png:image/png, c.webp:image/webp, big.jpg:image/jpeg, g.png:image/png
+console errs: [
+  'Failed to load resource: the server responded with a status of 415 (Unsupported Media Type)'
+]

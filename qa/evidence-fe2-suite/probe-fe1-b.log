@@ -1,0 +1,53 @@
+[console/404]  /u/bmCoZTUqlSQz -> []
+[console/404]  / -> ["FAILED /signup?_rsc=5CB68i4pnAekjehf net::ERR_ABORTED","FAILED https://localhost:3232/login?_rsc=5CB68i4pnAekjehf net::ERR_SSL_PROTOCOL_ERROR","FAILED /signup?_rsc=tXyZJ52UQVBCVsD3 net::ERR_ABORTED"]
+[console/404]  /signup -> ["FAILED /login?_rsc=x75wzsg_NPcEQdn1 net::ERR_ABORTED"]
+[console/404]  /login -> ["FAILED /forgot-password?_rsc=_H_fFy2_Q06N8BA7 net::ERR_ABORTED","FAILED /forgot-password?_rsc=sW2A7HEmFQnSVIMx net::ERR_ABORTED"]
+[console/404]  /forgot-password -> []
+[M4-09] /dashboard url http://localhost:3232/dashboard
+[M4-09] dashboard main text: Hi, Maya | Here’s how your drops are doing. | New drop | Verified | Earnings | Gross sales | $506.00 | 30 sales · 2 reversed | Platform fee | $43.10 | 10% of completed sales | Processing fees | $21.56 | 5% of completed sales · card processor | Your earnings (net) | $366.34 | 85% of completed sales, after fees | $506.00 gross − $43.10 platform fee − $21.56 processing fees − $50.00 refunded − $25.00 charged back = $366.34 | Reversed sales: $50.00 refunded · $25.00 charged back. Fees on reversed sales are returned, so they are not counted above. | Available | $156.34 | Net earnings not yet in a payout | Pending payouts | $60.00 | Requested, not yet paid | Paid out | $150.00 | Sent to you so far | Net earnings = gross sales − platform fee − card-processing fees. Payouts are not enabled yet — balances will appear here as sales come in. | Your drops | 6 total · 3 live | View all | Your drops | DROP	STATUS	PRICE	FILES	SOLD	REVENUE	 | ACTIONS | Pop-up reel | Created Oct 1, 2026 | 	Under review	$9.99	1	0	$0.00	 | View | Winter archive | Created Oct 1, 2026 | 	Unpublished	$30.00	2	0	$0.00	 | Publish | Manage | Autumn preview (draft) | Created Oct 1, 2026 | 	Draft	$15.00	2	0	$0.00	 | Publish | Manage | Travel set, vol. 2 | unveil.link/u/QJSJ95hZxWT3 | 	Published	$8.00	4	5	$40.00	 | Copy link | Unpublish | Manage | Studio colour study | unveil.link/u/MK9zzaJ48D4- | 	Published	$25.00	3	7	$175.00	 | Copy link | Unpublish | Manage
+[M4-09] DB truth: {"gross":"43100","plat":"4310","proc":"2156","net":"36634","n":"30"} [{"status":"pending","s":"6000"},{"status":"paid","s":"15000"}] fee_percent: { fee_percent: '10.00' }
+[M4-10] DB per-drop: [{"title":"Autumn preview (draft)","units":"0","rev":"0"},{"title":"Pop-up reel","units":"0","rev":"0"},{"title":"Spring collection pack","units":"18","rev":"21600"},{"title":"Studio colour study","units":"7","rev":"17500"},{"title":"Travel set, vol. 2","units":"5","rev":"4000"},{"title":"Winter archive","units":"0","rev":"0"}]
+[M4-10] drops list text: Drops | Everything you’re selling, in one place. | New drop | All | 6 | Published | 3 | Drafts | 1 | Unpublished | 1 | Under review | 1 | Your drops | DROP	STATUS	PRICE	FILES	SOLD	REVENUE	 | ACTIONS | Pop-up reel | Created Oct 1, 2026 | 	Under review	$9.99	1	0	$0.00	 | View | Winter archive | Created Oct 1, 2026 | 	Unpublished	$30.00	2	0	$0.00	 | Publish | Manage | Autumn preview (draft) | Created Oct 1, 2026 | 	Draft	$15.00	2	0	$0.00	 | Publish | Manage | Travel set, vol. 2 | unveil.link/u/QJSJ95hZxWT3 | 	Published	$8.00	4	5	$40.00	 | Copy link | Unpublish | Manage | Studio colour study | unveil.link/u/MK9zzaJ48D4- | 	Published	$25.00	3	7	$175.00	 | Copy link | Unpublish | Manage | Spring collection pack | unveil.link/u/bmCoZTUqlSQz | 	Published	$12.00	6	18	$216.00	 | Copy link | Unpublish | Manage
+[M4-10] 'views'/'conversion' text present: false
+[M4-11] 'transaction|country|history' on dashboard/drops: false
+[M4-11] /dashboard/transactions status text: 404 | This page could not be found.
+[M2-10/13] editor text: ← All drops | Spring collection pack | Published | $12.00 | A set of 12 original edits from this season, shot on location. Full resolution, ready to use in your own projects. | Copy link | Public page | Unpublish | Live at unveil.link/u/bmCoZTUqlSQz | Live — anyone with the link can buy. | Files | 6 | Sold | 18 | Revenue | $216.00 | Files (6/10) | 107 KB of 2 GB | spring-collection-pack-1.jpg | 18 KB | spring-collection-pack-2.jpg | 16 KB | spring-collection-pack-3.jpg | 19 KB | spring-collection-pack-4.jpg | 18 KB | spring-collection-pack-5.jpg | 18 KB | spring-collection-pack-6.jpg | 17 KB | This is what buyers see before they pay. | Add files | JPG, PNG or WebP. They’re added to this drop right away. | Drag & drop files here, or choose files | JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+[M2-10/13] editor inputs: 3 | buttons: [
+  'Copy link',
+  'Unpublish',
+  'Browse files',
+  '',
+  'Cancel',
+  'Publish',
+  '',
+  'Keep published',
+  'Unpublish'
+] | delete/edit controls: 1
+[M2-10/13] PATCH /api/drops/:id -> 405
+[M2-10/13] PUT /api/drops/:id -> 405
+[M2-10/13] DELETE /api/drops/:id -> 405
+[M4-17] profile controls: /dashboard/settings|profile: /dashboard/settings=404 /dashboard/profile=404 /settings=404 /profile=404
+[M4-17] PATCH /api/auth/me -> 405
+[M4-17] PUT /api/auth/me -> 405
+[M6-06] banner/status text on dashboard: true
+[csp/console] maya session: csp 0 errors 10 [
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 405 (Method Not Allowed)',
+  'Failed to load resource: the server responded with a status of 405 (Method Not Allowed)',
+  'Failed to load resource: the server responded with a status of 405 (Method Not Allowed)',
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'Failed to load resource: the server responded with a status of 405 (Method Not Allowed)',
+  'Failed to load resource: the server responded with a status of 405 (Method Not Allowed)'
+]
+[M4-09] sam dashboard: Hi, Sam | Here’s how your drops are doing. | New drop | Verification: Pending | Pending | You can create drafts and upload files now. Publishing unlocks once your identity is verified. | Earnings | Gross sales | $0.00 | 0 sales | Platform fee | $0.00 | Charged on each sale | Processing fees | $0.00 | Paid to the card processor | Your earnings (net) | $0.00 | After fees | $0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00 | Available | $0.00 | Nothing to pay out yet | Pending payouts | $0.00 | None in progress | Paid out | $0.00 | No payouts yet | Net earnings = gross sales − platform fee − card-processing fees. Payouts are not enabled yet — balances will appear here as sales co
+[csp] sam: 0 []
+[M4-09] jo dashboard: Hi, Jo | Here’s how your drops are doing. | New drop | Verification: Pending | Pending | You can create drafts and upload files now. Publishing unlocks once your identity is verified. | Earnings | Gross sales | $0.00 | 0 sales | Platform fee | $0.00 | Charged on each sale | Processing fees | $0.00 | Paid to the card processor | Your earnings (net) | $0.00 | After fees | $0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00 | Available | $0.00 | Nothing to pay out yet | Pending payouts | $0.00 | None in progress | Paid out | $0.00 | No payouts yet | Net earnings = gross sales − platform fee − card-processing fees. Payouts are not enabled yet — balances will appear here as sales com
+[csp] jo: 0 []
+[M2-18] dashboard mobile 390 dashboard: sw 390 cw 390 hscroll=false
+[M2-18] dashboard mobile 390 drops: sw 390 cw 390 hscroll=false
+[M2-18] dashboard mobile 390 new: sw 390 cw 390 hscroll=false
+[M2-18] dashboard mobile 390 editor: sw 390 cw 390 hscroll=false
+[csp] mobile 0 []

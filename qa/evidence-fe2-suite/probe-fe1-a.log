@@ -1,0 +1,55 @@
+[M2-07] status 200 x-robots-tag: noindex, nofollow
+[noindex] meta robots: <meta name="robots" content="noindex, nofollow, nocache"/>
+[M2-07] title tag: Spring collection pack · Unveil
+[M2-07] main text: Unveil | Secure payment link | 6 files: 6 images | Previews are blurred. The full files unlock after purchase. | Verified creator | Spring collection pack | M | by Maya Lin | A set of 12 original edits from this season, shot on location. Full resolution, ready to use in your own projects. | Price | $12.00 | 6 files: 6 images | I agree to the Terms and understand all sales are final. | Buy for $12.00 | Pay by card · No account needed · Instant download | All sales are final. Because files are delivered digitally right away, purchases can’t be refunded. | Secure checkout | Card payments handled by a trusted provider. | Instant download | Files unlock the moment you’ve paid. | No account needed
+[M2-07] drop-title/seller/price/summary: Spring collection pack / Maya Lin / $12.00 / 6 files: 6 images
+[originals] img srcs: [
+  '/api/files/d3b3cf0b-55bf-4a78-b856-0cc21e021924/preview',
+  '/api/files/c14949fc-3de7-4e85-947c-bcc3b7860a9d/preview',
+  '/api/files/85a7d819-c982-4cd7-be73-c534bde418ed/preview',
+  '/api/files/9a53d055-8fcb-458c-b974-5e5c8acb08a5/preview',
+  '/api/files/a700290c-8653-4b8d-a3e1-734c53cd2257/preview',
+  '/api/files/085d98cf-2b15-4d4b-b6c8-a5b4dd97b55d/preview'
+]
+[originals] html contains '/original' or 'signed': false
+[originals] network reqs containing /original or signed: 0 | all /api requests: [ '/api/files/<id>/preview' ]
+[originals] preview natural sizes: [ '320x240', '320x240', '320x240', '320x240', '320x240', '320x240' ]
+[csp] violations: 0 [] | console errors: 0 []
+[noindex] robots.txt: User-Agent: * ; Disallow: /u/ ; Disallow: /d/ ; Disallow: /api/ ; Disallow: /dashboard ;  ; 
+[M3-18] final-sale notice visible before Buy: true "All sales are final. Because files are delivered digitally right away, purchases can’t be refunded."
+[M3-01] buy button text: Buy for $12.00 | login prompts on page: 0 | card inputs: 0
+[M3-01] click Buy w/o terms -> alert: [ 'Please confirm to continue.', '' ] | notice: 0
+[M3-01] checkout API status: 501 {"error":"Checkout is not implemented yet","code":"not_implemented"}
+[M3-01] notice: Checkout is in test mode |  | Payments aren’t switched on yet, so nothing was charged. Check back soon — this link will work as soon as checkout opens. | url: http://localhost:3232/u/bmCoZTUqlSQz
+[M2-11] /u/unpublished: status 404 x-robots: noindex, nofollow | text: Unveil | Secure payment link | This link isn’t available | It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it. | Go to Unveil | © 2026 Unvei
+[M2-11] /u/draft: status 404 x-robots: noindex, nofollow | text: Unveil | Secure payment link | This link isn’t available | It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it. | Go to Unveil | © 2026 Unvei
+[M2-11] /u/bogus: status 404 x-robots: noindex, nofollow | text: Unveil | Secure payment link | This link isn’t available | It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it. | Go to Unveil | © 2026 Unvei
+[M2-11] checkout for unpublished link -> 501 {"error":"Checkout is not implemented yet","code":"not_implemented"}
+[M2-18] 390x844 buyer: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] buy button box {"x":41,"y":436,"width":308,"height":52} within width: true | height>=44: true
+[M2-18] tap Buy -> notice: Checkout is in test mode |  | Payments aren’t switched on yet, so nothing was charged. Check back soon — this link will work as soon as checkout opens.
+[M2-18] 390x844 landing: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] 390x844 signup: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] 390x844 login: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] 390x844 forgot: scrollWidth 390 clientWidth 390 body 390 -> hscroll=false
+[M2-18] 390: csp 0 console errs 2 [
+  'Failed to load resource: the server responded with a status of 501 (Not Implemented)',
+  'Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR'
+]
+[M2-18] 360x800 buyer: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] buy button box {"x":41,"y":413.5,"width":278,"height":52} within width: true | height>=44: true
+[M2-18] tap Buy -> notice: Checkout is in test mode |  | Payments aren’t switched on yet, so nothing was charged. Check back soon — this link will work as soon as checkout opens.
+[M2-18] 360x800 landing: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] 360x800 signup: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] 360x800 login: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] 360x800 forgot: scrollWidth 360 clientWidth 360 body 360 -> hscroll=false
+[M2-18] 360: csp 0 console errs 2 [
+  'Failed to load resource: the server responded with a status of 501 (Not Implemented)',
+  'Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR'
+]
+[M2-19] 4G (9Mbps/170ms RTT, 4x CPU): [{"buyVisibleMs":334,"loadMs":947,"fcp":616,"bytes":217395,"res":16},{"buyVisibleMs":323,"loadMs":1090,"fcp":624,"bytes":217395,"res":16},{"buyVisibleMs":423,"loadMs":952,"fcp":644,"bytes":217395,"res":16}]
+[M2-19] Slow 4G (1.6Mbps/150ms): [{"buyVisibleMs":323,"loadMs":1722,"fcp":996,"bytes":217395,"res":16},{"buyVisibleMs":302,"loadMs":1709,"fcp":956,"bytes":217395,"res":16},{"buyVisibleMs":299,"loadMs":1703,"fcp":968,"bytes":217395,"res":16}]
+
+real	0m21.426s
+user	0m9.111s
+sys	0m1.911s

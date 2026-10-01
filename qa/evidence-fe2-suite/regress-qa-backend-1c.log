@@ -1,0 +1,18 @@
+[M1-08(race)] sequential, limit=5: 201,201,201,201,201,400,400,400
+[M1-08(race)] parallel 10 uploads, limit=5: statuses 201=5 400=5; rows in DB=5
+[M1-08(race)] parallel 25 uploads, limit=5: statuses 201=5 400=20; rows in DB=5
+[M1-02] GET /api/auth/google (no creds) => 501 {"error":"Google sign-in is not configured (set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)"}; callback => 307 location=http://localhost:3232/login?error=google_not_configured
+[M1-14] schema:
+   admins(id,email,created_at)
+   audit_log(id,admin_id,action,target,created_at)
+   drop_files(id,drop_id,storage_key,filename,mime,size_bytes,blurred_preview_key,sort_order,created_at)
+   drops(id,seller_id,public_link_id,title,description,price_cents,cover_url,status,attestation,created_at,updated_at,published_at,attested_at,last_republished_at,attestation_history)
+   login_throttle(key,failures,last_attempt_at,next_allowed_at)
+   password_reset_tokens(id,seller_id,token_hash,created_at,expires_at,used_at)
+   payouts(id,seller_id,amount_cents,status,provider_ref,created_at)
+   platform_settings(id,fee_percent,price_min_cents,price_max_cents,max_image_size_bytes,max_video_size_bytes,max_files_per_drop,allowed_image_mimes,updated_at,max_total_bytes_per_drop,download_ttl_seconds,login_delay_threshold,login_delay_base_seconds,login_delay_cap_seconds,login_delay_decay_seconds)
+   rate_limits(key,window_start,count)
+   reports(id,drop_id,reason,reporter_email,status,created_at)
+   sellers(id,email,password_hash,google_id,display_name,avatar,bio,verification_status,verification_ref,legal_name,dob,payout_details,created_at)
+   sessions(id,seller_id,created_at,expires_at,revoked_at,user_agent)
+   transactions(id,drop_id,seller_id,buyer_email,amount_cents,platform_fee_cents,processing_fee_cents,seller_net_cents,processor_ref,status,created_at)

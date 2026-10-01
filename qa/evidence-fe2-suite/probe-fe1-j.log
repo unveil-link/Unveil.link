@@ -1,0 +1,14 @@
+[authz] logged-out GET /dashboard -> 307 /login | cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+   leaks seed title in body: false
+[authz] logged-out GET /dashboard/drops -> 307 /login | cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+   leaks seed title in body: false
+[authz] logged-out GET /dashboard/drops/new -> 307 /login | cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+   leaks seed title in body: false
+[authz] logged-out GET /dashboard/drops/5a7b4650-ff72-4afc-bd55-d80b0cc2a8e3 -> 307 /login | cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+   leaks seed title in body: false
+[authz] Jo opening Maya's drop editor -> 200 | shows Maya data: false | Skip to content | Unveil | Overview | Drops | New drop | J | Jo Park | jo+mupnw50p@example.test | Sign out | We couldn’t
+[authz] Jo's dashboard list leaks Maya drops: false
+[authz] Jo POST /api/drops/<maya>/publish -> 404
+[authz] Jo /api/files preview of Maya file via dashboard thumb -> 404
+[a11y] modal initial focus: Close dialog | after Esc focus on: BUTTON:Unpublish
+[a11y] after 'Keep published' focus on: BUTTON:Unpublish

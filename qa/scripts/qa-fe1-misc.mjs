@@ -1,5 +1,5 @@
 import { chromium } from "playwright-core"; import fs from "node:fs"; import crypto from "node:crypto";
-const BASE="http://localhost:3206", MAIL="/workspace/qa-run5/mail2"; const sleep=(ms)=>new Promise(r=>setTimeout(r,ms)); const log=console.log;
+const BASE=process.env.BASE, MAIL=process.env.MAIL; const sleep=(ms)=>new Promise(r=>setTimeout(r,ms)); const log=console.log;
 const e=`qa-misc-${crypto.randomBytes(3).toString("hex")}@example.com`; const hd={"content-type":"application/json",origin:BASE};
 await fetch(BASE+"/api/auth/signup",{method:"POST",headers:hd,body:JSON.stringify({email:e,password:"Sunrise-Harbor-4821",displayName:"Misc"})});
 const b0=new Set(fs.readdirSync(MAIL)); await fetch(BASE+"/api/auth/forgot-password",{method:"POST",headers:hd,body:JSON.stringify({email:e})}); let mail; for(let i=0;i<30&&!mail;i++){await sleep(300);const f=fs.readdirSync(MAIL).filter(x=>!b0.has(x)); if(f.length) mail=JSON.parse(fs.readFileSync(MAIL+"/"+f[0],"utf8"));}

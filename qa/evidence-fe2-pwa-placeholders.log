@@ -1,0 +1,35 @@
+[M6-07] installability errors (persistent profile, http://localhost): []
+[M6-07] manifest errors: [] | name: Unveil | display: standalone | icons: 192x192:any,512x512:any,512x512:maskable
+[M2-18] 390px /terms: hscroll=false h1=Terms footer links=/,/terms,/privacy,/dmca,/contact
+[M2-18] 390px /privacy: hscroll=false h1=Privacy footer links=/,/terms,/privacy,/dmca,/contact
+[M2-18] 390px /dmca: hscroll=false h1=DMCA footer links=/,/terms,/privacy,/dmca,/contact
+[M2-18] 390px /contact: hscroll=false h1=Contact footer links=/,/terms,/privacy,/dmca,/contact
+[footer] landing footer 'Terms' -> /terms h1=Terms
+[footer] landing footer 'Privacy' -> /privacy h1=Privacy
+[footer] landing footer 'DMCA' -> /dmca h1=DMCA
+[footer] landing footer 'Contact' -> /contact h1=Contact
+[footer] buyer page 'Terms' checkbox link -> /terms
+[footer] signup 'Terms' -> /terms
+[footer] signup 'Privacy Policy' -> /privacy
+[console] 390px errors: ["Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR","Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR","Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR","Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR"]
+[M2-18] 360px /terms: hscroll=false h1=Terms footer links=/,/terms,/privacy,/dmca,/contact
+[M2-18] 360px /privacy: hscroll=false h1=Privacy footer links=/,/terms,/privacy,/dmca,/contact
+[M2-18] 360px /dmca: hscroll=false h1=DMCA footer links=/,/terms,/privacy,/dmca,/contact
+[M2-18] 360px /contact: hscroll=false h1=Contact footer links=/,/terms,/privacy,/dmca,/contact
+[footer] landing footer 'Terms' -> /terms h1=Terms
+[footer] landing footer 'Privacy' -> /privacy h1=Privacy
+[footer] landing footer 'DMCA' -> /dmca h1=DMCA
+[footer] landing footer 'Contact' -> /contact h1=Contact
+[footer] buyer page 'Terms' checkbox link -> /terms
+[footer] signup 'Terms' -> /terms
+[footer] signup 'Privacy Policy' -> /privacy
+[console] 360px errors: ["Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR","Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR","Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR","Failed to load resource: net::ERR_SSL_PROTOCOL_ERROR"]
+[links] /                          -> /terms,/privacy,/dmca,/contact | footer element: 1
+[links] /login                     -> (none) | footer element: 0
+[links] /signup                    -> /terms,/privacy | footer element: 0
+[links] /forgot-password           -> (none) | footer element: 0
+[links] /reset-password?token=x    -> (none) | footer element: 0
+[links] /u/bmCoZTUqlSQz            -> /terms | footer element: 1
+[links] /u/nope                    -> (none) | footer element: 1
+[links] /terms                     -> /terms,/privacy,/dmca,/contact | footer element: 1
+[links] /dashboard                 -> (none) | footer element: 0
