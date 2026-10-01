@@ -62,7 +62,7 @@ export default function DropEditor({ drop, files, verificationStatus }: Props) {
         <p className="mt-1 flex items-center gap-2 text-sm text-muted">
           ${(drop.priceCents / 100).toFixed(2)}
           <Badge data-testid="drop-status" tone={drop.status === "published" ? "success" : "neutral"}>{drop.status}</Badge>
-          {drop.status === "published" && <a className="font-medium text-primary underline" href={`/d/${drop.publicLinkId}`}>public page</a>}
+          {drop.status === "published" && <a className="font-medium text-primary underline" href={`/u/${drop.publicLinkId}`}>public page</a>}
         </p>
         {drop.description && <p className="mt-2">{drop.description}</p>}
       </div>

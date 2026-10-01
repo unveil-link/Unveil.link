@@ -118,13 +118,51 @@ export async function publishDrop(sellerId: string, dropId: string, attestation:
   }
   const files = await listFiles(dropId);
   if (files.length === 0) throw new HttpError(400, "Add at least one file before publishing", "no_files");
+  // First publish: attested_at / attestation are written once and never overwritten.
+  // Any later publish (re-publish after unpublish, or a repeat call) is appended to attestation_history
+  // and stamps last_republished_at; the original attestation timestamp is preserved.
+  const at = new Date().toISOString();
+  const entry = JSON.stringify({ ...attestation, at });
   const rows = await query<Drop>(
-    `UPDATE drops SET status='published', published_at = now(), updated_at = now(),
-            attestation = $2::jsonb
+    `UPDATE drops SET
+            status = 'published', published_at = now(), updated_at = now(),
+            attestation = CASE WHEN attested_at IS NULL THEN $2::jsonb ELSE attestation END,
+            attestation_history = CASE WHEN attested_at IS NULL THEN attestation_history
+                                       ELSE attestation_history || jsonb_build_array($2::jsonb) END,
+            last_republished_at = CASE WHEN attested_at IS NULL THEN last_republished_at ELSE now() END,
+            attested_at = COALESCE(attested_at, $3::timestamptz)
       WHERE id = $1 RETURNING ${DROP_COLS}`,
-    [dropId, JSON.stringify({ ...attestation, at: new Date().toISOString() })],
+    [dropId, entry, at],
   );
   return rows[0];
+}
+
+/** Public path for a link id (spec: unveil.link/u/<12 chars>). */
+export const publicPath = (linkId: string) => `/u/${linkId}`;
+
+export interface PublicSummary {
+  fileCount: number;
+  imageCount: number;
+  videoCount: number;
+  otherCount: number;
+  /** e.g. "3 files: 2 images, 1 video" */
+  label: string;
+}
+
+const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
+
+/** Summarise file kinds from MIME types (pure; unit-tested). */
+export function summarizeFiles(files: { mime: string }[]): PublicSummary {
+  const imageCount = files.filter((f) => f.mime.startsWith("image/")).length;
+  const videoCount = files.filter((f) => f.mime.startsWith("video/")).length;
+  const otherCount = files.length - imageCount - videoCount;
+  const parts = [
+    imageCount && plural(imageCount, "image"),
+    videoCount && plural(videoCount, "video"),
+    otherCount && plural(otherCount, "other file"),
+  ].filter(Boolean);
+  const label = files.length === 0 ? "0 files" : `${plural(files.length, "file")}: ${parts.join(", ")}`;
+  return { fileCount: files.length, imageCount, videoCount, otherCount, label };
 }
 
 export async function unpublishDrop(sellerId: string, dropId: string): Promise<Drop> {

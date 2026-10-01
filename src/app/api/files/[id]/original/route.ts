@@ -1,5 +1,6 @@
 import { HttpError } from "@/server/errors";
 import { api } from "@/server/http";
+import { enforceIpLimit } from "@/server/ratelimit";
 import { getFileRow } from "@/server/services/images";
 import { verifyOriginalSignature } from "@/server/services/signing";
 import { storage } from "@/server/storage";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 /** The ONLY route that can return original bytes. Requires a valid, unexpired HMAC signature. */
 export const GET = api<{ params: Promise<{ id: string }> }>(async (req, { params }) => {
+  await enforceIpLimit("DOWNLOAD", req);
   const { id } = await params;
   const url = new URL(req.url);
   const v = verifyOriginalSignature(id, url.searchParams.get("exp"), url.searchParams.get("sig"));
