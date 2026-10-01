@@ -1743,8 +1743,8 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     eq((await db.query("SELECT count(*)::int AS n FROM admin_sessions WHERE admin_id=$1 AND revoked_at IS NULL AND created_at > $2", [id, rv])).rows[0].n, 0, "no live session row created after the revoke committed");
     // and the new password works, the old one does not (the attacker loops armed the per-email delay: wait it out, it is capped at CAP s)
     await sleep(CAP * 1000 + 500);
+    eq((await adminLogin(new Client_(), em, ADMIN_PW + "-new")).status, 200, "new password works (a success also clears the delay)");
     eq((await adminLogin(new Client_(), em, ADMIN_PW)).status, 401, "old password refused");
-    eq((await adminLogin(new Client_(), em, ADMIN_PW + "-new")).status, 200, "new password works");
     return `minted before reset: ${won.length}; codes ${JSON.stringify(codes)}`;
   });
 
