@@ -7,6 +7,7 @@ let dropDb: (() => Promise<void>) | null = null;
 
 // Lazily imported after env is set (config reads env on access, the pg Pool is created on first query).
 type Mods = {
+  jan: typeof import("../../src/server/payments/janitor");
   db: typeof import("../../src/server/db");
   wh: typeof import("../../src/server/payments/webhooks");
   ev: typeof import("../../src/server/payments/mock/events");
@@ -29,6 +30,7 @@ beforeAll(async () => {
   });
   delete process.env.MOCK_PROCESSING_FEE_PERCENT;
   m = {
+    jan: await import("../../src/server/payments/janitor"),
     db: await import("../../src/server/db"),
     wh: await import("../../src/server/payments/webhooks"),
     ev: await import("../../src/server/payments/mock/events"),
@@ -884,7 +886,8 @@ describe.skipIf(!available)("QA-6 session expiry and re-validation at capture", 
       expect((await deliver(sale(c.transactionId, 2000))).status).toBe(200); // still 200: the event is recorded, the void is retried later
     } finally { prov.issueRefund = orig; }
     expect((await row(c.transactionId))!.refund_requested_at).toBeNull();
-    expect(await m.refunds.retryVoidRefunds()).toBeGreaterThanOrEqual(1);
+    await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = NULL WHERE id=$1`, [c.transactionId]); // skip the backoff wait (tested separately)
+    expect((await m.refunds.retryVoidRefunds()).requested).toBeGreaterThanOrEqual(1);
     expect((await row(c.transactionId))!.refund_requested_at).not.toBeNull();
   });
 });
@@ -1043,5 +1046,178 @@ describe.skipIf(!available)("FU-1 price change supersedes a stale pending checko
     expect(r.body).toMatchObject({ outcome: "processed" });
     expect(await sum(a.transactionId)).toBe(1560); // 2000 - 200 - 240: the snapshot the buyer was actually charged
     expect((await txRow(a.transactionId))!.status).toBe("succeeded");
+  });
+});
+
+// =====================================================================================================================
+// Follow-ups 2: payments janitor
+// =====================================================================================================================
+async function voidedTx(over: { failProvider?: boolean } = {}) {
+  const s = await seed();
+  const c = await checkout(s);
+  await m.db.query(`UPDATE sellers SET verification_status='failed' WHERE id=$1`, [s.sellerId]);
+  const reg = await import("../../src/server/payments/registry");
+  const prov = reg.findProvider("mock")!;
+  const orig = prov.issueRefund;
+  if (over.failProvider) prov.issueRefund = async () => { throw new Error("processor down"); };
+  try { await deliver(sale(c.transactionId, 2000)); } finally { prov.issueRefund = orig; }
+  return { ...s, id: c.transactionId };
+}
+const withProvider = async <T,>(impl: (() => Promise<never>) | null, fn: () => Promise<T>): Promise<T> => {
+  const prov = (await import("../../src/server/payments/registry")).findProvider("mock")!;
+  const orig = prov.issueRefund;
+  if (impl) prov.issueRefund = impl as never;
+  try { return await fn(); } finally { prov.issueRefund = orig; }
+};
+const cleanSlate = async () => { // other tests leave work for the janitor; start each janitor test from zero
+  await m.db.query(`UPDATE transactions SET status='failed', failure_code='session_expired' WHERE status='pending'`);
+  await m.db.query(`UPDATE transactions SET refund_requested_at = now() WHERE review_reason IS NOT NULL AND refund_requested_at IS NULL`);
+  await m.db.query(`UPDATE webhook_events SET stale_flagged_at = now() WHERE outcome='parked' AND stale_flagged_at IS NULL`);
+};
+
+describe.skipIf(!available)("FU-2 janitor: expiry sweep", () => {
+  it("expires only pending sessions older than the TTL; idempotent; writes heartbeat + audit row with counts", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const old = await idemCo(s, null, "old@example.test", TOKEN_A), fresh = await idemCo(s, null, "fresh@example.test", TOKEN_A);
+    await m.db.query(`UPDATE transactions SET created_at = now() - interval '45 minutes' WHERE id=$1`, [old.transactionId]);
+    const r1 = await m.jan.runPaymentsJanitor();
+    expect(r1).toMatchObject({ skipped: false, counts: { expiredCheckouts: 1 } });
+    expect(await txRow(old.transactionId)).toMatchObject({ status: "failed", failure_code: "session_expired" });
+    expect((await txRow(fresh.transactionId))!.status).toBe("pending");
+    const audit = await m.db.queryOne<{ target: string }>(`SELECT target FROM audit_log WHERE action='payments_janitor_run' ORDER BY created_at DESC LIMIT 1`);
+    expect(audit!.target).toMatch(/"expiredCheckouts":1/);
+    const r2 = await m.jan.runPaymentsJanitor(); // nothing left to do
+    expect(r2).toMatchObject({ skipped: false, counts: { expiredCheckouts: 0, voidRefundsRequested: 0 } });
+    const before = Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='payments_janitor_run'`))!.n);
+    await m.jan.runPaymentsJanitor();
+    expect(Number((await m.db.queryOne<{ n: string }>(`SELECT count(*) n FROM audit_log WHERE action='payments_janitor_run'`))!.n)).toBe(before); // quiet runs don't spam the audit log
+    const st = await m.jan.getJanitorState();
+    expect(st!.last_run_at).not.toBeNull();
+    expect(Number(st!.runs)).toBeGreaterThanOrEqual(3);
+  });
+  it("honours checkout_session_ttl_minutes", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const a = await idemCo(s, null, "ttl@example.test", TOKEN_A);
+    await m.db.query(`UPDATE transactions SET created_at = now() - interval '5 minutes' WHERE id=$1`, [a.transactionId]);
+    expect((await m.jan.runPaymentsJanitor() as { counts: { expiredCheckouts: number } }).counts.expiredCheckouts).toBe(0);
+    await setSetting("checkout_session_ttl_minutes", 2);
+    try { expect((await m.jan.runPaymentsJanitor() as { counts: { expiredCheckouts: number } }).counts.expiredCheckouts).toBe(1); }
+    finally { await setSetting("checkout_session_ttl_minutes", 30); }
+  });
+});
+
+describe.skipIf(!available)("FU-2 janitor: void refund retry (success / failure / backoff / cap / last error)", () => {
+  it("backoff schedule is pure and capped at 24h", () => {
+    expect([1, 2, 3, 4, 5].map((n) => m.refunds.voidRefundBackoffMinutes(n, 5))).toEqual([5, 10, 20, 40, 80]);
+    expect(m.refunds.voidRefundBackoffMinutes(30, 5)).toBe(1440);
+  });
+  it("a failing provider: attempt counted, last error + next attempt recorded; the janitor does not retry before the backoff elapses", async () => {
+    await cleanSlate();
+    const t = await voidedTx({ failProvider: true });
+    let row = (await txRow(t.id)) as unknown as Record<string, unknown>;
+    expect(row).toMatchObject({ void_refund_attempts: 1, void_refund_last_error: "processor down", refund_requested_at: null });
+    expect(row.void_refund_next_attempt_at).not.toBeNull();
+    const r = await m.jan.runPaymentsJanitor();
+    expect(r).toMatchObject({ skipped: false, counts: { voidRefundsRequested: 0, voidRefundsFailed: 0 } }); // still inside the backoff window
+    expect(((await txRow(t.id)) as unknown as Record<string, unknown>).void_refund_attempts).toBe(1);
+    // backoff elapsed + provider still down -> attempt 2, longer next delay
+    await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = now() - interval '1 second' WHERE id=$1`, [t.id]);
+    const r2 = await withProvider(async () => { throw new Error("still down"); }, () => m.jan.runPaymentsJanitor());
+    expect(r2).toMatchObject({ counts: { voidRefundsFailed: 1 } });
+    row = (await txRow(t.id)) as unknown as Record<string, unknown>;
+    expect(row).toMatchObject({ void_refund_attempts: 2, void_refund_last_error: "still down" });
+    const gap = await m.db.queryOne<{ mins: string }>(`SELECT round(extract(epoch FROM (void_refund_next_attempt_at - void_refund_last_attempt_at))/60) AS mins FROM transactions WHERE id=$1`, [t.id]);
+    expect(Number(gap!.mins)).toBe(10); // 5 * 2^1
+    // provider recovers -> requested, error history kept, no more retries
+    await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = NULL WHERE id=$1`, [t.id]);
+    const r3 = await m.jan.runPaymentsJanitor();
+    expect(r3).toMatchObject({ counts: { voidRefundsRequested: 1 } });
+    row = (await txRow(t.id)) as unknown as Record<string, unknown>;
+    expect(row.refund_requested_at).not.toBeNull();
+    expect(row.void_refund_next_attempt_at).toBeNull();
+    expect(await m.jan.runPaymentsJanitor()).toMatchObject({ counts: { voidRefundsRequested: 0 } }); // idempotent
+    expect(await ledgerOf(t.id)).toEqual([]); // the janitor never posts money
+  });
+  it("attempt cap: after void_refund_max_attempts failures the row is no longer retried and is reported as gaveUp", async () => {
+    await cleanSlate();
+    await setSetting("void_refund_max_attempts", 2);
+    try {
+      const t = await voidedTx({ failProvider: true }); // attempt 1
+      await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = NULL WHERE id=$1`, [t.id]);
+      await withProvider(async () => { throw new Error("down #2"); }, () => m.jan.runPaymentsJanitor()); // attempt 2 = cap
+      expect(((await txRow(t.id)) as unknown as Record<string, unknown>).void_refund_attempts).toBe(2);
+      await m.db.query(`UPDATE transactions SET void_refund_next_attempt_at = NULL WHERE id=$1`, [t.id]);
+      const calls = { n: 0 };
+      const r = await withProvider(async () => { calls.n++; throw new Error("never called"); }, () => m.jan.runPaymentsJanitor());
+      expect(calls.n).toBe(0);
+      expect(r).toMatchObject({ counts: { voidRefundsFailed: 0, voidRefundsGaveUp: 1 } });
+      expect(((await txRow(t.id)) as unknown as Record<string, unknown>)).toMatchObject({ void_refund_last_error: "down #2", refund_requested_at: null });
+    } finally { await setSetting("void_refund_max_attempts", 5); }
+  });
+});
+
+describe.skipIf(!available)("FU-2 janitor: stale parked events and concurrency", () => {
+  it("a refund parked for longer than parked_event_stale_hours is flagged stale (not deleted, still parked); fresh ones are untouched; flagged once", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const c1 = await checkout(s), c2 = await checkout(s, { email: "other@example.test" });
+    for (const c of [c1, c2]) expect((await deliver(m.ev.mockEvents.refund({ transactionId: c.transactionId, refundId: `mockrf_park_${c.transactionId.slice(0, 8)}`, amountCents: 500 }))).body.outcome).toBe("parked");
+    await m.db.query(`UPDATE webhook_events SET received_at = now() - interval '100 hours' WHERE transaction_id=$1 AND outcome='parked'`, [c1.transactionId]);
+    const r = await m.jan.runPaymentsJanitor();
+    expect(r).toMatchObject({ counts: { parkedEventsFlaggedStale: 1 } });
+    const rows = await m.db.query<{ transaction_id: string; outcome: string; stale: boolean }>(`SELECT transaction_id, outcome, stale_flagged_at IS NOT NULL AS stale FROM webhook_events WHERE outcome='parked' AND transaction_id = ANY($1)`, [[c1.transactionId, c2.transactionId]]);
+    expect(rows.find((x) => x.transaction_id === c1.transactionId)).toMatchObject({ outcome: "parked", stale: true });
+    expect(rows.find((x) => x.transaction_id === c2.transactionId)).toMatchObject({ outcome: "parked", stale: false });
+    expect(await m.jan.runPaymentsJanitor()).toMatchObject({ counts: { parkedEventsFlaggedStale: 0 } });
+    // the sale still arrives later and applies the parked refund (the stale flag never blocks reconciliation)
+    expect((await deliver(sale(c1.transactionId, 2000))).body.outcome).toBe("processed");
+  });
+  it("concurrent janitor runs: exactly one does the work, the others return skipped; counts are never doubled", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const rows = [] as string[];
+    for (let i = 0; i < 6; i++) rows.push((await idemCo(s, null, `race${i}@example.test`, TOKEN_A)).transactionId);
+    await m.db.query(`UPDATE transactions SET created_at = now() - interval '2 hours' WHERE id = ANY($1)`, [rows]);
+    const rs = await Promise.all(Array.from({ length: 8 }, () => m.jan.runPaymentsJanitor()));
+    const done = rs.filter((r) => !r.skipped) as Extract<Awaited<ReturnType<typeof m.jan.runPaymentsJanitor>>, { skipped: false }>[];
+    expect(done.length).toBeGreaterThanOrEqual(1);
+    expect(done.reduce((a, r) => a + r.counts.expiredCheckouts, 0)).toBe(6); // each row expired exactly once across all runs
+    expect(rs.filter((r) => r.skipped).every((r) => r.skipped && r.reason === "already_running")).toBe(true);
+    const lockFree = await m.db.queryOne<{ ok: boolean }>(`SELECT pg_try_advisory_lock(hashtextextended('payments:janitor', 0)) AS ok`);
+    expect(lockFree!.ok).toBe(true); // the lock is released after the runs (this connection may now hold it; release below)
+    await m.db.query(`SELECT pg_advisory_unlock_all()`);
+  });
+  it("a failing step is recorded as an error (heartbeat + audit) but the other steps still run, and the lock is released", async () => {
+    await cleanSlate();
+    const s = await seed();
+    const a = await idemCo(s, null, "stepfail@example.test", TOKEN_A);
+    await m.db.query(`UPDATE transactions SET created_at = now() - interval '2 hours' WHERE id=$1`, [a.transactionId]);
+    await m.db.query(`ALTER TABLE webhook_events RENAME COLUMN stale_flagged_at TO stale_flagged_at_x`); // make step 4 blow up
+    try {
+      const r = await m.jan.runPaymentsJanitor();
+      expect(r).toMatchObject({ skipped: false, counts: { expiredCheckouts: 1, parkedEventsFlaggedStale: 0 } });
+      expect((r as { errors: string[] }).errors.join()).toMatch(/flag_stale_parked/);
+    } finally { await m.db.query(`ALTER TABLE webhook_events RENAME COLUMN stale_flagged_at_x TO stale_flagged_at`); }
+    const audit = await m.db.queryOne<{ target: string }>(`SELECT target FROM audit_log WHERE action='payments_janitor_run' ORDER BY created_at DESC LIMIT 1`);
+    expect(audit!.target).toMatch(/errors/);
+    expect(await m.jan.runPaymentsJanitor()).toMatchObject({ skipped: false, errors: [] }); // lock was released; next run is healthy
+  });
+});
+
+describe.skipIf(!available)("FU-2 earnings label for voided charges", () => {
+  it("a void shows as voided_refunding (refund asked) / voided (not yet) in the seller's recent list; raw status stays 'failed'; money totals unchanged", async () => {
+    await cleanSlate();
+    const t = await voidedTx();
+    const e1 = await m.earn.getEarningsSummary(t.sellerId);
+    expect(e1.recent.find((x) => x.id === t.id)).toMatchObject({ status: "failed", displayStatus: "voided_refunding" });
+    expect(e1.lifetime.grossCents).toBe(0);
+    expect(e1.balance.totalCents).toBe(0);
+    await m.db.query(`UPDATE transactions SET refund_requested_at = NULL WHERE id=$1`, [t.id]);
+    expect((await m.earn.getEarningsSummary(t.sellerId)).recent.find((x) => x.id === t.id)!.displayStatus).toBe("voided");
+    const s = await seed(); const c = await checkout(s);
+    await deliver(m.ev.mockEvents.saleFailed({ transactionId: c.transactionId, amountCents: 2000, failureCode: "card_declined" }));
+    expect((await m.earn.getEarningsSummary(s.sellerId)).recent.find((x) => x.id === c.transactionId)).toMatchObject({ status: "failed", displayStatus: "failed" });
   });
 });
