@@ -33,6 +33,7 @@ fi
 echo "== starting app on :$PORT"
 DATABASE_URL="$E2E_DATABASE_URL" STORAGE_DRIVER=local STORAGE_LOCAL_DIR="$E2E_STORAGE_DIR" APP_URL="$E2E_BASE_URL" \
   MAIL_TRANSPORT=file MAIL_DEV_DIR="$E2E_MAIL_DIR" RATE_LIMIT_CHECKOUT="3/60" \
+  LOGIN_DELAY_THRESHOLD=3 LOGIN_DELAY_BASE_SECONDS=1 LOGIN_DELAY_CAP_SECONDS=4 LOGIN_DELAY_DECAY_SECONDS=600 \
   NODE_ENV=production setsid npx next start -p "$PORT" > .e2e/server.log 2>&1 &
 SERVER_PID=$!
 # setsid => own process group; kill the whole group so no orphaned next-server keeps the port (it used to leak).

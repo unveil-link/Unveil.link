@@ -9,7 +9,7 @@ Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · PostgreSQL 17 · `pg`
 
 ## Repo structure
 ```
-db/migrations/           001_init.sql, 002_platform_settings.sql, 003_fixes_1.sql  (plain SQL, applied in filename order)
+db/migrations/           001_init.sql, 002_platform_settings.sql, 003_fixes_1.sql, 004_fixes_2.sql  (plain SQL, applied in filename order)
 scripts/
   migrate.ts             migration runner (schema_migrations table, advisory lock, one tx per file)
   set-verification.ts    dev helper: flip a seller's verification_status (stand-in for the future KYC provider/admin)
@@ -92,7 +92,7 @@ Added in `backend/fixes-1`:
 | `MAIL_DEV_DIR` | `.dev-mail` | where the `file` transport writes |
 | `RESEND_API_KEY` / `POSTMARK_SERVER_TOKEN` | – | credentials for the matching transport (**adapters untested live**) |
 
-Default rate limits (`NAME` → max/window): `LOGIN_IP` 20/15 min, `LOGIN_EMAIL` 10/15 min, `SIGNUP_IP` 10/h, `FORGOT_IP` 5/h, `FORGOT_EMAIL` 3/h (extra requests answer 200 but send no mail), `RESET_IP` 10/h, `DOWNLOAD` 60/min (`/api/files/:id/original`), `PREVIEW` 300/min, `PUBLIC_LINK` 120/min, `SIGNED_URL` 60/min (owner mint), `CHECKOUT` 10/min (stub `POST /api/checkout` → 501). Exceeding a limit returns `429` with `Retry-After` and `{code:"rate_limited"}`.
+Default rate limits (`NAME` → max/window): `LOGIN_IP` 20/15 min, `LOGIN_EMAIL` 20/min (burst valve only, **not** a lockout — see [Login delays](#login-delays-no-lockout)), `SIGNUP_IP` 10/h, `FORGOT_IP` 5/h, `FORGOT_EMAIL` 3/h (extra requests answer 200 but send no mail), `RESET_IP` 10/h, `DOWNLOAD` 60/min (`/api/files/:id/original`), `PREVIEW` 300/min, `PUBLIC_LINK` 120/min, `SIGNED_URL` 60/min (owner mint), `CHECKOUT` 10/min (stub `POST /api/checkout` → 501). Exceeding a limit returns `429` with `Retry-After` and `{code:"rate_limited"}`.
 
 ### Platform settings added in migration 003
 `max_files_per_drop` (default now **10**), `max_total_bytes_per_drop` (default **2147483648** = 2 GiB; sum of original sizes per drop), `download_ttl_seconds` (NULL = use env/24 h). Per-file caps unchanged: `max_image_size_bytes` 15 MiB (images), `max_video_size_bytes` 500 MiB (video upload not built). Edit via SQL (no admin UI yet), e.g. `UPDATE platform_settings SET download_ttl_seconds = 3600;`.
@@ -102,6 +102,22 @@ Set app-wide in `next.config.ts` (`X-Powered-By` removed): `Content-Security-Pol
 
 ### Password policy
 Min length **10** (was 8), max 200. Rejected: entries of a bundled blocklist (≈13k exact + ≈15k base words from SecLists top lists, MIT; regenerate with `node scripts/build-password-list.mjs <dir>`), common word + up to 6 trailing digits/symbols and simple leetspeak variants of those, password equal to (or trivially derived from) the email / its local part / display name, repeated patterns (`aaaaaaaaaa`, `abcabcabcabc`) and sequences (`1234567890`, `abcdefghij`, keyboard rows). Applies to signup and password reset. Existing accounts are not re-checked at login.
+
+### Login delays (no lockout)
+Failed logins on an email are answered with **progressive delays instead of a lockout**, so an attacker can never lock the real owner out. Per email (hashed; unknown emails behave identically, so nothing leaks account existence) the app stores the number of recent failures and `next_allowed_at` (table `login_throttle`). With threshold *T*, base *B*, cap *C* (defaults **5 / 1 s / 60 s**): failures 1…*T*-1 are free; the *f*-th failure (f ≥ T) arms a delay of `min(C, B·2^(f-T))` → 1 s, 2 s, 4 s, 8 s, 16 s, 32 s, 60 s, 60 s, … An attempt that arrives during the delay gets `429 {code:"login_delayed"}` with `Retry-After: <remaining seconds>` **without the password being evaluated** (a correct password is not a bypass, and rejected attempts neither count nor extend the delay). After the delay a correct password works. The delay is never longer than *C*, failures are forgotten after `decay` seconds (default 15 min) without an attempt, a successful login and a completed password reset clear the counter, and a DB `CHECK` guarantees no row can ever block for more than 1 h. Admission is atomic (row lock), so parallel guesses cannot slip through a window. The per-IP login limit (`LOGIN_IP`) and the per-email burst limiter (`LOGIN_EMAIL`, window clamped to ≤ *C*) are unchanged mechanisms.
+
+Config (precedence: `platform_settings` column > env > default; invalid values are ignored, cap is bounded to 1 h):
+
+| Setting | env | `platform_settings` column | default |
+|---|---|---|---|
+| failures before the first delay | `LOGIN_DELAY_THRESHOLD` | `login_delay_threshold` | 5 |
+| first delay (doubles each failure) | `LOGIN_DELAY_BASE_SECONDS` | `login_delay_base_seconds` | 1 |
+| maximum delay | `LOGIN_DELAY_CAP_SECONDS` | `login_delay_cap_seconds` | 60 |
+| forget failures after this idle time | `LOGIN_DELAY_DECAY_SECONDS` | `login_delay_decay_seconds` | 900 |
+
+e.g. `UPDATE platform_settings SET login_delay_cap_seconds = 30;`. Code: `src/server/ratelimit/login-throttle.ts`.
+
+**Future hook (not built): CAPTCHA.** The natural place is `enforceLoginDelay` / the login route: once `failures` passes a (higher) threshold, require a verified CAPTCHA token (Turnstile/hCaptcha) instead of — or in addition to — the delay. A valid token would let the owner skip the wait, which also closes the "attacker keeps polling at the instant the delay expires" annoyance noted in NOTES-fixes-2.md.
 
 ### Password reset
 `POST /api/auth/forgot-password {email}` always returns the same 200 body (work is done after the response so timing doesn't leak either). A random 256-bit token is emailed as `${APP_URL}/reset-password?token=…`; only its SHA-256 is stored; valid 60 minutes, single use (atomic claim), a newer request invalidates older links. `POST /api/auth/reset-password {token,password}` applies the password policy, sets the password and **revokes all of the seller's sessions**. In dev the email lands in `.dev-mail/` (`npm run dev` → read the newest `.txt`).

@@ -759,7 +759,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     eq((await c.req("GET", p)).status, 429, "limited IP cannot download even with a valid link");
     eq((await new Client_().req("GET", p)).status, 200, "fresh IP downloads fine");
   });
-  await check("[#11] preview, public-link API, signed-url mint, login (per IP + per email), signup are rate limited", async () => {
+  await check("[#11] preview, public-link API, signed-url mint, login (per IP), signup are rate limited", async () => {
     const c = new Client_();
     const rs: Response[] = [];
     const ghost = crypto.randomUUID();
@@ -770,11 +770,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const pub: number[] = [];
     for (let i = 0; i < 122; i++) pub.push((await c2.req("GET", `/api/public/drops/nonexistent01`)).status);
     eq(pub.filter((s) => s === 429).length, 2, "public API 429s after 120/min");
-    // login: per-email limit holds even when the attacker rotates IPs
-    const victim = `victim+${stamp}@example.test`;
-    const st: number[] = [];
-    for (let i = 0; i < 11; i++) st.push((await new Client_().req("POST", "/api/auth/login", { json: { email: victim, password: "wrong-password-x" } })).status);
-    eq(st.slice(0, 10).every((s) => s === 401) && st[10] === 429, true, `login per-email: ${st.join(",")}`);
+    // (login per-email: no longer a lockout -> progressive delay, see [#13] below)
     // login per-IP
     const c3 = new Client_();
     const li: number[] = [];
@@ -871,6 +867,119 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const rr: number[] = [];
     for (let i = 0; i < 11; i++) rr.push((await rst.req("POST", "/api/auth/reset-password", { json: { token: "y".repeat(43), password: "some-long-passphrase" } })).status);
     eq(rr.slice(0, 10).every((s) => s === 400) && rr[10] === 429, true, `reset per-IP: ${rr.join(",")}`);
+  });
+
+  // ---- #13 progressive login delay (replaces the per-email lockout) ----
+  // e2e.sh starts the app with LOGIN_DELAY_THRESHOLD=3, BASE=1, CAP=4 (s) so the schedule is: failures 1-2 free, 3rd -> 1 s, 4th -> 2 s, 5th+ -> 4 s (cap).
+  const CAP = 4;
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const attempt = (em: string, pw: string, c: Client_ = new Client_()) => c.req("POST", "/api/auth/login", { json: { email: em, password: pw } });
+  const retryAfter = (r: Response) => Number(r.headers.get("retry-after"));
+  const throttleRow = async (em: string) => (await db.query("SELECT failures, next_allowed_at > now() AS delayed FROM login_throttle WHERE key = $1", ["login:" + crypto.createHash("sha256").update(em.trim().toLowerCase()).digest("hex").slice(0, 24)])).rows[0];
+  await check("[#13] attacker spamming 20 wrong passwords: first few 401, then 429 with Retry-After in 1..cap (never above); correct password DURING the delay is also refused, not evaluated", async () => {
+    const { c: _o, email: owner } = await signupClient("owner13");
+    void _o;
+    // 20 concurrent wrong guesses, each from its own (fake) IP = distributed attacker. Admission is serialised per email in the DB,
+    // so exactly `threshold` (3) are evaluated; the other 17 are refused without being evaluated.
+    const rs = await Promise.all(Array.from({ length: 20 }, (_, i) => attempt(owner, `wrong-guess-${i}-xyz`)));
+    const st = rs.map((r) => r.status);
+    eq(st.filter((s) => s === 401).length, 3, `exactly 3 evaluated (${st.join(",")})`);
+    eq(st.filter((s) => s === 429).length, 17, `the rest are delayed (${st.join(",")})`);
+    for (const r of rs.filter((r) => r.status === 429)) {
+      const ra = retryAfter(r);
+      assert(Number.isInteger(ra) && ra >= 1 && ra <= CAP, `Retry-After ${ra} within 1..${CAP}`);
+      eq((await r.json()).code, "login_delayed", "error code");
+    }
+    // the owner's CORRECT password during the active delay is not evaluated (no bypass by guessing during the delay)
+    const dur = await attempt(owner, password);
+    eq(dur.status, 429, "correct password during the delay -> 429");
+    assert(!dur.headers.get("set-cookie"), "no session issued while delayed");
+    // ...and rejected attempts neither count nor extend the delay: after waiting out <= cap the owner gets in
+    await sleep(CAP * 1000 + 300);
+    const ok = await attempt(owner, password);
+    eq(ok.status, 200, "owner logs in after waiting out the delay");
+    eq(await throttleRow(owner), undefined, "counter reset on success");
+    return `3x401 + 17x429 (Retry-After <= ${CAP})`;
+  });
+  await check("[#13] delays escalate exponentially (1,2,4 s) and are capped at the cap; a 429 never persists past Retry-After; no permanent lock", async () => {
+    const { email: v } = await signupClient("esc13");
+    const seen: number[] = [];
+    const hit = async (pw: string) => {
+      const r = await attempt(v, pw);
+      return r;
+    };
+    eq((await hit("bad-guess-aaa-1")).status, 401, "1st");
+    eq((await hit("bad-guess-aaa-2")).status, 401, "2nd");
+    eq((await hit("bad-guess-aaa-3")).status, 401, "3rd (arms 1 s)");
+    for (let i = 0; i < 6; i++) {
+      const blocked = await hit("bad-guess-bbb");
+      eq(blocked.status, 429, `blocked right after failure #${3 + i}`);
+      const ra = retryAfter(blocked);
+      seen.push(ra);
+      await sleep(ra * 1000 + 250); // wait out exactly the advertised delay
+      const next = await hit("bad-guess-ccc");
+      eq(next.status, 401, `after waiting Retry-After the attempt is evaluated again (failure #${4 + i})`);
+    }
+    // seen = Retry-After right after failures #3..#8 => 1,2,4,4,4,4 (ceil of the remaining time, so first read may be one lower)
+    const exp = [1, 2, 4, 4, 4, 4];
+    seen.forEach((ra, i) => assert(ra <= exp[i] && ra >= Math.max(1, exp[i] - 1), `Retry-After #${i + 1} = ${ra}, expected ~${exp[i]}`));
+    assert(seen[2] > seen[0] && Math.max(...seen) <= CAP, `increasing then capped: ${seen.join(",")}`);
+    // 9 failures deep: the owner must still be able to get in after at most one cap-length wait
+    const blocked = await hit(password);
+    eq(blocked.status, 429, "correct password during delay -> 429");
+    assert(retryAfter(blocked) <= CAP, "still <= cap");
+    await sleep(retryAfter(blocked) * 1000 + 250);
+    const ok = await hit(password);
+    eq(ok.status, 200, "correct password after the delay -> 200 (no permanent lock)");
+    return `Retry-After sequence: ${seen.join(",")}`;
+  });
+  await check("[#13] a correct login resets the counter: next wrong passwords are free again (401,401) and only the 3rd arms the delay", async () => {
+    const { email: v } = await signupClient("reset13");
+    eq((await attempt(v, "bad-guess-xx-1")).status, 401, "f1");
+    eq((await attempt(v, "bad-guess-xx-2")).status, 401, "f2");
+    eq((await throttleRow(v)).failures, 2, "2 failures recorded");
+    eq((await attempt(v, password)).status, 200, "success while below threshold");
+    eq(await throttleRow(v), undefined, "row removed");
+    eq((await attempt(v, "bad-guess-xx-3")).status, 401, "fresh f1");
+    eq((await attempt(v, "bad-guess-xx-4")).status, 401, "fresh f2");
+    eq((await attempt(v, "bad-guess-xx-5")).status, 401, "fresh f3 (evaluated; arms the delay)");
+    const d = await attempt(v, "bad-guess-xx-6");
+    eq(d.status, 429, "delayed");
+    await sleep(retryAfter(d) * 1000 + 250);
+    eq((await attempt(v, password)).status, 200, "success after delay");
+    eq((await attempt(v, "bad-guess-xx-7")).status, 401, "counter reset again after success");
+    eq((await attempt(v, "bad-guess-xx-8")).status, 401, "still free");
+  });
+  await check("[#13] no user enumeration: an unknown email gets the identical delay behaviour (401,401,401 then 429 + Retry-After <= cap)", async () => {
+    const ghost = `ghost13+${stamp}@example.test`;
+    const st: number[] = [];
+    let ra = 0;
+    for (let i = 0; i < 6; i++) {
+      const r = await attempt(ghost, `bad-guess-g-${i}-zz`);
+      st.push(r.status);
+      if (r.status === 429) ra = Math.max(ra, retryAfter(r));
+    }
+    eq(st.join(), "401,401,401,429,429,429", "same status sequence as a real account");
+    assert(ra >= 1 && ra <= CAP, `Retry-After ${ra} <= cap`);
+    await sleep(CAP * 1000 + 300);
+    eq((await attempt(ghost, "bad-guess-g-after")).status, 401, "after the delay: evaluated again (401, not a lock)");
+  });
+  await check("[#13] password reset clears the login delay; delayed state is per email (other emails unaffected); DB bound: next_allowed_at <= last_attempt_at + 1 h", async () => {
+    const { email: v } = await signupClient("pwreset13");
+    const { email: other } = await signupClient("other13");
+    for (let i = 0; i < 4; i++) await attempt(v, `bad-guess-r-${i}-q`);
+    eq((await throttleRow(v)).delayed, true, "victim is in a delay window");
+    eq((await attempt(other, password)).status, 200, "another account is not affected");
+    await new Client_().req("POST", "/api/auth/forgot-password", { json: { email: v } });
+    const tok = tokenFrom((await waitForMails(v, 1))[0]);
+    eq((await new Client_().req("POST", "/api/auth/reset-password", { json: { token: tok, password: "reset-passphrase-13x" } })).status, 200, "reset");
+    eq(await throttleRow(v), undefined, "counter cleared by reset");
+    eq((await attempt(v, "reset-passphrase-13x")).status, 200, "owner logs in immediately after reset, no waiting");
+    const bad = await db.query("SELECT count(*)::int AS n FROM login_throttle WHERE next_allowed_at > last_attempt_at + interval '1 hour'");
+    eq(bad.rows[0].n, 0, "no row exceeds the 1 h hard bound");
+    let rejected = false;
+    try { await db.query("INSERT INTO login_throttle (key, failures, last_attempt_at, next_allowed_at) VALUES ('x', 99, now(), now() + interval '2 hours')"); } catch { rejected = true; }
+    assert(rejected, "CHECK constraint refuses a >1 h block");
   });
 
   await db.end();

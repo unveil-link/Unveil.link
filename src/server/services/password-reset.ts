@@ -6,6 +6,7 @@ import { hashPassword } from "../auth/password";
 import { checkPasswordStrength } from "../auth/password-policy";
 import { revokeAllSessions } from "../auth/session";
 import { sendMail } from "../mail";
+import { resetLoginThrottle } from "../ratelimit/login-throttle";
 
 export const RESET_TTL_MINUTES = 60;
 const hashToken = (t: string) => crypto.createHash("sha256").update(t).digest("hex");
@@ -66,6 +67,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
     await c.query("UPDATE sellers SET password_hash = $2 WHERE id = $1", [row.seller_id, hash]);
     await c.query("UPDATE password_reset_tokens SET used_at = now() WHERE seller_id = $1 AND used_at IS NULL", [row.seller_id]);
     await revokeAllSessions(row.seller_id, c);
+    await resetLoginThrottle(row.email, c); // owner proved control of the mailbox: clear any login delay
   });
 }
 

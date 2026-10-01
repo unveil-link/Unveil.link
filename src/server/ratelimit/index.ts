@@ -58,7 +58,10 @@ export interface Limit { limit: number; windowSec: number }
 /** Defaults. Override any with env RATE_LIMIT_<NAME>="<max>/<windowSeconds>", e.g. RATE_LIMIT_LOGIN_IP=30/900. */
 export const DEFAULT_LIMITS = {
   LOGIN_IP: { limit: 20, windowSec: 900 },
-  LOGIN_EMAIL: { limit: 10, windowSec: 900 },
+  // Per-email BURST limiter (counts attempts admitted by the progressive delay). NOT a lockout: the login route clamps its
+  // window to the progressive-delay cap, so it can never block the owner for longer than that cap. The failed-attempt
+  // delay itself lives in ./login-throttle.ts.
+  LOGIN_EMAIL: { limit: 20, windowSec: 60 },
   SIGNUP_IP: { limit: 10, windowSec: 3600 },
   FORGOT_IP: { limit: 5, windowSec: 3600 },
   FORGOT_EMAIL: { limit: 3, windowSec: 3600 },
@@ -118,11 +121,17 @@ export async function checkLimit(s: RateLimitStore, key: string, l: Limit): Prom
  * `subject` is typically `clientIp(req)` or a hashed email. Fails OPEN (logs) if the store errors,
  * so a limiter outage cannot take the site down.
  */
-export async function enforceRateLimit(name: LimitName, subject: string): Promise<void> {
+export async function enforceRateLimit(
+  name: LimitName,
+  subject: string,
+  opts: { maxWindowSec?: number } = {},
+): Promise<void> {
   if (!config.rateLimitEnabled) return;
   let r: RateLimitResult;
   try {
-    r = await checkLimit(store(), `${name}:${subject}`, limitFor(name));
+    const l = limitFor(name);
+    if (opts.maxWindowSec) l.windowSec = Math.min(l.windowSec, opts.maxWindowSec);
+    r = await checkLimit(store(), `${name}:${subject}`, l);
   } catch (e) {
     console.error("rate limiter error (failing open)", e);
     return;
