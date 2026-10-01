@@ -73,6 +73,8 @@ export const DEFAULT_LIMITS = {
   CHECKOUT: { limit: 10, windowSec: 60 },
   // Caps how many *rejected* (bad signature / malformed) webhook deliveries per IP are logged; valid deliveries are never limited.
   WEBHOOK_REJECTED: { limit: 60, windowSec: 60 },
+  // Cron/internal trigger routes, per IP, counted BEFORE the bearer check (throttles guessing of CRON_SECRET).
+  CRON: { limit: 30, windowSec: 60 },
 } satisfies Record<string, Limit>;
 export type LimitName = keyof typeof DEFAULT_LIMITS;
 
