@@ -15,6 +15,7 @@ ALTER TABLE platform_settings
 -- transactions: extend the 001 table (no duplicate table).
 -- fee_percent / processing_fee_percent snapshot the rates in force when the checkout was created; the
 -- *_fee_cents columns already hold the resulting integer cents (CHECK seller_net = amount - fees stays).
+-- reversed_cents = cumulative gross cents handed back to the buyer by refunds AND chargebacks (<= amount_cents).
 -- ---------------------------------------------------------------------------
 ALTER TABLE transactions
   ADD COLUMN IF NOT EXISTS provider               text,
@@ -22,7 +23,7 @@ ALTER TABLE transactions
   ADD COLUMN IF NOT EXISTS currency               char(3) NOT NULL DEFAULT 'USD',
   ADD COLUMN IF NOT EXISTS fee_percent            numeric(5,2),
   ADD COLUMN IF NOT EXISTS processing_fee_percent numeric(5,2),
-  ADD COLUMN IF NOT EXISTS refunded_cents         integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS reversed_cents         integer NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS failure_code           text,
   ADD COLUMN IF NOT EXISTS buyer_confirmed_18_at  timestamptz,
   ADD COLUMN IF NOT EXISTS succeeded_at           timestamptz,
@@ -37,8 +38,8 @@ ALTER TABLE transactions ALTER COLUMN processor_ref DROP NOT NULL;
 ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_processor_ref_key;
 CREATE UNIQUE INDEX IF NOT EXISTS transactions_provider_ref_uniq ON transactions (provider, processor_ref) WHERE processor_ref IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS transactions_provider_session_uniq ON transactions (provider, provider_session_id) WHERE provider_session_id IS NOT NULL;
-ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_refunded_range;
-ALTER TABLE transactions ADD CONSTRAINT transactions_refunded_range CHECK (refunded_cents >= 0 AND refunded_cents <= amount_cents);
+ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_reversed_range;
+ALTER TABLE transactions ADD CONSTRAINT transactions_reversed_range CHECK (reversed_cents >= 0 AND reversed_cents <= amount_cents);
 CREATE INDEX IF NOT EXISTS transactions_status_idx ON transactions (status);
 
 -- ---------------------------------------------------------------------------
