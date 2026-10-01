@@ -1,6 +1,7 @@
 import { query, queryOne } from "../db";
 import { HttpError } from "../errors";
 import { hashPassword, verifyPassword } from "../auth/password";
+import { checkPasswordStrength } from "../auth/password-policy";
 
 export interface Seller {
   id: string;
@@ -23,6 +24,8 @@ export async function signupWithPassword(input: {
   displayName: string;
 }): Promise<Seller> {
   const email = input.email.trim().toLowerCase();
+  const weak = checkPasswordStrength(input.password, { email, displayName: input.displayName });
+  if (weak) throw new HttpError(400, weak, "weak_password");
   const hash = await hashPassword(input.password);
   try {
     // verification_status is intentionally left to the column default ('pending').

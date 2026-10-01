@@ -41,19 +41,22 @@ export default function AuthForm({ mode, googleEnabled }: { mode: "signup" | "lo
         <Field id="email" label="Email">
           {(a) => <Input {...a} name="email" type="email" required autoComplete="email" />}
         </Field>
-        <Field id="password" label="Password" help={mode === "signup" ? "At least 8 characters." : undefined}>
+        <Field id="password" label="Password" help={mode === "signup" ? "At least 10 characters. Common passwords, your email and simple patterns are not allowed." : undefined}>
           {(a) => (
             <Input
               {...a}
               name="password"
               type="password"
               required
-              minLength={mode === "signup" ? 8 : 1}
+              minLength={mode === "signup" ? 10 : 1}
               autoComplete={mode === "signup" ? "new-password" : "current-password"}
             />
           )}
         </Field>
         {error && <p role="alert" className="text-sm font-medium text-danger">{error}</p>}
+        {mode === "login" && (
+          <p className="text-sm"><Link className="font-medium text-primary" href="/forgot-password">Forgot your password?</Link></p>
+        )}
         <Button type="submit" loading={busy}>{mode === "signup" ? "Sign up" : "Sign in"}</Button>
         {googleEnabled && (
           <a href="/api/auth/google" className={buttonClasses("secondary")}>Continue with Google</a>

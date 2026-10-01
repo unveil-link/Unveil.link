@@ -30,6 +30,29 @@ export const config = {
   get storageLocalDir() {
     return process.env.STORAGE_LOCAL_DIR ?? "./storage-data";
   },
+  /** Default lifetime of signed download links (seconds). platform_settings.download_ttl_seconds wins when set. */
+  get signedUrlTtlSeconds() {
+    const n = Number(process.env.SIGNED_URL_TTL_SECONDS);
+    return Number.isInteger(n) && n > 0 ? n : 24 * 60 * 60; // = FALLBACK_TTL_S
+  },
+  /** How many reverse-proxy hops append to X-Forwarded-For (client IP = Nth entry from the right). */
+  get trustedProxyHops() {
+    const n = Number(process.env.TRUSTED_PROXY_HOPS ?? 1);
+    return Number.isInteger(n) && n >= 0 ? n : 1;
+  },
+  get rateLimitEnabled() {
+    return process.env.RATE_LIMIT_ENABLED !== "0";
+  },
+  get mail() {
+    return {
+      transport: (process.env.MAIL_TRANSPORT ?? (process.env.NODE_ENV === "production" ? "" : "file")) as
+        | "file" | "console" | "resend" | "postmark" | "",
+      from: process.env.MAIL_FROM ?? "Unveil <no-reply@unveil.link>",
+      devDir: process.env.MAIL_DEV_DIR ?? ".dev-mail",
+      resendApiKey: process.env.RESEND_API_KEY,
+      postmarkToken: process.env.POSTMARK_SERVER_TOKEN,
+    };
+  },
   get google() {
     const id = process.env.GOOGLE_CLIENT_ID;
     const secret = process.env.GOOGLE_CLIENT_SECRET;
