@@ -813,10 +813,10 @@ describe.skipIf(!available)("QA-6 session expiry and re-validation at capture", 
     try { expect((await m.co.getCheckoutStatus(c.transactionId))!.status).toBe("failed"); } finally { await setSetting("checkout_session_ttl_minutes", 30); }
   });
   it.each([
-    ["seller verification failed", async (s: { sellerId: string }) => { await m.db.query(`UPDATE sellers SET verification_status='failed' WHERE id=$1`, [s.sellerId]); }, "seller_not_verified"],
-    ["seller in manual_review", async (s: { sellerId: string }) => { await m.db.query(`UPDATE sellers SET verification_status='manual_review' WHERE id=$1`, [s.sellerId]); }, "seller_not_verified"],
-    ["drop unpublished", async (s: { dropId: string }) => { await m.db.query(`UPDATE drops SET status='unpublished' WHERE id=$1`, [s.dropId]); }, "drop_unavailable"],
-    ["drop flagged", async (s: { dropId: string }) => { await m.db.query(`UPDATE drops SET status='flagged' WHERE id=$1`, [s.dropId]); }, "drop_unavailable"],
+    ["seller verification failed", async (s: { sellerId: string }) => { await m.db.query(`UPDATE sellers SET verification_status='failed' WHERE id=$1`, [s.sellerId]); }],
+    ["seller in manual_review", async (s: { sellerId: string }) => { await m.db.query(`UPDATE sellers SET verification_status='manual_review' WHERE id=$1`, [s.sellerId]); }],
+    ["drop unpublished", async (s: { dropId: string }) => { await m.db.query(`UPDATE drops SET status='unpublished' WHERE id=$1`, [s.dropId]); }],
+    ["drop flagged", async (s: { dropId: string }) => { await m.db.query(`UPDATE drops SET status='flagged' WHERE id=$1`, [s.dropId]); }],
   ] as const)("%s after checkout: the mock hosted page refuses payment", async (_n, mutate) => {
     const s = await seed();
     const c = await checkout(s);

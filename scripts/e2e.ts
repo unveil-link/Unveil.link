@@ -1216,6 +1216,167 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     return `outcomes: ${JSON.stringify(by)}`;
   });
 
+  // ---------------------------------------------------------------- round 2: QA fixes (items 1-7) over real HTTP
+  const freshEmail = (tag: string) => `pay-${tag}+${stamp}-${crypto.randomBytes(3).toString("hex")}@example.test`;
+  const coFor = (email: string, headers: Record<string, string> = {}) =>
+    new Client_().req("POST", "/api/checkout", { json: { linkId: payLink, email, confirmOver18: true }, headers });
+  const payVia = async (sessionId: string, card: string) => (await (await new Client_().req("POST", "/api/dev/payments/pay", { json: { sessionId, card } })).json());
+  const sessionIdOf = (b: { checkoutUrl: string }) => b.checkoutUrl.split("/").pop()!;
+
+  await check("[pay#1] concurrent identical POST /api/checkout (x8, same drop+email) -> ONE pending transaction/session; Idempotency-Key honoured (same key = same txn, other drop = 409)", async () => {
+    const em = freshEmail("conc");
+    const rs = await Promise.all(Array.from({ length: 8 }, () => coFor(em)));
+    assert(rs.every((r) => r.status === 200 || r.status === 201), `statuses ${rs.map((r) => r.status)}`);
+    const bodies = await Promise.all(rs.map((r) => r.json()));
+    eq(new Set(bodies.map((b) => b.transactionId)).size, 1, "one transaction id");
+    eq(new Set(bodies.map((b) => b.checkoutUrl)).size, 1, "one session");
+    eq(rs.filter((r) => r.status === 201).length, 1, "exactly one 201 (new), the rest 200 (reused)");
+    eq((await db.query("SELECT count(*)::int AS n FROM transactions WHERE lower(buyer_email)=lower($1)", [em])).rows[0].n, 1, "one row in the DB");
+    // Idempotency-Key
+    const em2 = freshEmail("idem");
+    const k = crypto.randomUUID();
+    const a = await coFor(em2, { "idempotency-key": k });
+    const b = await coFor(em2, { "idempotency-key": k });
+    eq(a.status, 201, "first"); eq(b.status, 200, "replay");
+    eq((await a.json()).transactionId, (await b.json()).transactionId, "same txn for the same key");
+    // the same key for a different drop is a client error, not someone else's session
+    const d2 = (await (await sellerC.req("POST", "/api/drops", { json: { title: "Second paid drop", priceCents: 1500 } })).json()).drop;
+    eq((await sellerC.req("POST", `/api/drops/${d2.id}/files`, { form: uploadForm(await tinyPng("#2255aa")) })).status, 201, "upload2");
+    eq((await sellerC.req("POST", `/api/drops/${d2.id}/publish`, { json: { attestation: att } })).status, 200, "publish2");
+    const other = await new Client_().req("POST", "/api/checkout", { json: { linkId: d2.public_link_id, email: em2, confirmOver18: true }, headers: { "idempotency-key": k } });
+    eq(other.status, 409, "same key, different drop -> 409");
+    // a paid checkout is not handed out again
+    const paid = await (await coFor(em2, { "idempotency-key": k })).json();
+    eq((await payVia(sessionIdOf(paid), TEST_CARDS.approved)).status, "succeeded", "pay it");
+    const again = await coFor(em2);
+    eq(again.status, 201, "after success a new purchase attempt gets a NEW pending session");
+    assert((await again.json()).transactionId !== paid.transactionId, "new txn");
+  });
+
+  await check("[pay#3] NUL byte / invalid strings in the event id or data.reference -> 400 (never 500) with a 'rejected' reconciliation row; garbage JSON -> 400; handler still healthy after", async () => {
+    const co = await (await coFor(freshEmail("nul"))).json();
+    const before = (await db.query("SELECT count(*)::int AS n FROM webhook_events WHERE outcome='rejected'")).rows[0].n;
+    const bad1 = await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_nul\u0000_x" }));
+    eq(bad1.status, 400, "NUL in event id");
+    const evRef = mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_nul_ref" }) as unknown as { data: Record<string, unknown> };
+    evRef.data.reference = `${co.transactionId}\u0000`;
+    const bad2 = await hook(evRef as unknown as MockWireEvent);
+    eq(bad2.status, 400, "NUL in data.reference");
+    const after = (await db.query("SELECT count(*)::int AS n FROM webhook_events WHERE outcome='rejected'")).rows[0].n;
+    assert(after >= before + 1, `rejected row(s) recorded (${before} -> ${after})`);
+    eq((await db.query("SELECT count(*)::int AS n FROM webhook_events WHERE outcome='error'")).rows[0].n, 0, "no 'error' rows (nothing blew up)");
+    eq((await txState(co.transactionId)).status, "pending", "no state change");
+    const ok = await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000 }));
+    eq(ok.body.outcome, "processed", "a clean event still works afterwards");
+  });
+
+  await check("[pay#2] wrong-amount sale is rejected, then the correct sale (same processor txn id, NEW event id) is PROCESSED (not 'duplicate'); ignored/unknown outcomes don't burn the claim; replays still dedupe", async () => {
+    const co = await (await coFor(freshEmail("amt"))).json();
+    const bad = await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 1999, eventId: "evt_e2e_wrong_amt" }));
+    eq(bad.body.outcome, "rejected", "wrong amount rejected"); eq(bad.body.detail, "amount_mismatch", "detail");
+    eq((await txState(co.transactionId)).status, "pending", "still pending");
+    const good = await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_e2e_right_amt" }));
+    eq(good.body.outcome, "processed", "correct sale processed");
+    eq((await txState(co.transactionId)).status, "succeeded", "succeeded");
+    eq(await ledgerSum(co.transactionId), 1560, "one posting");
+    eq((await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_e2e_right_amt_2" }))).body.outcome, "duplicate", "same sale, other event id, after success -> duplicate");
+    const burst = await Promise.all(Array.from({ length: 12 }, () => hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_e2e_right_amt" }))));
+    assert(burst.every((x) => x.status === 200 && x.body.outcome === "duplicate"), "12 concurrent replays: all duplicate");
+    eq(await ledgerSum(co.transactionId), 1560, "still exactly one posting");
+    // unknown -> ignored, then the txn exists later? (an ignored event for a not-yet-known id must not block the real one)
+    const ghostTx = crypto.randomUUID();
+    eq((await hook(mockEvents.saleSucceeded({ transactionId: ghostTx, amountCents: 2000, eventId: "evt_e2e_ghost" }))).body.outcome, "ignored", "unknown txn ignored");
+  });
+
+  await check("[pay#4] repeat chargebacks flag the seller for review (threshold 3 in 90 days), exactly once, with an audit row; seller is NOT banned", async () => {
+    const sid = (await db.query("SELECT id FROM sellers WHERE email=$1", [sellerEmail])).rows[0].id;
+    const cbCount = async () => (await db.query("SELECT count(DISTINCT t.id)::int AS n FROM transactions t JOIN drops d ON d.id=t.drop_id WHERE d.seller_id=$1 AND t.status='charged_back'", [sid])).rows[0].n;
+    const flagged = async () => (await db.query("SELECT risk_flagged_at, risk_flag_reason, verification_status FROM sellers WHERE id=$1", [sid])).rows[0];
+    const chargebackOne = async () => {
+      const co = await (await coFor(freshEmail("cb"))).json();
+      eq((await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000 }))).body.outcome, "processed", "sale");
+      return hook(mockEvents.chargeback({ transactionId: co.transactionId, amountCents: null }));
+    };
+    let guard = 0;
+    while ((await cbCount()) < 2 && guard++ < 5) await chargebackOne();
+    eq((await flagged()).risk_flagged_at, null, `not flagged at ${await cbCount()} chargebacks`);
+    const third = await chargebackOne();
+    eq(third.body.outcome, "processed", "3rd chargeback processed");
+    assert((await flagged()).risk_flagged_at !== null, "flagged at the threshold");
+    await chargebackOne(); // 4th
+    const f = await flagged();
+    assert(/chargeback/i.test(f.risk_flag_reason ?? ""), `reason '${f.risk_flag_reason}'`);
+    eq(f.verification_status, "verified", "not auto-banned / still verified");
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='seller_flagged_repeat_chargebacks' AND target LIKE $1", [`seller:${sid}%`])).rows[0].n, 1, "one audit row (flagged once)");
+  });
+
+  await check("[pay#5] 'all sales final' notice is on /u/<link> (next to the buy form) and on the hosted mock checkout page", async () => {
+    const page = stripComments(await (await anon.req("GET", `/u/${payLink}`)).text());
+    assert(page.includes('data-testid="sales-final"') && /All sales are final/i.test(page), "public drop page has the notice");
+    const co = await (await coFor(freshEmail("sf"))).json();
+    const hosted = stripComments(await (await anon.req("GET", `/pay/mock/${sessionIdOf(co)}`)).text());
+    assert(hosted.includes('data-testid="sales-final"') && /All sales are final/i.test(hosted), "hosted page has the notice");
+  });
+
+  await check("[pay#7] decline -> friendly message (no raw code anywhere buyer-facing); retry with a good card on the SAME session succeeds", async () => {
+    const co = await (await coFor(freshEmail("retry"))).json();
+    const sess = sessionIdOf(co);
+    const d = await payVia(sess, TEST_CARDS.declined);
+    eq(d.approved, false, "declined"); assert(typeof d.message === "string" && /declined/i.test(d.message) && !/card_declined|failed: failed/i.test(d.message), `message '${d.message}'`);
+    const st = await (await anon.req("GET", `/api/checkout/status?id=${co.transactionId}`)).text();
+    assert(!/card_declined|failureCode|failure_code/.test(st), `status API leaks no raw code: ${st}`);
+    assert(JSON.parse(st).retryable === true, "retryable");
+    const hosted = stripComments(await (await anon.req("GET", `/pay/mock/${sess}`)).text());
+    assert(!/card_declined|insufficient_funds/.test(hosted), "hosted page HTML has no raw codes");
+    const ok = await payVia(sess, TEST_CARDS.approved);
+    eq(ok.status, "succeeded", "retry on the same session succeeds");
+    eq(await ledgerSum(co.transactionId), 1560, "one posting");
+    // a later checkout for the same buyer works too
+    const co2 = await coFor(freshEmail("retry2"));
+    eq(co2.status, 201, "fresh buyer checkout");
+  });
+
+  await check("[pay#6] pending sessions expire (30 min TTL) and cannot be paid; seller un-verified / drop unpublished after checkout -> payment refused, webhook success voided (no ledger) and refund requested", async () => {
+    // expiry
+    const em = freshEmail("exp");
+    const co = await (await coFor(em)).json();
+    await db.query("UPDATE transactions SET created_at = now() - interval '31 minutes' WHERE id=$1", [co.transactionId]);
+    const st = await (await anon.req("GET", `/api/checkout/status?id=${co.transactionId}`)).json();
+    eq(st.status, "failed", "expired on access"); assert(/expired/i.test(st.message), `message '${st.message}'`);
+    const p = await payVia(sessionIdOf(co), TEST_CARDS.approved);
+    eq(p.approved, false, "expired session cannot be paid");
+    eq(await ledgerSum(co.transactionId), 0, "no ledger");
+    const fresh = await coFor(em);
+    eq(fresh.status, 201, "a new session is issued after expiry");
+    assert((await fresh.json()).transactionId !== co.transactionId, "different txn");
+    // backdated 30 days (QA repro)
+    const co30 = await (await coFor(freshEmail("old"))).json();
+    await db.query("UPDATE transactions SET created_at = now() - interval '30 days' WHERE id=$1", [co30.transactionId]);
+    eq((await payVia(sessionIdOf(co30), TEST_CARDS.approved)).approved, false, "30-day-old pending session cannot be paid");
+    // seller verification failed after checkout
+    const cv = await (await coFor(freshEmail("ver"))).json();
+    await db.query("UPDATE sellers SET verification_status='failed' WHERE email=$1", [sellerEmail]);
+    const pv = await payVia(sessionIdOf(cv), TEST_CARDS.approved);
+    eq(pv.approved, false, "payment refused while the seller is unverified"); assert(!/seller_not_verified|unavailable/.test(pv.message), "no raw code");
+    // webhook success for a pending txn when the seller is no longer verified: void + refund, no posting
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [sellerEmail]);
+    const cw = await (await coFor(freshEmail("wh"))).json();
+    await db.query("UPDATE sellers SET verification_status='failed' WHERE email=$1", [sellerEmail]);
+    const w = await hook(mockEvents.saleSucceeded({ transactionId: cw.transactionId, amountCents: 2000 }));
+    eq(w.body.outcome, "processed", "webhook accepted (200, processor must not retry)"); assert(/^voided:/.test(w.body.detail ?? ""), `detail ${w.body.detail}`);
+    const tw = (await db.query("SELECT status, failure_code, review_reason, refund_requested_at FROM transactions WHERE id=$1", [cw.transactionId])).rows[0];
+    eq([tw.status, tw.failure_code, tw.review_reason].join(), "failed,invalid_at_capture,seller_not_verified", "voided + flagged for review");
+    assert(tw.refund_requested_at !== null, "refund requested through the provider");
+    eq(await ledgerSum(cw.transactionId), 0, "not credited");
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [sellerEmail]);
+    // drop unpublished
+    const dropId = (await db.query("SELECT id FROM drops WHERE public_link_id=$1", [payLink])).rows[0].id;
+    const cu = await (await coFor(freshEmail("unp"))).json();
+    await db.query("UPDATE drops SET status='unpublished' WHERE id=$1", [dropId]);
+    eq((await payVia(sessionIdOf(cu), TEST_CARDS.approved)).approved, false, "unpublished drop: refused");
+    await db.query("UPDATE drops SET status='published' WHERE id=$1", [dropId]);
+  });
+
   await check("[pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404", async () => {
     let port = Number(new URL(BASE).port) + 17;
     while (await fetch(`http://127.0.0.1:${port}/`).then(() => true, () => false)) port++;
