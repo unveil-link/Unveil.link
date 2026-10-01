@@ -75,6 +75,8 @@ export const DEFAULT_LIMITS = {
   WEBHOOK_REJECTED: { limit: 60, windowSec: 60 },
   // Cron/internal trigger routes, per IP, counted BEFORE the bearer check (throttles guessing of CRON_SECRET).
   CRON: { limit: 30, windowSec: 60 },
+  // Admin login attempts per IP (plus the per-email progressive delay, namespaced apart from sellers).
+  ADMIN_LOGIN_IP: { limit: 10, windowSec: 900 },
 } satisfies Record<string, Limit>;
 export type LimitName = keyof typeof DEFAULT_LIMITS;
 
