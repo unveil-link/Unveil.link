@@ -2,14 +2,14 @@
 
 Creators sell photos/videos through payment links. Buyers see a **blurred preview**; originals stay **private** and are only released through expiring, HMAC-signed URLs.
 
-**Status of this foundation:** auth, schema, private storage, image upload + blur pipeline, signed-URL delivery, publish gating and a full automated e2e proof are built. **Not built yet:** payments/checkout, payouts, video upload, ID-verification provider, admin UI, reports UI. See [Not built / untested](#not-built--untested).
+**Status of this foundation:** auth, schema, private storage, image upload + blur pipeline, signed-URL delivery, publish gating and a full automated e2e proof are built. **Payments:** processor-agnostic payment layer with a mock processor, webhook pipeline, ledger and record-only payouts (see [Payments layer](#payments-layer)); no real processor yet. **Not built yet:** real processor integration, payout transfers, video upload, ID-verification provider, admin UI, reports UI. See [Not built / untested](#not-built--untested).
 
 ## Stack
 Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · PostgreSQL 17 · `pg` · `jose` (JWT sessions) · `bcryptjs` · `sharp` · `zod` · vitest.
 
 ## Repo structure
 ```
-db/migrations/           001_init.sql, 002_platform_settings.sql, 003_fixes_1.sql, 004_fixes_2.sql  (plain SQL, applied in filename order)
+db/migrations/           001_init.sql … 004_fixes_2.sql, 005_payments_enums.sql, 006_payments.sql  (plain SQL, applied in filename order)
 scripts/
   migrate.ts             migration runner (schema_migrations table, advisory lock, one tx per file)
   set-verification.ts    dev helper: flip a seller's verification_status (stand-in for the future KYC provider/admin)
@@ -26,7 +26,9 @@ src/server/              server layer — no React, no route code
   http.ts, errors.ts     route wrapper (error mapping, same-origin guard), requireSeller
 src/app/                 UI + route handlers (thin: parse → call service → respond)
   api/auth/{signup,login,logout,me,forgot-password,reset-password,google,google/callback}
-  api/checkout            stub: rate limited, returns 501
+  api/checkout            guest checkout (rate limited) -> pending transaction + processor session
+  api/webhooks/[provider], api/checkout/status, api/earnings, api/dev/payments/* (mock simulator, 404 in production)
+  pay/mock/[sessionId]    hosted mock checkout page (dev only)
   api/drops, api/drops/[id], .../files (upload), .../publish, .../unpublish
   api/files/[id]/{preview,original,signed-url}
   api/public/drops/[linkId], api/settings
@@ -75,6 +77,39 @@ npm run e2e       # = bash scripts/e2e.sh : full end-to-end proof, 41 checks, wr
 ```
 `e2e.sh` needs Postgres reachable with the creds in `.env`; it creates/drops a separate database `unveil_e2e` (refuses any DB name not containing `e2e`), builds into `.next-e2e`, and uses its own storage dir `.e2e/storage` and dev-mail dir `.e2e/mail`. It starts the app on port 3100 (or the next free port if 3100 is taken, so it never tests a stale server) and gives every test client its own fake `X-Forwarded-For` so rate-limit state doesn't bleed between checks. It never touches your dev DB or `storage-data/`.
 
+## Payments layer
+Full design notes, decisions and open questions: **[PAYMENTS-NOTES.md](PAYMENTS-NOTES.md)**.
+
+```
+src/server/payments/
+  types.ts        PaymentProvider interface + NormalizedPaymentEvent (sale_succeeded | sale_failed | refunded | chargeback)
+  registry.ts     PAYMENT_PROVIDER=<name> (default "mock") -> provider; unknown/unavailable => 503
+  signature.ts    HMAC-SHA256 webhook signing/verification (raw body, timestamp tolerance, constant-time compare)
+  money.ts        PURE integer-cent math: one rounding rule (round-half-up), fee split, cumulative refund shares
+  ledger.ts       append-only ledger_entries postings + balance (pending vs available)
+  webhooks.ts     provider-independent pipeline: verify -> claim (dedupe) -> apply -> reconciliation log; parks out-of-order refunds
+  checkout.ts / refunds.ts / payouts.ts / earnings.ts / pricing.ts   services (routes stay thin)
+  mock/           the mock processor: cards.ts (test cards), events.ts (wire format + signed-event builders), index.ts
+  dev/simulator.ts  dev-only "processor calls our webhook" helper behind /api/dev/payments/*
+```
+Flow: `POST /api/checkout` (drop must be published, seller verified, price read from the DB, buyer email + 18+ confirmation required) → `transactions` row `pending` + `provider.createCheckoutSession` → buyer pays at the processor → processor calls `POST /api/webhooks/<provider>` → signature verified over the raw body → event claimed once (unique index) → transaction `succeeded` + ledger postings in one DB transaction. A transaction is **never** marked succeeded from the browser redirect.
+
+**Adding a real provider (Segpay / CCBill):** (1) create `src/server/payments/<name>/index.ts` exporting a `PaymentProvider`; keep wire formats, URLs, parameter names and credentials in that folder; (2) `createCheckoutSession` must pass our `transactionId` (and, since neither processor documents webhook signatures, an HMAC of `transactionId + price` made with `PAYMENT_WEBHOOK_SECRET`, in the processor's custom/pass-through variable); (3) `verifyWebhook` verifies that HMAC (+ optional IP allowlist) over the raw body and maps the processor's event types onto the four normalized types, deriving `eventId` as `<tranid>:<type>` when there is no event id; optionally implement `confirmTransaction` for the server-side confirmation call the handler runs before applying a sale; (4) implement `issueRefund` / `recordPayout`; (5) register it in `registry.ts`; (6) set `PAYMENT_PROVIDER=<name>`, `platform_settings.processing_fee_percent`, extend the CSP (`frame-src`/`form-action`) for the hosted page; (7) copy `tests/payments-provider.test.ts` for the new `verifyWebhook`. Nothing else changes: dedupe, ordering, ledger, refunds and payouts are provider-independent.
+
+**Mock processor:** test cards by last four digits — `…4242` approves, `…0002` card_declined, `…9995` insufficient_funds, `…0069` expired_card, `…0127` incorrect_cvc, anything else declined. Dev flow: open a drop page → *Unlock* → hosted mock page (`/pay/mock/<session>`) → *Pay (mock)`. Webhook payloads are signed with `signMockEvent()` (`src/server/payments/mock/events.ts`), the same helper the tests and the simulator use. **The mock is default-deny:** it is allowed only when `NODE_ENV` is exactly `development` or `test`, or when `MOCK_PAYMENTS_ENABLED=1` **and** `APP_URL` is loopback (the repo's e2e runs a production *build* this way). Production, staging or an unset `NODE_ENV` ⇒ provider unavailable (checkout/webhook 503), `/api/dev/payments/*` and `/pay/mock/*` 404 (see `config.mockPaymentsAllowed`). **Checkout:** `POST /api/checkout` honours an `Idempotency-Key` header (same key ⇒ same session, 200; reused on another drop ⇒ 409) and returns the existing live pending session for an identical drop+email. Pending sessions expire after `platform_settings.checkout_session_ttl_minutes` (30); payment and webhook-success re-validate seller verification + drop status (invalid ⇒ voided + refund requested + flagged for review). Buyers see friendly failure messages (never raw codes) and an "All sales are final" notice. Repeated chargebacks (`chargeback_flag_threshold` 3 in `chargeback_flag_window_days` 90) set `sellers.risk_flagged_at` for review. Details: PAYMENTS-NOTES.md "Round 2".
+
+**Money:** integer cents everywhere. Platform fee % = `platform_settings.fee_percent` (default 10), processing fee % = `platform_settings.processing_fee_percent` else `MOCK_PROCESSING_FEE_PERCENT` (12). `$20.00` → processing `$2.40`, platform `$2.00`, seller `$15.60`. Rounding rule: round-half-up on cents per fee, seller_net = gross − platform − processing (so it always sums). Hold period `payout_hold_days` (7), `min_payout_cents` (2500), `chargeback_fee_cents` (0) are platform settings.
+
+**Run / verify payments**
+```bash
+npm run migrate                                   # applies 005 + 006 + 007
+npm run typecheck && npm run lint
+npm test                                          # all unit tests; DB-backed suites in tests/db/ run when Postgres is reachable (else skip)
+npm run e2e                                       # 62 checks incl. the payments flow
+curl -s localhost:3000/api/earnings               # (signed-in seller) pending/available balance, lifetime totals
+```
+DB tests create and drop a throwaway database `unveil_paytest_payments` next to your `DATABASE_URL` (or `TEST_DATABASE_URL`).
+
 ## Environment
 See `.env.example`. Key vars: `DATABASE_URL`, `SESSION_SECRET`, `SIGNED_URL_SECRET`, `STORAGE_DRIVER` (`local`|`s3`), `STORAGE_LOCAL_DIR`, `S3_*`, `GOOGLE_CLIENT_ID/SECRET`, `APP_URL`. `.env` is gitignored.
 
@@ -92,7 +127,7 @@ Added in `backend/fixes-1`:
 | `MAIL_DEV_DIR` | `.dev-mail` | where the `file` transport writes |
 | `RESEND_API_KEY` / `POSTMARK_SERVER_TOKEN` | – | credentials for the matching transport (**adapters untested live**) |
 
-Default rate limits (`NAME` → max/window): `LOGIN_IP` 20/15 min, `LOGIN_EMAIL` 20/min (burst valve only, **not** a lockout — see [Login delays](#login-delays-no-lockout)), `SIGNUP_IP` 10/h, `FORGOT_IP` 5/h, `FORGOT_EMAIL` 3/h (extra requests answer 200 but send no mail), `RESET_IP` 10/h, `DOWNLOAD` 60/min (`/api/files/:id/original`), `PREVIEW` 300/min, `PUBLIC_LINK` 120/min, `SIGNED_URL` 60/min (owner mint), `CHECKOUT` 10/min (stub `POST /api/checkout` → 501). Exceeding a limit returns `429` with `Retry-After` and `{code:"rate_limited"}`.
+Default rate limits (`NAME` → max/window): `LOGIN_IP` 20/15 min, `LOGIN_EMAIL` 20/min (burst valve only, **not** a lockout — see [Login delays](#login-delays-no-lockout)), `SIGNUP_IP` 10/h, `FORGOT_IP` 5/h, `FORGOT_EMAIL` 3/h (extra requests answer 200 but send no mail), `RESET_IP` 10/h, `DOWNLOAD` 60/min (`/api/files/:id/original`), `PREVIEW` 300/min, `PUBLIC_LINK` 120/min, `SIGNED_URL` 60/min (owner mint), `CHECKOUT` 10/min (`POST /api/checkout`), `WEBHOOK_REJECTED` 60/min (logged rejected webhook deliveries per IP). Exceeding a limit returns `429` with `Retry-After` and `{code:"rate_limited"}`.
 
 ### Platform settings added in migration 003
 `max_files_per_drop` (default now **10**), `max_total_bytes_per_drop` (default **2147483648** = 2 GiB; sum of original sizes per drop), `download_ttl_seconds` (NULL = use env/24 h). Per-file caps unchanged: `max_image_size_bytes` 15 MiB (images), `max_video_size_bytes` 500 MiB (video upload not built). Edit via SQL (no admin UI yet), e.g. `UPDATE platform_settings SET download_ttl_seconds = 3600;`.

@@ -53,6 +53,40 @@ export const config = {
       postmarkToken: process.env.POSTMARK_SERVER_TOKEN,
     };
   },
+  /**
+   * Payment layer. Provider-specific credentials stay in the provider modules; only the registry key and the
+   * shared webhook-HMAC settings live here. See src/server/payments/.
+   */
+  get payments() {
+    const tol = Number(process.env.PAYMENT_WEBHOOK_TOLERANCE_SECONDS);
+    return {
+      provider: (process.env.PAYMENT_PROVIDER?.trim() || "mock").toLowerCase(),
+      /** HMAC-SHA256 key for webhook signatures (mock provider; real providers: our own HMAC in a pass-through field). */
+      webhookSecret: process.env.PAYMENT_WEBHOOK_SECRET ?? "",
+      webhookToleranceSeconds: Number.isInteger(tol) && tol > 0 ? tol : 300,
+      /** Default processing fee (percent) of the mock processor; platform_settings.processing_fee_percent overrides. */
+      mockProcessingFeePercent: process.env.MOCK_PROCESSING_FEE_PERCENT?.trim() || "12",
+    };
+  },
+  /**
+   * The mock processor (and every /api/dev/payments/* simulator route + the /pay/mock hosted page) is DEFAULT-DENY.
+   * It is available only when
+   *   - NODE_ENV is exactly "development" or "test" (next dev / vitest), or
+   *   - MOCK_PAYMENTS_ENABLED=1 AND APP_URL's host is loopback (localhost / 127.0.0.1 / ::1).
+   * Anything else (production, staging, unset/unknown NODE_ENV, a public APP_URL) is denied. The second form exists for
+   * the repo's own e2e, which has to run a production *build* (`next start`) on this machine.
+   */
+  get mockPaymentsAllowed() {
+    const env = process.env.NODE_ENV;
+    if (env === "development" || env === "test") return true;
+    if (process.env.MOCK_PAYMENTS_ENABLED !== "1") return false;
+    try {
+      const h = new URL(this.appUrl).hostname;
+      return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";
+    } catch {
+      return false;
+    }
+  },
   get google() {
     const id = process.env.GOOGLE_CLIENT_ID;
     const secret = process.env.GOOGLE_CLIENT_SECRET;

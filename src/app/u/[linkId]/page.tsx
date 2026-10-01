@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDropByPublicLink, listFiles, summarizeFiles } from "@/server/services/drops";
 import { queryOne } from "@/server/db";
-import { Button } from "@/components/ui";
 import AppShell from "../../components/AppShell";
+import BuyForm from "./BuyForm";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
 };
 
-// Public drop page: only blurred previews are ever rendered here. Purchase flow comes later.
+// Public drop page: only blurred previews are ever rendered here. The buy form posts to /api/checkout (price comes from the DB).
 export default async function PublicDrop({ params }: { params: Promise<{ linkId: string }> }) {
   const drop = await getDropByPublicLink((await params).linkId);
   if (!drop || drop.status !== "published") notFound();
@@ -41,7 +41,7 @@ export default async function PublicDrop({ params }: { params: Promise<{ linkId:
           ))}
         </div>
         <p className="text-2xl font-semibold" data-testid="drop-price">{`$${(drop.price_cents / 100).toFixed(2)}`}</p>
-        <Button disabled className="self-start">Unlock for ${(drop.price_cents / 100).toFixed(2)} (payments coming soon)</Button>
+        <BuyForm linkId={drop.public_link_id} priceLabel={`$${(drop.price_cents / 100).toFixed(2)}`} />
       </div>
     </AppShell>
   );

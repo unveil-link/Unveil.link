@@ -8,7 +8,10 @@ import path from "node:path";
 import sharp from "sharp";
 import { Client } from "pg";
 import { SignJWT } from "jose";
+import { spawn } from "node:child_process";
 import { signOriginalUrl } from "../src/server/services/signing";
+import { mockEvents, mockSaleId, signMockEvent, type MockWireEvent } from "../src/server/payments/mock/events";
+import { TEST_CARDS } from "../src/server/payments/mock/cards";
 
 const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3100";
 const STORAGE_DIR = path.resolve(process.env.STORAGE_LOCAL_DIR!);
@@ -732,17 +735,18 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
   });
 
   // ---- #11 rate limiting ----
-  await check("[#11] /api/checkout stub: 501 until the (env-configured 3/60s) limit, then 429 + Retry-After; other IPs unaffected", async () => {
+  await check("[#11] /api/checkout keeps its rate limit: handled (400 validation here) until the (env-configured 3/60s) limit, then 429 + Retry-After; other IPs unaffected", async () => {
     const c = new Client_(), other = new Client_();
     const codes: number[] = [];
+    // body is deliberately invalid (no email / 18+ confirmation): the limiter must run BEFORE validation, like the old stub
     for (let i = 0; i < 3; i++) codes.push((await c.req("POST", "/api/checkout", { json: { dropId } })).status);
-    eq(codes.join(","), "501,501,501", "first three");
+    eq(codes.join(","), "400,400,400", "first three");
     const r = await c.req("POST", "/api/checkout", { json: { dropId } });
     eq(r.status, 429, "4th");
     const ra = Number(r.headers.get("retry-after"));
     assert(Number.isInteger(ra) && ra >= 1 && ra <= 60, `Retry-After ${r.headers.get("retry-after")}`);
     eq((await r.json()).code, "rate_limited", "body code");
-    eq((await other.req("POST", "/api/checkout", { json: { dropId } })).status, 501, "different IP still allowed");
+    eq((await other.req("POST", "/api/checkout", { json: { dropId } })).status, 400, "different IP still allowed");
     return `Retry-After=${ra}`;
   });
   await check("[#11] download endpoint (/api/files/:id/original) rate limited per IP: 60 allowed/min then 429 + Retry-After", async () => {
@@ -980,6 +984,419 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     let rejected = false;
     try { await db.query("INSERT INTO login_throttle (key, failures, last_attempt_at, next_allowed_at) VALUES ('x', 99, now(), now() + interval '2 hours')"); } catch { rejected = true; }
     assert(rejected, "CHECK constraint refuses a >1 h block");
+  });
+
+
+  // =====================================================================================
+  // PAYMENTS (mock processor): checkout -> signed webhook -> ledger -> duplicates/bad signature/decline/refund
+  // =====================================================================================
+  const WH_SECRET = process.env.PAYMENT_WEBHOOK_SECRET!;
+  assert(WH_SECRET && WH_SECRET.length >= 32, "PAYMENT_WEBHOOK_SECRET must be set for the payments e2e (scripts/e2e.sh does)");
+  async function rawPost(who: Client_, rawBody: string, headers: Record<string, string>) {
+    return fetch(BASE + "/api/webhooks/mock", { method: "POST", headers: { "x-forwarded-for": who.ip, ...headers }, body: rawBody });
+  }
+  const hook = async (event: MockWireEvent, opts: { secret?: string; nowSec?: number } = {}) => {
+    const sgn = signMockEvent(event, opts.secret ?? WH_SECRET, { nowSec: opts.nowSec });
+    const r = await rawPost(new Client_(), sgn.rawBody, sgn.headers);
+    return { status: r.status, body: await r.json() as { outcome?: string; detail?: string; code?: string } };
+  };
+  const payEmail = `pay+${stamp}@example.test`;
+  const sellerEmail = `payseller+${stamp}@example.test`;
+  const sellerC = new Client_();
+  let payLink = "";
+  const ledgerSum = async (txId: string) => Number((await db.query("SELECT COALESCE(SUM(amount_cents),0) AS s FROM ledger_entries WHERE transaction_id=$1", [txId])).rows[0].s);
+  const txState = async (id: string) => (await db.query("SELECT status, reversed_cents, processor_ref, failure_code, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents FROM transactions WHERE id=$1", [id])).rows[0];
+  const startCheckout = async (over: Record<string, unknown> = {}) =>
+    new Client_().req("POST", "/api/checkout", { json: { linkId: payLink, email: payEmail, confirmOver18: true, ...over } });
+
+  await check("[pay] setup: seller signs up, is verified, creates a $20.00 drop with a file, publishes it", async () => {
+    eq((await sellerC.req("POST", "/api/auth/signup", { json: { email: sellerEmail, password, displayName: "Pay Seller" } })).status, 201, "signup");
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [sellerEmail]);
+    const d = (await (await sellerC.req("POST", "/api/drops", { json: { title: "Paid drop", priceCents: 2000 } })).json()).drop;
+    eq((await sellerC.req("POST", `/api/drops/${d.id}/files`, { form: uploadForm(await tinyPng("#aa5500")) })).status, 201, "upload");
+    eq((await sellerC.req("POST", `/api/drops/${d.id}/publish`, { json: { attestation: att } })).status, 200, "publish");
+    payLink = d.public_link_id;
+  });
+
+  await check("[pay] public drop page has the buy form (email + 18+ checkbox), no client-supplied amount", async () => {
+    const html = stripComments(await (await anon.req("GET", `/u/${payLink}`)).text());
+    assert(html.includes('data-testid="buy-form"') && html.includes('data-testid="over18"') && html.includes('data-testid="buy-button"'), "buy form present");
+    assert(html.includes("Unlock for") && html.includes("$20.00"), "price shown");
+  });
+
+  await check("[pay] checkout validation: email required, 18+ confirmation required, amount field ignored, unpublished/unknown drop, cross-origin blocked", async () => {
+    eq((await startCheckout({ email: undefined })).status, 400, "no email");
+    eq((await startCheckout({ email: "not-an-email" })).status, 400, "bad email");
+    const noAge = await startCheckout({ confirmOver18: false });
+    eq(noAge.status, 400, "18+ false");
+    eq((await startCheckout({ confirmOver18: undefined })).status, 400, "18+ missing");
+    eq((await new Client_().req("POST", "/api/checkout", { json: { email: payEmail, confirmOver18: true } })).status, 400, "no drop");
+    eq((await startCheckout({ linkId: "AAAAAAAAAAAA" })).status, 404, "unknown link");
+    const draft = (await (await sellerC.req("POST", "/api/drops", { json: { title: "Draft", priceCents: 500 } })).json()).drop;
+    eq((await new Client_().req("POST", "/api/checkout", { json: { dropId: draft.id, email: payEmail, confirmOver18: true } })).status, 404, "unpublished (draft) drop");
+    await db.query("UPDATE sellers SET verification_status='pending' WHERE email=$1", [sellerEmail]);
+    eq((await startCheckout()).status, 409, "seller not verified");
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [sellerEmail]);
+    eq((await new Client_().req("POST", "/api/checkout", { json: { linkId: payLink, email: payEmail, confirmOver18: true }, headers: { origin: "http://evil.example" } })).status, 403, "cross-origin");
+    const n0 = (await db.query("SELECT count(*)::int AS n FROM transactions")).rows[0].n;
+    eq(n0, 0, "no transaction rows were created by rejected requests");
+  });
+
+  let tx1 = "", session1 = "";
+  await check("[pay] valid checkout: 201, PENDING transaction priced from the DB ($20 -> 2.40 / 2.00 / 15.60) even if the client sends an amount; nothing on the ledger", async () => {
+    const r = await startCheckout({ amountCents: 1, amount: 0.01, priceCents: 1 });
+    eq(r.status, 201, "status");
+    const body = await r.json();
+    tx1 = body.transactionId;
+    eq(body.amountCents, 2000, "amount from DB");
+    assert(/\/pay\/mock\/mocksess_[0-9a-f]{32}$/.test(body.checkoutUrl), `checkoutUrl ${body.checkoutUrl}`);
+    session1 = body.checkoutUrl.split("/").pop();
+    const t = await txState(tx1);
+    eq(t.status, "pending", "status pending");
+    eq([t.amount_cents, t.processing_fee_cents, t.platform_fee_cents, t.seller_net_cents].join(","), "2000,240,200,1560", "fee split");
+    eq((await db.query("SELECT count(*)::int AS n FROM ledger_entries WHERE transaction_id=$1", [tx1])).rows[0].n, 0, "no ledger yet");
+    eq((await anon.req("GET", `/api/checkout/status?id=${tx1}`).then((x) => x.json())).status, "pending", "status API");
+  });
+
+  await check("[pay] hosted mock checkout page renders (e2e runs the production build on loopback with the local-build flag)", async () => {
+    const r = await anon.req("GET", `/pay/mock/${session1}`);
+    eq(r.status, 200, "page");
+    const html = stripComments(await r.text());
+    assert(html.includes("Mock checkout") && html.includes("$20.00"), "page content");
+    eq((await anon.req("GET", `/pay/mock/mocksess_${"0".repeat(32)}`)).status, 404, "unknown session");
+  });
+
+  await check("[pay] bad signature is rejected (401) with NO state change; tampered body, wrong secret, stale timestamp, missing header all 401", async () => {
+    const ev = mockEvents.saleSucceeded({ transactionId: tx1, amountCents: 2000 });
+    const wrong = await hook(ev, { secret: "an-attacker-secret-an-attacker-secret-1234" });
+    eq(wrong.status, 401, "wrong secret");
+    const stale = await hook(ev, { nowSec: Math.floor(Date.now() / 1000) - 3600 });
+    eq(stale.status, 401, "stale");
+    const good = signMockEvent(mockEvents.saleSucceeded({ transactionId: tx1, amountCents: 100 }), WH_SECRET);
+    const tampered = await rawPost(new Client_(), good.rawBody.replace('"amount_cents":100', '"amount_cents":2000'), good.headers);
+    eq(tampered.status, 401, "tampered body");
+    eq((await rawPost(new Client_(), good.rawBody, { "content-type": "application/json" })).status, 401, "no signature header");
+    eq((await txState(tx1)).status, "pending", "still pending");
+    eq((await db.query("SELECT count(*)::int AS n FROM ledger_entries WHERE transaction_id=$1", [tx1])).rows[0].n, 0, "ledger untouched");
+    const rej = (await db.query("SELECT count(*)::int AS n FROM webhook_events WHERE outcome='rejected' AND signature_valid=false")).rows[0].n;
+    assert(rej >= 4, `rejections are logged (${rej})`);
+    eq((await rawPost(new Client_(), "x", {})).status, 401, "garbage unsigned");
+  });
+
+  await check("[pay] unknown provider segment -> 404", async () => {
+    const r = await fetch(BASE + "/api/webhooks/segpay", { method: "POST", body: "{}" });
+    eq(r.status, 404, "status");
+    eq((await fetch(BASE + "/api/webhooks/__proto__", { method: "POST", body: "{}" })).status, 404, "__proto__");
+  });
+
+  await check("[pay] signed sale webhook -> transaction succeeded, ledger = +20.00 / -2.00 / -2.40 (sums to 15.60), balance pending 15.60", async () => {
+    const r = await hook(mockEvents.saleSucceeded({ transactionId: tx1, amountCents: 2000, eventId: "evt_e2e_sale_1" }));
+    eq(r.status, 200, "status");
+    eq(r.body.outcome, "processed", "outcome");
+    const t = await txState(tx1);
+    eq(t.status, "succeeded", "status");
+    eq(t.processor_ref, mockSaleId(tx1), "processor ref");
+    const rows = (await db.query("SELECT entry_type, amount_cents FROM ledger_entries WHERE transaction_id=$1 ORDER BY id", [tx1])).rows;
+    eq(rows.map((x) => `${x.entry_type}:${x.amount_cents}`).join(","), "sale_credit:2000,platform_fee:-200,processing_fee:-240", "ledger lines");
+    eq(await ledgerSum(tx1), 1560, "sum");
+    eq((await anon.req("GET", `/api/checkout/status?id=${tx1}`).then((x) => x.json())).status, "succeeded", "status API");
+    const earn = await (await sellerC.req("GET", "/api/earnings")).json();
+    eq(earn.balance.pendingCents, 1560, "pending balance");
+    eq(earn.balance.availableCents, 0, "available (7-day hold)");
+    eq(earn.lifetime.grossCents, 2000, "lifetime gross");
+    eq((await anon.req("GET", "/api/earnings")).status, 401, "earnings needs a session");
+  });
+
+  await check("[pay] duplicate webhook (same event, and same sale under a new event id) -> 200 'duplicate', still exactly one ledger posting and one succeeded charge", async () => {
+    const same = await hook(mockEvents.saleSucceeded({ transactionId: tx1, amountCents: 2000, eventId: "evt_e2e_sale_1" }));
+    eq(same.status, 200, "status"); eq(same.body.outcome, "duplicate", "outcome");
+    const renamed = await hook(mockEvents.saleSucceeded({ transactionId: tx1, amountCents: 2000, eventId: "evt_e2e_sale_1_replayed_under_new_id" }));
+    eq(renamed.status, 200, "status2"); eq(renamed.body.outcome, "duplicate", "outcome2");
+    eq((await db.query("SELECT count(*)::int AS n FROM ledger_entries WHERE transaction_id=$1", [tx1])).rows[0].n, 3, "3 ledger lines");
+    const outs = (await db.query("SELECT outcome FROM webhook_events WHERE transaction_id=$1 ORDER BY received_at, id", [tx1])).rows.map((r) => r.outcome).join(",");
+    eq(outs, "processed,duplicate,duplicate", "reconciliation log");
+    // concurrent burst over HTTP
+    const ev = mockEvents.saleSucceeded({ transactionId: tx1, amountCents: 2000, eventId: "evt_e2e_sale_1" });
+    const rs = await Promise.all(Array.from({ length: 10 }, () => hook(ev)));
+    assert(rs.every((x) => x.status === 200 && x.body.outcome === "duplicate"), "10 concurrent redeliveries all duplicate");
+    eq(await ledgerSum(tx1), 1560, "still 15.60");
+  });
+
+  await check("[pay] unknown transaction -> 200 ignored, nothing created", async () => {
+    const n0 = (await db.query("SELECT count(*)::int AS n FROM ledger_entries")).rows[0].n;
+    const r = await hook(mockEvents.saleSucceeded({ transactionId: "99999999-9999-4999-8999-999999999999", amountCents: 2000 }));
+    eq(r.status, 200, "status"); eq(r.body.outcome, "ignored", "outcome"); eq(r.body.detail, "unknown_transaction", "detail");
+    eq((await db.query("SELECT count(*)::int AS n FROM ledger_entries")).rows[0].n, n0, "ledger untouched");
+  });
+
+  await check("[pay] declined card: hosted-page 'pay' with the decline test card -> transaction failed (card_declined), no ledger; the approve card then works on a new checkout", async () => {
+    const co = await (await startCheckout()).json();
+    const sid = co.checkoutUrl.split("/").pop();
+    const r = await new Client_().req("POST", "/api/dev/payments/pay", { json: { sessionId: sid, card: TEST_CARDS.declined } });
+    eq(r.status, 200, "pay call");
+    const body = await r.json();
+    eq(body.status, "failed", "status"); eq(body.failureCode, "card_declined", "failure code");
+    const t = await txState(co.transactionId);
+    eq(t.status, "failed", "db status"); eq(t.failure_code, "card_declined", "db failure code");
+    eq((await db.query("SELECT count(*)::int AS n FROM ledger_entries WHERE transaction_id=$1", [co.transactionId])).rows[0].n, 0, "no ledger");
+    // insufficient funds variant
+    const co2 = await (await startCheckout()).json();
+    const r2 = await (await new Client_().req("POST", "/api/dev/payments/pay", { json: { sessionId: co2.checkoutUrl.split("/").pop(), card: TEST_CARDS.insufficientFunds } })).json();
+    eq(r2.failureCode, "insufficient_funds", "insufficient funds");
+    // approved card via the simulator path = the same signed-webhook pipeline
+    const co3 = await (await startCheckout()).json();
+    const r3 = await (await new Client_().req("POST", "/api/dev/payments/pay", { json: { sessionId: co3.checkoutUrl.split("/").pop(), card: TEST_CARDS.approved } })).json();
+    eq(r3.status, "succeeded", "approved"); eq(r3.webhook.outcome, "processed", "via webhook pipeline");
+    eq(await ledgerSum(co3.transactionId), 1560, "ledger for simulator-paid sale");
+  });
+
+  await check("[pay] out-of-order: refund webhook BEFORE the sale is parked (200), then applied when the sale arrives -> refunded, ledger nets to 0", async () => {
+    const co = await (await startCheckout()).json();
+    const early = await hook(mockEvents.refund({ transactionId: co.transactionId, refundId: "mockrf_e2e_early", amountCents: 2000 }));
+    eq(early.status, 200, "status"); eq(early.body.outcome, "parked", "parked");
+    eq((await txState(co.transactionId)).status, "pending", "still pending");
+    eq((await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000 }))).body.outcome, "processed", "sale");
+    const t = await txState(co.transactionId);
+    eq(t.status, "refunded", "refunded after sale lands");
+    eq(await ledgerSum(co.transactionId), 0, "net 0");
+  });
+
+  await check("[pay] refund: full refund of the $20 sale (via request + signed refund webhook) reverses the ledger exactly; double refund is rejected; partial refund on another sale is cents-exact", async () => {
+    const sim = await new Client_().req("POST", "/api/dev/payments/refund", { json: { transactionId: tx1 } });
+    eq(sim.status, 200, "refund call");
+    eq((await sim.json()).webhook.outcome, "processed", "webhook processed");
+    const t = await txState(tx1);
+    eq(t.status, "refunded", "status"); eq(t.reversed_cents, 2000, "reversed");
+    eq(await ledgerSum(tx1), 0, "ledger nets to 0");
+    const rows = (await db.query("SELECT entry_type, component, amount_cents FROM ledger_entries WHERE transaction_id=$1 AND entry_type='refund_reversal' ORDER BY id", [tx1])).rows;
+    eq(rows.map((r) => `${r.component}:${r.amount_cents}`).join(","), "gross:-2000,platform_fee:200,processing_fee:240", "reversal lines");
+    eq((await new Client_().req("POST", "/api/dev/payments/refund", { json: { transactionId: tx1 } })).status, 409, "cannot refund a refunded sale");
+    // over-refund via a (validly signed) webhook is rejected, ledger unchanged
+    const over = await hook(mockEvents.refund({ transactionId: tx1, refundId: "mockrf_over", amountCents: 1 }));
+    eq(over.body.outcome, "rejected", "over refund"); eq(over.body.detail, "over_refund", "detail");
+    eq(await ledgerSum(tx1), 0, "still 0");
+    // partial refunds on a fresh sale: 3333 + 1 + rest
+    const co = await (await startCheckout()).json();
+    await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000 }));
+    for (const amt of [666, 1, 1, 332]) {
+      const r = await (await new Client_().req("POST", "/api/dev/payments/refund", { json: { transactionId: co.transactionId, amountCents: amt } })).json();
+      eq(r.webhook.outcome, "processed", `partial ${amt}`);
+    }
+    const t2 = await txState(co.transactionId);
+    eq(t2.reversed_cents, 1000, "reversed so far");
+    eq(await ledgerSum(co.transactionId), 780, "half the seller net remains (1560 - 780)");
+    const rest = await (await new Client_().req("POST", "/api/dev/payments/refund", { json: { transactionId: co.transactionId } })).json();
+    eq(rest.amountCents, 1000, "remaining refundable");
+    eq(await ledgerSum(co.transactionId), 0, "fully reversed to exactly 0");
+  });
+
+  await check("[pay] chargeback: webhook reverses the sale, status charged_back, and a negative balance is allowed", async () => {
+    const co = await (await startCheckout()).json();
+    await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000 }));
+    const r = await hook(mockEvents.chargeback({ transactionId: co.transactionId, amountCents: null }));
+    eq(r.body.outcome, "processed", "chargeback");
+    eq((await txState(co.transactionId)).status, "charged_back", "status");
+    eq(await ledgerSum(co.transactionId), 0, "reversed");
+  });
+
+  await check("[pay] reconciliation log: every delivery above is recorded (processed/duplicate/rejected/ignored/parked) with hashes; ledger entries are append-only", async () => {
+    const o = (await db.query("SELECT outcome, count(*)::int AS n FROM webhook_events GROUP BY outcome")).rows;
+    const by = Object.fromEntries(o.map((r) => [r.outcome, r.n]));
+    for (const k of ["processed", "duplicate", "rejected", "ignored"]) assert((by[k] ?? 0) > 0, `has ${k} rows (${JSON.stringify(by)})`);
+    eq((await db.query("SELECT count(*)::int AS n FROM webhook_events WHERE payload_sha256 !~ '^[0-9a-f]{64}$'")).rows[0].n, 0, "all hashed");
+    let blocked = false;
+    try { await db.query("UPDATE ledger_entries SET amount_cents = 1 WHERE id = (SELECT min(id) FROM ledger_entries)"); } catch { blocked = true; }
+    assert(blocked, "UPDATE on ledger_entries is blocked");
+    // global invariant: every transaction's ledger sums to what the seller still nets from it
+    const bad = (await db.query(`
+      SELECT t.id FROM transactions t JOIN (SELECT transaction_id, SUM(amount_cents) s FROM ledger_entries GROUP BY 1) l ON l.transaction_id = t.id
+       WHERE l.s <> t.seller_net_cents - (SELECT COALESCE(SUM(-amount_cents),0) FROM ledger_entries e WHERE e.transaction_id=t.id AND e.entry_type IN ('refund_reversal','chargeback_reversal') AND e.component='gross')
+                    + (SELECT COALESCE(SUM(amount_cents),0) FROM ledger_entries e WHERE e.transaction_id=t.id AND e.entry_type IN ('refund_reversal','chargeback_reversal') AND e.component IN ('platform_fee','processing_fee'))`)).rows;
+    eq(bad.length, 0, "ledger identity holds for every transaction");
+    return `outcomes: ${JSON.stringify(by)}`;
+  });
+
+  // ---------------------------------------------------------------- round 2: QA fixes (items 1-7) over real HTTP
+  const freshEmail = (tag: string) => `pay-${tag}+${stamp}-${crypto.randomBytes(3).toString("hex")}@example.test`;
+  const coFor = (email: string, headers: Record<string, string> = {}) =>
+    new Client_().req("POST", "/api/checkout", { json: { linkId: payLink, email, confirmOver18: true }, headers });
+  const payVia = async (sessionId: string, card: string) => (await (await new Client_().req("POST", "/api/dev/payments/pay", { json: { sessionId, card } })).json());
+  const sessionIdOf = (b: { checkoutUrl: string }) => b.checkoutUrl.split("/").pop()!;
+
+  await check("[pay#1] concurrent identical POST /api/checkout (x8, same drop+email) -> ONE pending transaction/session; Idempotency-Key honoured (same key = same txn, other drop = 409)", async () => {
+    const em = freshEmail("conc");
+    const rs = await Promise.all(Array.from({ length: 8 }, () => coFor(em)));
+    assert(rs.every((r) => r.status === 200 || r.status === 201), `statuses ${rs.map((r) => r.status)}`);
+    const bodies = await Promise.all(rs.map((r) => r.json()));
+    eq(new Set(bodies.map((b) => b.transactionId)).size, 1, "one transaction id");
+    eq(new Set(bodies.map((b) => b.checkoutUrl)).size, 1, "one session");
+    eq(rs.filter((r) => r.status === 201).length, 1, "exactly one 201 (new), the rest 200 (reused)");
+    eq((await db.query("SELECT count(*)::int AS n FROM transactions WHERE lower(buyer_email)=lower($1)", [em])).rows[0].n, 1, "one row in the DB");
+    // Idempotency-Key
+    const em2 = freshEmail("idem");
+    const k = crypto.randomUUID();
+    const a = await coFor(em2, { "idempotency-key": k });
+    const b = await coFor(em2, { "idempotency-key": k });
+    eq(a.status, 201, "first"); eq(b.status, 200, "replay");
+    eq((await a.json()).transactionId, (await b.json()).transactionId, "same txn for the same key");
+    // the same key for a different drop is a client error, not someone else's session
+    const d2 = (await (await sellerC.req("POST", "/api/drops", { json: { title: "Second paid drop", priceCents: 1500 } })).json()).drop;
+    eq((await sellerC.req("POST", `/api/drops/${d2.id}/files`, { form: uploadForm(await tinyPng("#2255aa")) })).status, 201, "upload2");
+    eq((await sellerC.req("POST", `/api/drops/${d2.id}/publish`, { json: { attestation: att } })).status, 200, "publish2");
+    const other = await new Client_().req("POST", "/api/checkout", { json: { linkId: d2.public_link_id, email: em2, confirmOver18: true }, headers: { "idempotency-key": k } });
+    eq(other.status, 409, "same key, different drop -> 409");
+    // a paid checkout is not handed out again
+    const paid = await (await coFor(em2, { "idempotency-key": k })).json();
+    eq((await payVia(sessionIdOf(paid), TEST_CARDS.approved)).status, "succeeded", "pay it");
+    const again = await coFor(em2);
+    eq(again.status, 201, "after success a new purchase attempt gets a NEW pending session");
+    assert((await again.json()).transactionId !== paid.transactionId, "new txn");
+  });
+
+  await check("[pay#3] NUL byte / invalid strings in the event id or data.reference -> 400 (never 500) with a 'rejected' reconciliation row; garbage JSON -> 400; handler still healthy after", async () => {
+    const co = await (await coFor(freshEmail("nul"))).json();
+    const before = (await db.query("SELECT count(*)::int AS n FROM webhook_events WHERE outcome='rejected'")).rows[0].n;
+    const bad1 = await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_nul\u0000_x" }));
+    eq(bad1.status, 400, "NUL in event id");
+    const evRef = mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_nul_ref" }) as unknown as { data: Record<string, unknown> };
+    evRef.data.reference = `${co.transactionId}\u0000`;
+    const bad2 = await hook(evRef as unknown as MockWireEvent);
+    eq(bad2.status, 400, "NUL in data.reference");
+    const after = (await db.query("SELECT count(*)::int AS n FROM webhook_events WHERE outcome='rejected'")).rows[0].n;
+    assert(after >= before + 1, `rejected row(s) recorded (${before} -> ${after})`);
+    eq((await db.query("SELECT count(*)::int AS n FROM webhook_events WHERE outcome='error'")).rows[0].n, 0, "no 'error' rows (nothing blew up)");
+    eq((await txState(co.transactionId)).status, "pending", "no state change");
+    const ok = await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000 }));
+    eq(ok.body.outcome, "processed", "a clean event still works afterwards");
+  });
+
+  await check("[pay#2] wrong-amount sale is rejected, then the correct sale (same processor txn id, NEW event id) is PROCESSED (not 'duplicate'); ignored/unknown outcomes don't burn the claim; replays still dedupe", async () => {
+    const co = await (await coFor(freshEmail("amt"))).json();
+    const bad = await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 1999, eventId: "evt_e2e_wrong_amt" }));
+    eq(bad.body.outcome, "rejected", "wrong amount rejected"); eq(bad.body.detail, "amount_mismatch", "detail");
+    eq((await txState(co.transactionId)).status, "pending", "still pending");
+    const good = await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_e2e_right_amt" }));
+    eq(good.body.outcome, "processed", "correct sale processed");
+    eq((await txState(co.transactionId)).status, "succeeded", "succeeded");
+    eq(await ledgerSum(co.transactionId), 1560, "one posting");
+    eq((await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_e2e_right_amt_2" }))).body.outcome, "duplicate", "same sale, other event id, after success -> duplicate");
+    const burst = await Promise.all(Array.from({ length: 12 }, () => hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000, eventId: "evt_e2e_right_amt" }))));
+    assert(burst.every((x) => x.status === 200 && x.body.outcome === "duplicate"), "12 concurrent replays: all duplicate");
+    eq(await ledgerSum(co.transactionId), 1560, "still exactly one posting");
+    // unknown -> ignored, then the txn exists later? (an ignored event for a not-yet-known id must not block the real one)
+    const ghostTx = crypto.randomUUID();
+    eq((await hook(mockEvents.saleSucceeded({ transactionId: ghostTx, amountCents: 2000, eventId: "evt_e2e_ghost" }))).body.outcome, "ignored", "unknown txn ignored");
+  });
+
+  await check("[pay#4] repeat chargebacks flag the seller for review (threshold 3 in 90 days), exactly once, with an audit row; seller is NOT banned", async () => {
+    const sid = (await db.query("SELECT id FROM sellers WHERE email=$1", [sellerEmail])).rows[0].id;
+    const cbCount = async () => (await db.query("SELECT count(DISTINCT t.id)::int AS n FROM transactions t JOIN drops d ON d.id=t.drop_id WHERE d.seller_id=$1 AND t.status='charged_back'", [sid])).rows[0].n;
+    const flagged = async () => (await db.query("SELECT risk_flagged_at, risk_flag_reason, verification_status FROM sellers WHERE id=$1", [sid])).rows[0];
+    const chargebackOne = async () => {
+      const co = await (await coFor(freshEmail("cb"))).json();
+      eq((await hook(mockEvents.saleSucceeded({ transactionId: co.transactionId, amountCents: 2000 }))).body.outcome, "processed", "sale");
+      return hook(mockEvents.chargeback({ transactionId: co.transactionId, amountCents: null }));
+    };
+    let guard = 0;
+    while ((await cbCount()) < 2 && guard++ < 5) await chargebackOne();
+    eq((await flagged()).risk_flagged_at, null, `not flagged at ${await cbCount()} chargebacks`);
+    const third = await chargebackOne();
+    eq(third.body.outcome, "processed", "3rd chargeback processed");
+    assert((await flagged()).risk_flagged_at !== null, "flagged at the threshold");
+    await chargebackOne(); // 4th
+    const f = await flagged();
+    assert(/chargeback/i.test(f.risk_flag_reason ?? ""), `reason '${f.risk_flag_reason}'`);
+    eq(f.verification_status, "verified", "not auto-banned / still verified");
+    eq((await db.query("SELECT count(*)::int AS n FROM audit_log WHERE action='seller_flagged_repeat_chargebacks' AND target LIKE $1", [`seller:${sid}%`])).rows[0].n, 1, "one audit row (flagged once)");
+  });
+
+  await check("[pay#5] 'all sales final' notice is on /u/<link> (next to the buy form) and on the hosted mock checkout page", async () => {
+    const page = stripComments(await (await anon.req("GET", `/u/${payLink}`)).text());
+    assert(page.includes('data-testid="sales-final"') && /All sales are final/i.test(page), "public drop page has the notice");
+    const co = await (await coFor(freshEmail("sf"))).json();
+    const hosted = stripComments(await (await anon.req("GET", `/pay/mock/${sessionIdOf(co)}`)).text());
+    assert(hosted.includes('data-testid="sales-final"') && /All sales are final/i.test(hosted), "hosted page has the notice");
+  });
+
+  await check("[pay#7] decline -> friendly message (no raw code anywhere buyer-facing); retry with a good card on the SAME session succeeds", async () => {
+    const co = await (await coFor(freshEmail("retry"))).json();
+    const sess = sessionIdOf(co);
+    const d = await payVia(sess, TEST_CARDS.declined);
+    eq(d.approved, false, "declined"); assert(typeof d.message === "string" && /declined/i.test(d.message) && !/card_declined|failed: failed/i.test(d.message), `message '${d.message}'`);
+    const st = await (await anon.req("GET", `/api/checkout/status?id=${co.transactionId}`)).text();
+    assert(!/card_declined|failureCode|failure_code/.test(st), `status API leaks no raw code: ${st}`);
+    assert(JSON.parse(st).retryable === true, "retryable");
+    const hosted = stripComments(await (await anon.req("GET", `/pay/mock/${sess}`)).text());
+    assert(!/card_declined|insufficient_funds/.test(hosted), "hosted page HTML has no raw codes");
+    const ok = await payVia(sess, TEST_CARDS.approved);
+    eq(ok.status, "succeeded", "retry on the same session succeeds");
+    eq(await ledgerSum(co.transactionId), 1560, "one posting");
+    // a later checkout for the same buyer works too
+    const co2 = await coFor(freshEmail("retry2"));
+    eq(co2.status, 201, "fresh buyer checkout");
+  });
+
+  await check("[pay#6] pending sessions expire (30 min TTL) and cannot be paid; seller un-verified / drop unpublished after checkout -> payment refused, webhook success voided (no ledger) and refund requested", async () => {
+    // expiry
+    const em = freshEmail("exp");
+    const co = await (await coFor(em)).json();
+    await db.query("UPDATE transactions SET created_at = now() - interval '31 minutes' WHERE id=$1", [co.transactionId]);
+    const st = await (await anon.req("GET", `/api/checkout/status?id=${co.transactionId}`)).json();
+    eq(st.status, "failed", "expired on access"); assert(/expired/i.test(st.message), `message '${st.message}'`);
+    const p = await payVia(sessionIdOf(co), TEST_CARDS.approved);
+    eq(p.approved, false, "expired session cannot be paid");
+    eq(await ledgerSum(co.transactionId), 0, "no ledger");
+    const fresh = await coFor(em);
+    eq(fresh.status, 201, "a new session is issued after expiry");
+    assert((await fresh.json()).transactionId !== co.transactionId, "different txn");
+    // backdated 30 days (QA repro)
+    const co30 = await (await coFor(freshEmail("old"))).json();
+    await db.query("UPDATE transactions SET created_at = now() - interval '30 days' WHERE id=$1", [co30.transactionId]);
+    eq((await payVia(sessionIdOf(co30), TEST_CARDS.approved)).approved, false, "30-day-old pending session cannot be paid");
+    // seller verification failed after checkout
+    const cv = await (await coFor(freshEmail("ver"))).json();
+    await db.query("UPDATE sellers SET verification_status='failed' WHERE email=$1", [sellerEmail]);
+    const pv = await payVia(sessionIdOf(cv), TEST_CARDS.approved);
+    eq(pv.approved, false, "payment refused while the seller is unverified"); assert(!/seller_not_verified|unavailable/.test(pv.message), "no raw code");
+    // webhook success for a pending txn when the seller is no longer verified: void + refund, no posting
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [sellerEmail]);
+    const cw = await (await coFor(freshEmail("wh"))).json();
+    await db.query("UPDATE sellers SET verification_status='failed' WHERE email=$1", [sellerEmail]);
+    const w = await hook(mockEvents.saleSucceeded({ transactionId: cw.transactionId, amountCents: 2000 }));
+    eq(w.body.outcome, "processed", "webhook accepted (200, processor must not retry)"); assert(/^voided:/.test(w.body.detail ?? ""), `detail ${w.body.detail}`);
+    const tw = (await db.query("SELECT status, failure_code, review_reason, refund_requested_at FROM transactions WHERE id=$1", [cw.transactionId])).rows[0];
+    eq([tw.status, tw.failure_code, tw.review_reason].join(), "failed,invalid_at_capture,seller_not_verified", "voided + flagged for review");
+    assert(tw.refund_requested_at !== null, "refund requested through the provider");
+    eq(await ledgerSum(cw.transactionId), 0, "not credited");
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [sellerEmail]);
+    // drop unpublished
+    const dropId = (await db.query("SELECT id FROM drops WHERE public_link_id=$1", [payLink])).rows[0].id;
+    const cu = await (await coFor(freshEmail("unp"))).json();
+    await db.query("UPDATE drops SET status='unpublished' WHERE id=$1", [dropId]);
+    eq((await payVia(sessionIdOf(cu), TEST_CARDS.approved)).approved, false, "unpublished drop: refused");
+    await db.query("UPDATE drops SET status='published' WHERE id=$1", [dropId]);
+  });
+
+  await check("[pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404", async () => {
+    let port = Number(new URL(BASE).port) + 17;
+    while (await fetch(`http://127.0.0.1:${port}/`).then(() => true, () => false)) port++;
+    const child = spawn("npx", ["next", "start", "-p", String(port)], {
+      detached: true, stdio: "ignore",
+      env: { ...process.env, NODE_ENV: "production", APP_URL: "https://unveil.example", MOCK_PAYMENTS_ENABLED: "", NEXT_DIST_DIR: ".next-e2e" },
+    });
+    try {
+      const base = `http://127.0.0.1:${port}`;
+      for (let i = 0; i < 60; i++) { if (await fetch(base + "/api/settings").then((r) => r.ok, () => false)) break; await new Promise((r) => setTimeout(r, 500)); }
+      const j = { "content-type": "application/json", "x-forwarded-for": "10.77.0.1" };
+      eq((await fetch(base + "/api/checkout", { method: "POST", headers: j, body: JSON.stringify({ linkId: payLink, email: payEmail, confirmOver18: true }) })).status, 503, "checkout");
+      const s = signMockEvent(mockEvents.saleSucceeded({ transactionId: tx1, amountCents: 2000 }), WH_SECRET);
+      eq((await fetch(base + "/api/webhooks/mock", { method: "POST", headers: { ...j, ...s.headers }, body: s.rawBody })).status, 503, "webhook");
+      eq((await fetch(base + "/api/dev/payments/pay", { method: "POST", headers: j, body: JSON.stringify({ sessionId: session1, card: TEST_CARDS.approved }) })).status, 404, "simulator pay");
+      eq((await fetch(base + "/api/dev/payments/refund", { method: "POST", headers: j, body: JSON.stringify({ transactionId: tx1 }) })).status, 404, "simulator refund");
+      eq((await fetch(base + `/pay/mock/${session1}`)).status, 404, "hosted mock page");
+    } finally {
+      try { process.kill(-child.pid!, "SIGTERM"); } catch { child.kill("SIGTERM"); }
+    }
   });
 
   await db.end();
