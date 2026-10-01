@@ -1221,7 +1221,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     while (await fetch(`http://127.0.0.1:${port}/`).then(() => true, () => false)) port++;
     const child = spawn("npx", ["next", "start", "-p", String(port)], {
       detached: true, stdio: "ignore",
-      env: { ...process.env, NODE_ENV: "production", APP_URL: "https://unveil.example", MOCK_PAYMENTS_LOCAL_BUILD: "", NEXT_DIST_DIR: ".next-e2e" },
+      env: { ...process.env, NODE_ENV: "production", APP_URL: "https://unveil.example", MOCK_PAYMENTS_ENABLED: "", NEXT_DIST_DIR: ".next-e2e" },
     });
     try {
       const base = `http://127.0.0.1:${port}`;

@@ -7,11 +7,11 @@ beforeAll(() => {
   process.env.PAYMENT_WEBHOOK_SECRET = SECRET;
 });
 const env = process.env as Record<string, string | undefined>;
-const saved = { NODE_ENV: env.NODE_ENV, L: env.MOCK_PAYMENTS_LOCAL_BUILD, P: env.PAYMENT_PROVIDER, A: env.APP_URL };
+const saved = { NODE_ENV: env.NODE_ENV, L: env.MOCK_PAYMENTS_ENABLED, P: env.PAYMENT_PROVIDER, A: env.APP_URL };
 // process.env coerces `= undefined` to the string "undefined", so restore via delete.
 const restore = (k: string, v: string | undefined) => { if (v === undefined) delete env[k]; else env[k] = v; };
 afterEach(() => {
-  restore("NODE_ENV", saved.NODE_ENV); restore("MOCK_PAYMENTS_LOCAL_BUILD", saved.L); restore("PAYMENT_PROVIDER", saved.P); restore("APP_URL", saved.A);
+  restore("NODE_ENV", saved.NODE_ENV); restore("MOCK_PAYMENTS_ENABLED", saved.L); restore("PAYMENT_PROVIDER", saved.P); restore("APP_URL", saved.A);
   env.PAYMENT_WEBHOOK_SECRET = SECRET;
 });
 
@@ -118,41 +118,57 @@ describe("mock test cards", async () => {
   });
 });
 
-describe("the mock can never run in production", async () => {
+describe("the mock is DEFAULT-DENY (item 8)", async () => {
   const { config } = await import("../src/server/config");
   const { mockProvider } = await import("../src/server/payments/mock");
   const { activeProvider, findProvider, registeredProviderNames } = await import("../src/server/payments/registry");
   const { assertSimulatorEnabled } = await import("../src/server/payments/dev/simulator");
 
-  it("is available outside production", () => {
+  it("is available in development and test", () => {
+    for (const e of ["test", "development"]) {
+      env.NODE_ENV = e;
+      expect(config.mockPaymentsAllowed, e).toBe(true);
+    }
     env.NODE_ENV = "test";
-    expect(config.mockPaymentsAllowed).toBe(true);
     expect(mockProvider.availability()).toEqual({ ok: true });
     expect(activeProvider().name).toBe("mock");
     expect(() => assertSimulatorEnabled()).not.toThrow();
   });
-  it("is disabled when NODE_ENV=production: provider unavailable, registry refuses, simulator 404s", () => {
+  it("is DENIED for production, staging, unset and any unknown NODE_ENV (even with a loopback APP_URL)", () => {
+    delete env.MOCK_PAYMENTS_ENABLED;
+    env.APP_URL = "http://localhost:3000";
+    for (const e of ["production", "staging", "preview", "prod", "Production", "", "qa"]) {
+      env.NODE_ENV = e;
+      expect(config.mockPaymentsAllowed, `NODE_ENV=${e}`).toBe(false);
+    }
+    delete env.NODE_ENV;
+    expect(config.mockPaymentsAllowed, "NODE_ENV unset").toBe(false);
+  });
+  it("production: provider unavailable, registry refuses, simulator 404s", () => {
     env.NODE_ENV = "production";
-    delete env.MOCK_PAYMENTS_LOCAL_BUILD;
-    expect(config.mockPaymentsAllowed).toBe(false);
+    delete env.MOCK_PAYMENTS_ENABLED;
     expect(mockProvider.availability().ok).toBe(false);
     expect(() => activeProvider()).toThrowError(/not available/i);
     expect(() => assertSimulatorEnabled()).toThrowError(/not found/i);
   });
-  it("the local-build escape hatch needs MOCK_PAYMENTS_LOCAL_BUILD=1 AND a loopback APP_URL", () => {
-    env.NODE_ENV = "production";
-    env.MOCK_PAYMENTS_LOCAL_BUILD = "1";
-    env.APP_URL = "http://localhost:3100";
-    expect(config.mockPaymentsAllowed).toBe(true);
-    env.APP_URL = "http://127.0.0.1:3100";
-    expect(config.mockPaymentsAllowed).toBe(true);
-    for (const url of ["https://unveil.link", "https://localhost.evil.example", "http://10.0.0.5", "not a url"]) {
-      env.APP_URL = url;
-      expect(config.mockPaymentsAllowed, url).toBe(false);
+  it("the explicit opt-in needs MOCK_PAYMENTS_ENABLED=1 AND a loopback APP_URL, in any non-dev NODE_ENV", () => {
+    for (const e of ["production", "staging"]) {
+      env.NODE_ENV = e;
+      env.MOCK_PAYMENTS_ENABLED = "1";
+      for (const url of ["http://localhost:3100", "http://127.0.0.1:3100"]) {
+        env.APP_URL = url;
+        expect(config.mockPaymentsAllowed, `${e} ${url}`).toBe(true);
+      }
+      for (const url of ["https://unveil.link", "https://localhost.evil.example", "http://localhost@evil.example", "http://10.0.0.5", "not a url"]) {
+        env.APP_URL = url;
+        expect(config.mockPaymentsAllowed, `${e} ${url}`).toBe(false);
+      }
+      env.APP_URL = "http://localhost:3100";
+      for (const v of ["true", "0", "", "yes"]) {
+        env.MOCK_PAYMENTS_ENABLED = v;
+        expect(config.mockPaymentsAllowed, `${e} flag=${v}`).toBe(false);
+      }
     }
-    env.APP_URL = "http://localhost:3100";
-    env.MOCK_PAYMENTS_LOCAL_BUILD = "true";
-    expect(config.mockPaymentsAllowed).toBe(false);
   });
   it("needs a real webhook secret; unknown provider names are not resolvable (incl. prototype keys)", () => {
     env.NODE_ENV = "test";
