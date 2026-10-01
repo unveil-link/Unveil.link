@@ -69,14 +69,17 @@ export const config = {
     };
   },
   /**
-   * The mock processor (and every /api/dev/payments/* simulator route) is available ONLY outside production.
-   * Production is NODE_ENV=production. The single exception exists for the repo's own e2e, which must run a
-   * production *build* (`next start`) on this machine: it additionally requires MOCK_PAYMENTS_LOCAL_BUILD=1 AND an
-   * APP_URL whose host is loopback (localhost / 127.0.0.1 / ::1). A real deployment (public APP_URL) can't pass it.
+   * The mock processor (and every /api/dev/payments/* simulator route + the /pay/mock hosted page) is DEFAULT-DENY.
+   * It is available only when
+   *   - NODE_ENV is exactly "development" or "test" (next dev / vitest), or
+   *   - MOCK_PAYMENTS_ENABLED=1 AND APP_URL's host is loopback (localhost / 127.0.0.1 / ::1).
+   * Anything else (production, staging, unset/unknown NODE_ENV, a public APP_URL) is denied. The second form exists for
+   * the repo's own e2e, which has to run a production *build* (`next start`) on this machine.
    */
   get mockPaymentsAllowed() {
-    if (process.env.NODE_ENV !== "production") return true;
-    if (process.env.MOCK_PAYMENTS_LOCAL_BUILD !== "1") return false;
+    const env = process.env.NODE_ENV;
+    if (env === "development" || env === "test") return true;
+    if (process.env.MOCK_PAYMENTS_ENABLED !== "1") return false;
     try {
       const h = new URL(this.appUrl).hostname;
       return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";

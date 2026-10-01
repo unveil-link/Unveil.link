@@ -31,9 +31,10 @@ export const mockEvents = {
     id: p.eventId ?? newEventId(), type: "sale.succeeded", created: (p.created ?? new Date()).toISOString(),
     data: { transaction_id: p.saleId ?? mockSaleId(p.transactionId), reference: p.reference === undefined ? p.transactionId : p.reference, amount_cents: p.amountCents, currency: p.currency ?? "USD" },
   }),
-  saleFailed: (p: Common & { transactionId: string; amountCents: number; failureCode: string }): MockWireEvent => ({
+  /** `attemptId` makes each failed card attempt a distinct processor transaction, so a buyer's 2nd decline is not de-duplicated away. */
+  saleFailed: (p: Common & { transactionId: string; amountCents: number; failureCode: string; attemptId?: string }): MockWireEvent => ({
     id: p.eventId ?? newEventId(), type: "sale.failed", created: (p.created ?? new Date()).toISOString(),
-    data: { transaction_id: mockSaleId(p.transactionId), reference: p.transactionId, amount_cents: p.amountCents, currency: p.currency ?? "USD", failure_code: p.failureCode },
+    data: { transaction_id: p.attemptId ? `mockfail_${h(p.attemptId)}` : mockSaleId(p.transactionId), reference: p.transactionId, amount_cents: p.amountCents, currency: p.currency ?? "USD", failure_code: p.failureCode },
   }),
   refund: (p: Common & { transactionId: string; refundId: string; amountCents: number | null; saleId?: string }): MockWireEvent => ({
     id: p.eventId ?? newEventId(), type: "refund.created", created: (p.created ?? new Date()).toISOString(),

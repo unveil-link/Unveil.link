@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button, Field, Input } from "@/components/ui";
+import { SALES_FINAL_TEXT } from "../../../../lib/purchase-copy";
 
 /** Minimal buy hook (UI polish is another workstream): email + 18+ confirmation -> POST /api/checkout -> hosted checkout. */
 export default function BuyForm({ linkId, priceLabel }: { linkId: string; priceLabel: string }) {
@@ -8,6 +9,8 @@ export default function BuyForm({ linkId, priceLabel }: { linkId: string; priceL
   const [over18, setOver18] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // One key per mounted form: a double click / retried request shares a single checkout session (server-side idempotency).
+  const [idemKey] = useState(() => crypto.randomUUID());
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -15,7 +18,7 @@ export default function BuyForm({ linkId, priceLabel }: { linkId: string; priceL
     setError(null);
     const res = await fetch("/api/checkout", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "idempotency-key": idemKey },
       body: JSON.stringify({ linkId, email, confirmOver18: over18 }),
     });
     const data = await res.json().catch(() => ({}));
@@ -36,6 +39,7 @@ export default function BuyForm({ linkId, priceLabel }: { linkId: string; priceL
         <input type="checkbox" required checked={over18} onChange={(e) => setOver18(e.target.checked)} className="mt-1" data-testid="over18" />
         <span>I confirm that I am 18 years of age or older.</span>
       </label>
+      <p className="text-sm text-muted" data-testid="sales-final">{SALES_FINAL_TEXT}</p>
       {error && <p role="alert" className="text-sm font-medium text-danger">{error}</p>}
       <Button type="submit" loading={busy} className="self-start" data-testid="buy-button">Unlock for {priceLabel}</Button>
     </form>

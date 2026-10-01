@@ -6,6 +6,7 @@ import { enforceIpLimit } from "../ratelimit";
 import { getSettings } from "../services/settings";
 import { OverRefundError } from "./money";
 import { postReversal, postSale, TX_COLS, type TxRow } from "./ledger";
+import { voidCharge } from "./refunds";
 import { findProvider } from "./registry";
 import type { NormalizedPaymentEvent } from "./types";
 
@@ -20,6 +21,10 @@ import type { NormalizedPaymentEvent } from "./types";
  *           serialise here; the loser sees no row back, logs a `duplicate` row and returns 200 without touching state.
  *        b. lock the transaction row (FOR UPDATE), apply the event (status change + ledger postings), set the log outcome.
  *      Any exception rolls back the claim as well, so the processor's retry is processed normally.
+ *   The claim (dedupe_claim=true) is KEPT only for outcomes `processed` and `parked`. A `rejected` / `ignored` outcome releases
+ *   it (setOutcome), so e.g. an amount_mismatch or unknown_transaction event can never make a later, correct event for the
+ *   same processor transaction look like a duplicate. Genuine duplicates (same event id, or same processor txn id + type of an
+ *   already processed event) still collapse into exactly one posting.
  * Outcomes: processed | duplicate | rejected | ignored | parked | error  (see webhook_events.outcome).
  */
 export type WebhookOutcome = "processed" | "duplicate" | "rejected" | "ignored" | "parked" | "error";
@@ -33,8 +38,37 @@ const MAX_STORED_PAYLOAD = 64 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha256 = (s: string) => crypto.createHash("sha256").update(s, "utf8").digest("hex");
 
-interface Applied { outcome: WebhookOutcome; detail?: string; transactionId?: string | null }
-interface ApplyCtx { holdDays: number; chargebackFeeCents: number }
+interface Applied { outcome: WebhookOutcome; detail?: string; transactionId?: string | null; voidRefundFor?: string }
+interface ApplyCtx {
+  holdDays: number; chargebackFeeCents: number;
+  sessionTtlMinutes: number; lateGraceMinutes: number; cbThreshold: number; cbWindowDays: number;
+}
+const ctxFrom = (s: Awaited<ReturnType<typeof getSettings>>): ApplyCtx => ({
+  holdDays: s.payout_hold_days, chargebackFeeCents: s.chargeback_fee_cents,
+  sessionTtlMinutes: s.checkout_session_ttl_minutes, lateGraceMinutes: s.checkout_late_success_grace_minutes,
+  cbThreshold: s.chargeback_flag_threshold, cbWindowDays: s.chargeback_flag_window_days,
+});
+
+/** Postgres text/jsonb reject U+0000 (and we don't want lone surrogates): scrub anything from outside before it is stored. */
+export const clean = (s: string | null | undefined): string | null => (s == null ? null : s.replace(/\u0000/g, "\uFFFD").toWellFormed());
+const hasBadChars = (s: string) => s.includes("\u0000") || !s.isWellFormed();
+function badEventStrings(e: NormalizedPaymentEvent): string | null {
+  for (const [k, v] of Object.entries(e)) {
+    if (typeof v === "string" && (hasBadChars(v) || v.length > 512)) return `invalid_${k}`;
+  }
+  return null;
+}
+async function logRejected(provider: string, signatureValid: boolean, detail: string, hash: string, rawBody: string) {
+  try {
+    await query(
+      `INSERT INTO webhook_events (provider, signature_valid, outcome, outcome_detail, payload_sha256, payload)
+       VALUES ($1, $2, 'rejected', $3, $4, $5)`,
+      [provider, signatureValid, clean(detail), hash, clean(rawBody.slice(0, 1024))],
+    );
+  } catch (e) {
+    console.error("could not write rejected webhook row", (e as Error).message);
+  }
+}
 
 export async function handleWebhook(opts: { providerName: string; rawBody: string; headers: Headers; req?: Request }): Promise<WebhookResult> {
   const provider = findProvider(opts.providerName);
@@ -54,16 +88,19 @@ export async function handleWebhook(opts: { providerName: string; rawBody: strin
   if (!v.ok) {
     // Unauthenticated traffic must not be able to flood the reconciliation log: cap logged rejections per IP.
     if (opts.req) await enforceIpLimit("WEBHOOK_REJECTED", opts.req);
-    await query(
-      `INSERT INTO webhook_events (provider, signature_valid, outcome, outcome_detail, payload_sha256, payload)
-       VALUES ($1, $2, 'rejected', $3, $4, $5)`,
-      [provider.name, v.signatureValid, v.reason, payloadHash, rawBody.slice(0, 1024)],
-    );
+    await logRejected(provider.name, v.signatureValid, v.reason, payloadHash, rawBody);
     return v.signatureValid
       ? { status: 400, body: { error: "Invalid payload", code: "invalid_payload" } }
       : { status: 401, body: { error: "Invalid signature", code: "invalid_signature" } };
   }
   const event = v.event;
+  const badField = badEventStrings(event);
+  if (badField) {
+    // Authentic but unstorable/hostile strings (NUL, lone surrogates, absurd length): 4xx, never a 500 retry storm.
+    if (opts.req) await enforceIpLimit("WEBHOOK_REJECTED", opts.req);
+    await logRejected(provider.name, true, badField, payloadHash, rawBody);
+    return { status: 400, body: { error: "Invalid payload", code: "invalid_payload" } };
+  }
 
   // Server-side confirmation (processors without signed webhooks). Network I/O stays outside the DB transaction.
   let confirmFailure: string | null = null;
@@ -74,7 +111,7 @@ export async function handleWebhook(opts: { providerName: string; rawBody: strin
   }
 
   const settings = await getSettings();
-  const ctx: ApplyCtx = { holdDays: settings.payout_hold_days, chargebackFeeCents: settings.chargeback_fee_cents };
+  const ctx = ctxFrom(settings);
 
   try {
     const result = await withTx(async (c) => {
@@ -86,7 +123,7 @@ export async function handleWebhook(opts: { providerName: string; rawBody: strin
          ON CONFLICT DO NOTHING RETURNING id`,
         [
           event.provider, event.eventId, event.type, event.rawType, event.merchantReference, event.providerTransactionId,
-          event.relatedProviderTransactionId, event.amountCents, JSON.stringify(event), payloadHash, rawBody.slice(0, MAX_STORED_PAYLOAD),
+          event.relatedProviderTransactionId, event.amountCents, JSON.stringify(event), payloadHash, clean(rawBody.slice(0, MAX_STORED_PAYLOAD)),
         ],
       );
       if (claim.rowCount === 0) {
@@ -112,8 +149,13 @@ export async function handleWebhook(opts: { providerName: string; rawBody: strin
         ? ({ outcome: "rejected", detail: confirmFailure } satisfies Applied)
         : await applyEvent(c, rowId, event, ctx);
       await setOutcome(c, rowId, applied);
-      return { outcome: applied.outcome, detail: applied.detail };
+      return { outcome: applied.outcome, detail: applied.detail, voidRefundFor: applied.voidRefundFor };
     });
+    if (result.voidRefundFor) {
+      // After commit (network I/O never runs inside the DB transaction). A failure here is logged and picked up by
+      // retryVoidRefunds(); it must not make the processor re-deliver (the event is already recorded as processed).
+      await voidCharge(result.voidRefundFor).catch((e) => console.error("void refund request failed", (e as Error).message));
+    }
     return { status: 200, body: { received: true, outcome: result.outcome, detail: result.detail } };
   } catch (e) {
     if (e instanceof HttpError) throw e;
@@ -123,16 +165,18 @@ export async function handleWebhook(opts: { providerName: string; rawBody: strin
       `INSERT INTO webhook_events (provider, provider_event_id, event_type, raw_event_type, signature_valid, outcome, outcome_detail,
          merchant_reference, provider_transaction_id, payload_sha256)
        VALUES ($1,$2,$3,$4,true,'error',$5,$6,$7,$8)`,
-      [event.provider, event.eventId, event.type, event.rawType, (e as Error).message.slice(0, 300), event.merchantReference, event.providerTransactionId, payloadHash],
+      [event.provider, clean(event.eventId), event.type, event.rawType, clean((e as Error).message.slice(0, 300)), clean(event.merchantReference), clean(event.providerTransactionId), payloadHash],
     ).catch(() => {});
     return { status: 500, body: { error: "Internal error", code: "webhook_error" } };
   }
 }
 
 async function setOutcome(c: PoolClient, rowId: string, a: Applied) {
+  // Only processed / parked events hold the dedupe claim (see header comment).
+  const keepClaim = a.outcome === "processed" || a.outcome === "parked";
   await c.query(
-    `UPDATE webhook_events SET outcome = $2, outcome_detail = $3, transaction_id = $4, processed_at = now() WHERE id = $1`,
-    [rowId, a.outcome, a.detail ?? null, a.transactionId ?? null],
+    `UPDATE webhook_events SET outcome = $2, outcome_detail = $3, transaction_id = $4, processed_at = now(), dedupe_claim = $5 WHERE id = $1`,
+    [rowId, a.outcome, a.detail ?? null, a.transactionId ?? null, keepClaim],
   );
 }
 
@@ -154,9 +198,10 @@ async function applyEvent(c: PoolClient, rowId: string, e: NormalizedPaymentEven
     if (!tx) return { outcome: "ignored", detail: "unknown_transaction" };
     const tid = tx.id;
     if (e.type === "sale_failed") {
-      if (tx.status === "pending") {
-        await c.query(`UPDATE transactions SET status='failed', failure_code=$2, processor_ref = COALESCE(processor_ref, $3), updated_at=now() WHERE id=$1`,
-          [tid, e.failureCode ?? "declined", e.providerTransactionId]);
+      if (tx.review_reason || tx.refund_requested_at) return { outcome: "ignored", detail: "voided", transactionId: tid };
+      if (tx.status === "pending" || tx.status === "failed") {
+        // A card can be retried on the same checkout, so a later failure just refreshes the reason.
+        await c.query(`UPDATE transactions SET status='failed', failure_code=$2, updated_at=now() WHERE id=$1`, [tid, e.failureCode ?? "declined"]);
         return { outcome: "processed", transactionId: tid };
       }
       return { outcome: "ignored", detail: `sale_failed_but_${tx.status}`, transactionId: tid };
@@ -167,6 +212,18 @@ async function applyEvent(c: PoolClient, rowId: string, e: NormalizedPaymentEven
     }
     if (tx.status !== "pending" && tx.status !== "failed") {
       return { outcome: "ignored", detail: `sale_succeeded_but_${tx.status}`, transactionId: tid };
+    }
+    if (tx.review_reason || tx.refund_requested_at) return { outcome: "ignored", detail: "voided", transactionId: tid };
+    // The processor says money was taken. Is the purchase still valid? (seller verified, drop published and not flagged,
+    // session not older than TTL + late-success grace.) If not we do NOT credit the seller: the charge is voided
+    // (auto-refund via the provider interface after commit) and the transaction is marked for review.
+    const invalid = await invalidAtCapture(c, tid, ctx);
+    if (invalid) {
+      await c.query(
+        `UPDATE transactions SET status='failed', failure_code='invalid_at_capture', review_reason=$2, processor_ref=$3, updated_at=now() WHERE id=$1`,
+        [tid, invalid, e.providerTransactionId],
+      );
+      return { outcome: "processed", detail: `voided:${invalid}`, transactionId: tid, voidRefundFor: tid };
     }
     await c.query(
       `UPDATE transactions SET status='succeeded', failure_code=NULL, processor_ref=$2, succeeded_at=now(), updated_at=now() WHERE id=$1`,
@@ -190,6 +247,7 @@ async function applyEvent(c: PoolClient, rowId: string, e: NormalizedPaymentEven
 async function applyReversalEvent(c: PoolClient, rowId: string, e: NormalizedPaymentEvent, tx: TxRow, ctx: ApplyCtx): Promise<Applied> {
   const tid = tx.id;
   if (tx.status === "pending") return { outcome: "parked", detail: "sale_not_seen_yet", transactionId: tid };
+  if (tx.status === "failed" && tx.review_reason) return { outcome: "processed", detail: "void_refund_confirmed", transactionId: tid };
   if (tx.status === "failed") return { outcome: "ignored", detail: "reversal_of_failed_sale", transactionId: tid };
   if (tx.processor_ref && e.relatedProviderTransactionId && tx.processor_ref !== e.relatedProviderTransactionId) {
     return { outcome: "rejected", detail: "related_transaction_mismatch", transactionId: tid };
@@ -207,7 +265,47 @@ async function applyReversalEvent(c: PoolClient, rowId: string, e: NormalizedPay
   const reversed = tx.reversed_cents + amount;
   const status = kind === "chargeback" || tx.status === "charged_back" ? "charged_back" : reversed >= tx.amount_cents ? "refunded" : "succeeded";
   await c.query(`UPDATE transactions SET reversed_cents=$2, status=$3, updated_at=now() WHERE id=$1`, [tid, reversed, status]);
+  if (kind === "chargeback") {
+    const flagged = await flagSellerIfRepeatChargebacks(c, tx.seller_id, ctx);
+    if (flagged) return { outcome: "processed", detail: "seller_flagged_for_review", transactionId: tid };
+  }
   return { outcome: "processed", transactionId: tid };
+}
+
+/** Why a confirmed charge can no longer be honoured, or null when it is fine. Runs inside the webhook transaction. */
+async function invalidAtCapture(c: PoolClient, txId: string, ctx: ApplyCtx): Promise<string | null> {
+  const r = await c.query<{ drop_status: string; verification_status: string; age_min: number }>(
+    `SELECT d.status::text AS drop_status, s.verification_status::text AS verification_status,
+            EXTRACT(EPOCH FROM (now() - t.created_at)) / 60 AS age_min
+       FROM transactions t JOIN drops d ON d.id = t.drop_id JOIN sellers s ON s.id = t.seller_id WHERE t.id = $1`, [txId]);
+  const row = r.rows[0];
+  if (!row) return "transaction_missing";
+  if (row.verification_status !== "verified") return "seller_not_verified";
+  if (row.drop_status !== "published") return "drop_unavailable";
+  if (Number(row.age_min) > ctx.sessionTtlMinutes + ctx.lateGraceMinutes) return "session_expired";
+  return null;
+}
+
+/**
+ * Spec M5-08: repeated chargebacks on a seller's drops flag the ACCOUNT FOR REVIEW (no auto-ban: nothing else changes).
+ * Counts distinct charged-back transactions of the seller within the window; flags once (risk_flagged_at IS NULL guard),
+ * writes an audit_log row. The seller row is locked first so concurrent chargebacks can't each miss the threshold.
+ */
+async function flagSellerIfRepeatChargebacks(c: PoolClient, sellerId: string, ctx: ApplyCtx): Promise<boolean> {
+  await c.query(`SELECT 1 FROM sellers WHERE id = $1 FOR UPDATE`, [sellerId]);
+  const n = await c.query<{ n: number }>(
+    `SELECT count(DISTINCT transaction_id)::int AS n FROM ledger_entries
+      WHERE seller_id = $1 AND entry_type = 'chargeback_reversal' AND component = 'gross'
+        AND created_at > now() - make_interval(days => $2::int)`,
+    [sellerId, ctx.cbWindowDays],
+  );
+  if (n.rows[0].n < ctx.cbThreshold) return false;
+  const reason = `${n.rows[0].n} chargebacks within ${ctx.cbWindowDays} days (threshold ${ctx.cbThreshold})`;
+  const up = await c.query(
+    `UPDATE sellers SET risk_flagged_at = now(), risk_flag_reason = $2 WHERE id = $1 AND risk_flagged_at IS NULL`, [sellerId, reason]);
+  if (!up.rowCount) return false;
+  await c.query(`INSERT INTO audit_log (admin_id, action, target) VALUES (NULL, 'seller_flagged_repeat_chargebacks', $1)`, [`seller:${sellerId} ${reason}`]);
+  return true;
 }
 
 /** After a sale lands, apply refunds/chargebacks that arrived first (oldest first), inside the same transaction. */
@@ -235,7 +333,7 @@ async function applyParked(c: PoolClient, sale: TxRow, ctx: ApplyCtx) {
  */
 export async function retryParkedEvents(): Promise<number> {
   const settings = await getSettings();
-  const ctx: ApplyCtx = { holdDays: settings.payout_hold_days, chargebackFeeCents: settings.chargeback_fee_cents };
+  const ctx = ctxFrom(settings);
   const rows = await query<{ id: string }>(
     `SELECT DISTINCT t.id FROM webhook_events w
        JOIN transactions t ON t.provider = w.provider AND (t.id::text = w.merchant_reference OR t.processor_ref = w.related_transaction_id)

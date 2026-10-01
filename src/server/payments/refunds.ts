@@ -38,3 +38,37 @@ export async function requestRefund(transactionId: string, opts: { amountCents?:
 export const listTransactionLedger = (transactionId: string) =>
   query<{ entry_type: string; component: string; amount_cents: number; created_at: string }>(
     `SELECT entry_type, component, amount_cents, created_at FROM ledger_entries WHERE transaction_id = $1 ORDER BY id`, [transactionId]);
+
+/**
+ * Void a charge that the processor confirmed but we must not honour (seller no longer verified, drop pulled/flagged, session
+ * far past expiry): asks the provider for a FULL refund through the normal interface. No ledger entries exist for such a
+ * transaction (it was never credited); the processor's `refunded` webhook is only recorded (void_refund_confirmed).
+ * Idempotent: the provider idempotency key is stable per transaction and refund_requested_at is set once.
+ */
+export async function voidCharge(transactionId: string): Promise<boolean> {
+  const tx = await queryOne<TxRow>(`SELECT ${TX_COLS} FROM transactions WHERE id = $1`, [transactionId]);
+  if (!tx || !tx.review_reason || tx.refund_requested_at || !tx.processor_ref) return false;
+  const provider = findProvider(tx.provider);
+  if (!provider || !provider.availability().ok) throw new Error(`provider ${tx.provider} unavailable for void refund`);
+  await provider.issueRefund({
+    providerTransactionId: tx.processor_ref,
+    transactionId: tx.id,
+    amountCents: tx.amount_cents,
+    currency: tx.currency.trim(),
+    idempotencyKey: `void:${tx.id}`,
+    reason: `void:${tx.review_reason}`,
+  });
+  await query(`UPDATE transactions SET refund_requested_at = now(), updated_at = now() WHERE id = $1 AND refund_requested_at IS NULL`, [tx.id]);
+  return true;
+}
+
+/** Ops/cron hook: re-ask for void refunds whose first attempt failed (provider outage). Returns how many were requested. */
+export async function retryVoidRefunds(): Promise<number> {
+  const rows = await query<{ id: string }>(
+    `SELECT id FROM transactions WHERE review_reason IS NOT NULL AND refund_requested_at IS NULL AND processor_ref IS NOT NULL ORDER BY created_at LIMIT 100`);
+  let n = 0;
+  for (const r of rows) {
+    try { if (await voidCharge(r.id)) n++; } catch (e) { console.error("retryVoidRefunds", (e as Error).message); }
+  }
+  return n;
+}

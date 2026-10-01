@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button, Field, Input } from "@/components/ui";
+import { GENERIC_FAILURE } from "../../../../../lib/purchase-copy";
 
 // Test cards: 4242… approves; …0002 declined; …9995 insufficient funds; …0069 expired; …0127 bad CVC.
 export default function MockCheckoutForm({ sessionId, returnPath }: { sessionId: string; returnPath: string }) {
@@ -20,8 +21,9 @@ export default function MockCheckoutForm({ sessionId, returnPath }: { sessionId:
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
+    // Buyer-facing text only: the server sends a friendly `message`; raw processor/failure codes are never shown.
     if (res.ok && data.status === "succeeded") { setOk(true); setMsg("Payment succeeded (mock)."); }
-    else setMsg(`Payment failed: ${data.failureCode ?? data.error ?? data.status ?? "error"}`);
+    else setMsg(typeof data.message === "string" ? data.message : GENERIC_FAILURE);
   }
 
   return (

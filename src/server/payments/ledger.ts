@@ -25,9 +25,11 @@ export interface TxRow {
   provider: string;
   currency: string;
   reversed_cents: number;
+  review_reason: string | null;
+  refund_requested_at: string | null;
 }
 export const TX_COLS =
-  "id, drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, processor_ref, status, provider, currency, reversed_cents";
+  "id, drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, processor_ref, status, provider, currency, reversed_cents, review_reason, refund_requested_at";
 
 export const splitOf = (tx: TxRow): SaleSplit => ({
   grossCents: tx.amount_cents,

@@ -3,6 +3,7 @@ import { config } from "@/server/config";
 import { queryOne } from "@/server/db";
 import AppShell from "../../../components/AppShell";
 import MockCheckoutForm from "./MockCheckoutForm";
+import { SALES_FINAL_TEXT } from "../../../../../lib/purchase-copy";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mock checkout", robots: { index: false, follow: false } };
@@ -20,6 +21,7 @@ export default async function MockCheckout({ params }: { params: Promise<{ sessi
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Mock checkout (test mode, no real payment)</h1>
         <p className="text-sm text-muted">{tx.title} · <span data-testid="mock-amount">${(tx.amount_cents / 100).toFixed(2)}</span></p>
+        <p className="text-sm font-medium" data-testid="sales-final">{SALES_FINAL_TEXT}</p>
         <MockCheckoutForm sessionId={sessionId} returnPath={`/u/${tx.link}`} />
       </div>
     </AppShell>

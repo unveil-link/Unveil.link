@@ -16,10 +16,11 @@ const schema = z
   })
   .refine((v) => Boolean(v.dropId) !== Boolean(v.linkId), { message: "Provide exactly one of dropId or linkId" });
 
-/** Guest checkout: validates, prices from the DB, creates a pending transaction + processor session. Rate limited per IP (CHECKOUT). */
+/** Guest checkout (honours an `Idempotency-Key` header; identical concurrent requests share one session): validates, prices from the DB, creates a pending transaction + processor session. Rate limited per IP (CHECKOUT). */
 export const POST = api(async (req) => {
   await enforceIpLimit("CHECKOUT", req);
   const body = schema.parse(await jsonBody(req));
-  const out = await createCheckout(body);
-  return NextResponse.json(out, { status: 201 });
+  const out = await createCheckout({ ...body, idempotencyKey: req.headers.get("idempotency-key") });
+  // 201 for a new checkout, 200 when an existing one is returned (same Idempotency-Key / identical live pending checkout).
+  return NextResponse.json(out, { status: out.reused ? 200 : 201 });
 });
