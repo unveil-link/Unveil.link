@@ -66,6 +66,10 @@ const nextConfig: NextConfig = {
       { source: "/d/:path*", headers: noindex },
       { source: "/api/public/:path*", headers: noindex },
       { source: "/api/files/:path*", headers: noindex },
+      { source: "/admin/:path*", headers: [...noindex, { key: "Cache-Control", value: "no-store" }] },
+      { source: "/admin", headers: [...noindex, { key: "Cache-Control", value: "no-store" }] },
+      { source: "/api/admin/:path*", headers: [...noindex, { key: "Cache-Control", value: "no-store" }] },
+      { source: "/api/internal/:path*", headers: noindex },
     ];
   },
 };
