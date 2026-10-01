@@ -12,10 +12,15 @@ import { usd } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 // Link pages must never be indexed (also enforced by the X-Robots-Tag header in next.config.ts and /robots.txt).
-export const metadata: Metadata = {
-  title: "Unveil",
-  robots: { index: false, follow: false, nocache: true },
-};
+const robots = { index: false, follow: false, nocache: true } as const;
+
+// Title is the drop's own title; the root layout's template adds " · Unveil" ("<drop title> · Unveil").
+export async function generateMetadata({ params }: { params: Promise<{ linkId: string }> }): Promise<Metadata> {
+  const { linkId } = await params;
+  const drop = await getDropByPublicLink(linkId);
+  if (!drop || drop.status !== "published") return { title: "Link unavailable", robots };
+  return { title: drop.title, robots };
+}
 
 // Public drop page: only blurred previews are ever rendered here.
 export default async function PublicDrop({ params }: { params: Promise<{ linkId: string }> }) {
@@ -24,9 +29,11 @@ export default async function PublicDrop({ params }: { params: Promise<{ linkId:
   if (!drop || drop.status !== "published") notFound();
   const [files, seller] = await Promise.all([
     listFiles(drop.id),
-    queryOne<{ display_name: string }>("SELECT display_name FROM sellers WHERE id = $1", [drop.seller_id]),
+    queryOne<{ display_name: string; verification_status: string }>("SELECT display_name, verification_status FROM sellers WHERE id = $1", [drop.seller_id]),
   ]);
   const summary = summarizeFiles(files);
+  // Only shown while the seller is *currently* verified (unknown seller / pending / failed / manual review => no badge).
+  const verified = seller?.verification_status === "verified";
   const name = seller?.display_name ?? "Unknown seller";
   const [hero, ...rest] = files;
   const shown = rest.slice(0, 5);
@@ -65,7 +72,7 @@ export default async function PublicDrop({ params }: { params: Promise<{ linkId:
         {/* Details + buy */}
         <div className="flex flex-col gap-5">
           <div>
-            <Badge tone="accent" className="mb-3"><ShieldCheckIcon className="size-3.5" /> Verified creator</Badge>
+            {verified && <Badge tone="accent" className="mb-3" data-testid="verified-badge"><ShieldCheckIcon className="size-3.5" /> Verified creator</Badge>}
             <h1 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl" data-testid="drop-title">{drop.title}</h1>
             <p className="mt-3 flex items-center gap-2.5 text-sm text-muted">
               <span className="grid size-7 place-items-center rounded-full bg-primary text-xs font-bold text-white" aria-hidden="true">{name.trim()[0]?.toUpperCase() ?? "?"}</span>
