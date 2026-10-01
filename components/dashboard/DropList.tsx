@@ -66,7 +66,9 @@ export function DropList({
     );
   }
 
-  function Actions({ d }: { d: DropRow }) {
+  // A plain render helper, NOT a component: a component defined inside render gets a new identity on every state change,
+  // which remounts the buttons and destroys the element a closing modal wants to return focus to (FE-02).
+  function actions(d: DropRow) {
     return (
       <div className="flex flex-wrap items-center gap-2">
         {d.status === "published" && <CopyLinkButton linkId={d.publicLinkId} />}
@@ -134,7 +136,7 @@ export function DropList({
                       <Td className="text-right tabular-nums">{d.fileCount}</Td>
                       <Td className="text-right tabular-nums">{d.units}</Td>
                       <Td className="text-right font-semibold tabular-nums">{usd(d.revenueCents)}</Td>
-                      <Td><Actions d={d} /></Td>
+                      <Td>{actions(d)}</Td>
                     </Tr>
                   ))}
                 </TBody>
@@ -156,7 +158,7 @@ export function DropList({
                     <div><dt className="text-muted">Sold</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums">{d.units}</dd></div>
                     <div><dt className="text-muted">Revenue</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums">{usd(d.revenueCents)}</dd></div>
                   </dl>
-                  <div className="mt-3"><Actions d={d} /></div>
+                  <div className="mt-3">{actions(d)}</div>
                 </li>
               ))}
             </ul>

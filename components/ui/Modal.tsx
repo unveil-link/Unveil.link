@@ -26,19 +26,46 @@ export function Modal({
   const titleId = useId();
   const descId = useId();
 
+  // The element that had focus when the dialog opened (the trigger); focus goes back to it on close (WCAG 2.4.3).
+  const returnTo = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) d.showModal();
+    if (open && !d.open) {
+      returnTo.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      d.showModal();
+    }
     if (!open && d.open) d.close();
   }, [open]);
+
+  // Dialogs that are unmounted while open (parents often render `{x && <Dialog open />}`) never fire a native "close"
+  // event, so restore focus on unmount too.
+  useEffect(() => {
+    const d = ref.current;
+    return () => {
+      const el = returnTo.current;
+      if (el && d?.open) requestAnimationFrame(() => { if (el.isConnected) el.focus(); });
+    };
+  }, []);
+
+  function restoreFocus() {
+    const el = returnTo.current;
+    returnTo.current = null;
+    // Wait a tick: the parent may re-render (e.g. remove the row/button) as part of closing; only restore if the
+    // trigger is still in the document, otherwise leave focus to the browser default.
+    if (el) requestAnimationFrame(() => { if (el.isConnected) el.focus(); });
+  }
 
   return (
     <dialog
       ref={ref}
       aria-labelledby={titleId}
       aria-describedby={description ? descId : undefined}
-      onClose={onClose}
+      onClose={() => {
+        restoreFocus();
+        onClose();
+      }}
       onClick={(e) => {
         if (e.target === ref.current) onClose(); // backdrop click
       }}
