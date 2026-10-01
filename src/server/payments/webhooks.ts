@@ -298,7 +298,8 @@ async function flagSellerIfRepeatChargebacks(c: PoolClient, sellerId: string, ct
   const n = await c.query<{ n: number }>(
     `SELECT count(DISTINCT transaction_id)::int AS n FROM ledger_entries
       WHERE seller_id = $1 AND entry_type = 'chargeback_reversal' AND component = 'gross'
-        AND created_at > now() - make_interval(days => $2::int)`,
+        AND created_at > now() - make_interval(days => $2::int)
+        AND created_at > COALESCE((SELECT risk_reviewed_at FROM sellers WHERE id = $1), '-infinity'::timestamptz)`, // an admin review restarts the count
     [sellerId, ctx.cbWindowDays],
   );
   if (n.rows[0].n < ctx.cbThreshold) return false;
