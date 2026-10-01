@@ -1,0 +1,46 @@
+[M1-04] me-before=200; logout=200; REPLAY old cookie: GET /api/auth/me=401, POST /api/drops=401; other device session still=200; sessions rows total=2 revoked=1
+[M1-04] re-login after logout=200
+[M1-04] session with expires_at in past -> /api/auth/me=401
+[M1-04] forged token (right sub, random jti, bad sig) -> 401
+[M1-04] forgot-password=200 {"ok":true,"message":"If an account exists for that email, a reset link is on its way."}; unknown email=200 (same status → no enumeration)
+[M1-08] GET /api/settings => maxFilesPerDrop=10 maxTotalBytesPerDrop=2147483648 (=2 GiB)
+[M1-08] DB defaults: max_files_per_drop=10 max_total_bytes_per_drop=2147483648
+[M1-08] sequential 12 uploads: 201,201,201,201,201,201,201,201,201,201,400,400; 11th body: {"error":"A drop can have at most 10 files","code":"too_many_files"}
+[M1-08] race run 1: 30 parallel -> 201=10 400=20 other=0; DB rows=10; files on disk=10
+[M1-08] race run 2: 30 parallel -> 201=10 400=20 other=0; DB rows=10; files on disk=10
+[M1-08] race run 3: 30 parallel -> 201=10 400=20 other=0; DB rows=10; files on disk=10
+[M1-08] sample incompressible jpeg = 129779 bytes
+[M1-08] total-size cap=389437B (3 files fit): sequential 5 uploads -> 201,201,201,413:drop_too_large,413:drop_too_large; stored total=389337B (<= cap: true)
+[M1-08] cap error message: 413 {"error":"A drop can hold at most 389437 bytes in total","code":"drop_too_large"}
+[M1-08] total-size cap race: 12 parallel -> 201=3, rejected=9 (codes 201:,413:drop_too_large); stored n=3 total=389296B <= cap 389437: true
+[M1-08] 2 GiB boundary at DEFAULT setting (drop pre-seeded with a 2GiB-1000B row): next ~129779B upload -> 413 drop_too_large; drop at 2GiB-1,000,000B + ~129779B -> 201
+[M1-08] per-file 15MiB cap still enforced: 16MiB -> 413 file_too_large
+[M2-04] publish=200 url=/u/8wzxPJccEKNA matches ^/u/[A-Za-z0-9_-]{12}$: true; GET /u/8wzxPJccEKNA=200; legacy /d/<id>=308 → /u/8wzxPJccEKNA
+[M2-04] 40 new links: unique=40 all 12 chars=true
+[M2-07] page 200 main text:  | Summer set | by | Aria Test | · | 2 files: 2 images | desc here | $20.00 | Unlock for $20.00 (payments coming soon) | 
+[M2-07] has title=true seller name=true file count+types=true price=true blurred imgs=2
+[M2-07] API: {"seller":{"displayName":"Aria Test","display_name":"Aria Test","avatar":null},"summary":{"fileCount":2,"imageCount":2,"videoCount":0,"otherCount":0,"label":"2 files: 2 images"},"priceCents":2000}; email/uuid leak=false
+[M2-08(regr)] originals/keys/filenames in page or API: none
+[M2-07] with a seeded video row: summary={"fileCount":3,"imageCount":2,"videoCount":1,"otherCount":0,"label":"3 files: 2 images, 1 video"}
+[M2-09] /u/8wzxPJccEKNA: X-Robots-Tag=noindex, nofollow; meta=["<meta name=\"robots\" content=\"noindex, nofollow, nocache\"/>"]
+[M2-09] /api/public/drops/<id> X-Robots-Tag=noindex, nofollow; preview X-Robots-Tag=noindex, nofollow; legacy /d redirect X-Robots-Tag=(absent); 404 link page X-Robots-Tag=noindex, nofollow
+[M2-09] /robots.txt 200 "User-Agent: *\nDisallow: /u/\nDisallow: /d/\nDisallow: /api/\nDisallow: /dashboard\n\n"; /sitemap.xml 404
+[M2-09] signed original X-Robots-Tag=noindex, nofollow
+[M2-09] no listings: /u=404 /explore=404 /browse=404 /api/public/drops=404
+[M6-02] GET / -> 200; missing: none; x-powered-by=(absent)
+[M6-02] GET /u/8wzxPJccEKNA -> 200; missing: none; x-powered-by=(absent)
+[M6-02] GET /login -> 200; missing: none; x-powered-by=(absent)
+[M6-02] GET /api/settings -> 200; missing: none; x-powered-by=(absent)
+[M6-02] GET /api/public/drops/8wzxPJccEKNA -> 200; missing: none; x-powered-by=(absent)
+[M6-02] GET /api/files/<uuid>/preview -> 200; missing: none; x-powered-by=(absent)
+[M6-02] GET /api/files/<uuid>/original?… -> 200; missing: none; x-powered-by=(absent)
+[M6-02] GET /no-such-page -> 404; missing: none; x-powered-by=(absent)
+[M6-02] GET /_next/static/chunks/nonexistent.js -> 404; missing: none; x-powered-by=(absent)
+[M6-02] GET /dashboard -> 307; missing: none; x-powered-by=(absent)
+[M6-02]   content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+[M6-02]   strict-transport-security: max-age=63072000; includeSubDomains; preload
+[M6-02]   x-frame-options: DENY
+[M6-02]   x-content-type-options: nosniff
+[M6-02]   referrer-policy: strict-origin-when-cross-origin
+[M6-02]   permissions-policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+[M6-02] POST /api/auth/logout headers present: 6/6

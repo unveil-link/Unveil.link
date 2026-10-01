@@ -2,6 +2,7 @@
 import sharp from "sharp"; import pg from "pg"; import fs from "node:fs"; import crypto from "node:crypto"; import { execSync } from "node:child_process";
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const db = new pg.Client({ connectionString: process.env.DB }); await db.connect();
+const ORIG_MAX = (await db.query("select max_files_per_drop m from platform_settings")).rows[0].m; // restored after race tests
 const log = (id, m) => console.log(`[${id}] ${m}`);
 const jar = {};
 const req = async (method, path, { json, form, headers = {}, raw, c = jar } = {}) => {
@@ -38,8 +39,8 @@ const mp = (name, data, type) => { const f = new FormData(); f.append("file", ne
   const rs = await Promise.all(Array.from({ length: 25 }, (_, i) => req("POST", `/api/drops/${d.id}/files`, { form: mp(`r${i}.jpg`, img, "image/jpeg") })));
   const c = {}; rs.forEach((r) => (c[r.status] = (c[r.status] ?? 0) + 1));
   const n = (await db.query("select count(*)::int n from drop_files where drop_id=$1", [d.id])).rows[0].n;
-  const orphans = fs.existsSync("/workspace/qa-run/storage/originals/" + d.id) ? fs.readdirSync("/workspace/qa-run/storage/originals/" + d.id).length : 0;
-  await db.query("UPDATE platform_settings SET max_files_per_drop=20");
+  const orphans = fs.existsSync((process.env.STORAGE_LOCAL_DIR ?? "/workspace/qa-run/storage") + "/originals/" + d.id) ? fs.readdirSync((process.env.STORAGE_LOCAL_DIR ?? "/workspace/qa-run/storage") + "/originals/" + d.id).length : 0;
+  await db.query(`UPDATE platform_settings SET max_files_per_drop=${ORIG_MAX}`);
   log("M1-08(race)", `limit=5, 25 parallel uploads => ${JSON.stringify(c)}; rows in DB=${n}; files on disk=${orphans}`);
 }
 // decompression bomb / big pixel images
@@ -84,14 +85,14 @@ const mp = (name, data, type) => { const f = new FormData(); f.append("file", ne
 {
   const a = await req("POST", "/api/drops", { json: { title: "o", priceCents: 1000 }, headers: { origin: "null" } });
   const b = await req("POST", "/api/auth/logout", { headers: { origin: "garbage" } });
-  const c = await req("POST", "/api/auth/login", { json: { email: "a@b.co", password: "x" }, headers: { origin: "http://localhost:3200" } });
+  const c = await req("POST", "/api/auth/login", { json: { email: "a@b.co", password: "x" }, headers: { origin: BASE } });
   log("M6-01(partial)", `Origin:null => ${a.status} ${a.text}; Origin:garbage => ${b.status} ${b.text}; same-origin login=${c.status}`);
 }
 // secrets in client bundle / repo
 {
-  const env = Object.fromEntries(fs.readFileSync("/workspace/qa-run/env.sh", "utf8").split("\n").filter((l) => /SECRET/.test(l)).map((l) => l.replace("export ", "").split("=")).map(([k, ...v]) => [k, v.join("=")]));
+  const env = Object.fromEntries(fs.readFileSync((process.env.ENVSH ?? "/workspace/qa-run/env.sh"), "utf8").split("\n").filter((l) => /SECRET/.test(l)).map((l) => l.replace("export ", "").split("=")).map(([k, ...v]) => [k, v.join("=")]));
   let hits = 0; const walk = (d) => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = d + "/" + f.name; if (f.isDirectory()) walk(p); else { const t = fs.readFileSync(p, "latin1"); for (const v of Object.values(env)) if (v && t.includes(v)) hits++; } } };
-  walk("/workspace/unveil/.next-qa/static");
+  walk((process.env.NEXT_STATIC ?? "/workspace/unveil/.next-qa/static"));
   const tracked = execSync("cd /workspace/unveil && git ls-files | grep -E '(^|/)\\.env($|\\.local)' || true").toString().trim();
   const hist = execSync("cd /workspace/unveil && git log --all --diff-filter=A --name-only --format= | grep -E '(^|/)\\.env($|\\.local)' || true").toString().trim();
   log("M6-02(partial)", `secret values in .next/static client bundle: ${hits} hits; tracked .env files: '${tracked}'; .env ever added in history: '${hist}'; .env.example uses placeholder secrets: yes`);

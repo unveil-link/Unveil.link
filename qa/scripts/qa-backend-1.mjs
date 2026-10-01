@@ -6,6 +6,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 
 const BASE = process.env.BASE ?? "http://localhost:3200";
+const PUB = process.env.PUB ?? "/d"; // public page prefix: /d on foundation, /u on fixes-1
 const DB = process.env.DB;
 const OUT = process.env.OUT ?? "/workspace/qa-run/out";
 fs.mkdirSync(OUT, { recursive: true });
@@ -360,11 +361,11 @@ const attestAll = { attestation: { over18: true, ownsRights: true, consentOfSubj
   await u.c.req("POST", `/api/drops/${d.id}/files`, { form: multipart("c.webp", await photo("webp"), "image/webp") });
   const api = await new Client().req("GET", `/api/public/drops/${d.public_link_id}`);
   log("M2-07", `public API ${api.status}: ${api.text}`);
-  const page = await new Client().req("GET", `/d/${d.public_link_id}`);
+  const page = await new Client().req("GET", `${PUB}/${d.public_link_id}`);
   log("M2-07", `public page /d/<id> ${page.status}; contains title=${page.text.includes("QA drop")}; price shown=${/\$20\.00/.test(page.text)}; seller display name shown=${page.text.includes("QA unv")}; file count shown=${/3 (files|items)/i.test(page.text)}; file types shown=${/(JPG|PNG|WebP)/i.test(page.text)}; blurred <img> count=${(page.text.match(/\/preview/g) ?? []).length}`);
   const alt = await new Client().req("GET", `/u/${d.public_link_id}`);
   log("M2-04", `spec link format unveil.link/u/<12>: GET /u/${d.public_link_id} => ${alt.status}; app returns url "${pubUrl(d)}" (path /d/)`);
-  function pubUrl(x) { return `/d/${x.public_link_id}`; }
+  function pubUrl(x) { return `${PUB}/${x.public_link_id}`; }
   // M2-08: leak scan
   const files = (await db.query("SELECT id, storage_key, blurred_preview_key, filename FROM drop_files WHERE drop_id=$1", [d.id])).rows;
   let leaks = [];
@@ -379,7 +380,7 @@ const attestAll = { attestation: { over18: true, ownsRights: true, consentOfSubj
   const metaRobots = (page.text.match(/<meta[^>]+name="robots"[^>]*>/gi) ?? []);
   const apiH = api.headers.get("x-robots-tag"); const pvH = (await new Client().req("GET", `/api/files/${files[0].id}/preview`)).headers.get("x-robots-tag");
   const robots = await new Client().req("GET", "/robots.txt"); const sitemap = await new Client().req("GET", "/sitemap.xml");
-  const nf = await new Client().req("GET", "/d/zzzzzzzzzzzz");
+  const nf = await new Client().req("GET", PUB + "/zzzzzzzzzzzz");
   log("M2-09", `/d/<id> X-Robots-Tag=${h["x-robots-tag"] ?? "(absent)"}; <meta robots>=${JSON.stringify(metaRobots)}; api X-Robots-Tag=${apiH}; preview X-Robots-Tag=${pvH}; /robots.txt=${robots.status}; /sitemap.xml=${sitemap.status}; unknown link page=${nf.status}`);
   log("M2-09", `directory/search/listing routes: /d=${(await new Client().req("GET", "/d")).status} /api/public/drops=${(await new Client().req("GET", "/api/public/drops")).status} /explore=${(await new Client().req("GET", "/explore")).status} /browse=${(await new Client().req("GET", "/browse")).status}`);
   const home = await new Client().req("GET", "/"); const hm = (home.text.match(/<meta[^>]+name="robots"[^>]*>/gi) ?? []);
@@ -389,7 +390,7 @@ const attestAll = { attestation: { over18: true, ownsRights: true, consentOfSubj
   const xd = await u.c.req("POST", "/api/drops", { json: { title: "<img src=x onerror=alert(1)>", description: "<script>alert(9)</script>", priceCents: 1000 } });
   await u.c.req("POST", `/api/drops/${xd.json.drop.id}/files`, { form: multipart("a.jpg", await photo(), "image/jpeg") });
   await u.c.req("POST", `/api/drops/${xd.json.drop.id}/publish`, { json: attestAll });
-  const xp = await new Client().req("GET", `/d/${xd.json.drop.public_link_id}`);
+  const xp = await new Client().req("GET", `${PUB}/${xd.json.drop.public_link_id}`);
   log("M6-01(partial XSS)", `title/desc rendered escaped on public page: raw '<script>alert(9)' present=${xp.text.includes("<script>alert(9)")} escaped present=${xp.text.includes("&lt;script&gt;alert(9)")}`);
   R._xssLink = xd.json.drop.public_link_id;
   // M2-10 edit
@@ -399,7 +400,7 @@ const attestAll = { attestation: { over18: true, ownsRights: true, consentOfSubj
   // M2-11 unpublish
   const up = await u.c.req("POST", `/api/drops/${d.id}/unpublish`);
   const after = await new Client().req("GET", `/api/public/drops/${d.public_link_id}`);
-  const afterPage = await new Client().req("GET", `/d/${d.public_link_id}`);
+  const afterPage = await new Client().req("GET", `${PUB}/${d.public_link_id}`);
   const afterPv = await new Client().req("GET", `/api/files/${files[0].id}/preview`);
   log("M2-11", `unpublish=${up.status} status=${up.json?.drop?.status}; public API=${after.status}; page=${afterPage.status} (custom 'unavailable' text? ${/unavailable|no longer/i.test(afterPage.text)}); anon preview=${afterPv.status}; buy button n/a (payments not built)`);
   const rep = await u.c.req("POST", `/api/drops/${d.id}/publish`, { json: attestAll });

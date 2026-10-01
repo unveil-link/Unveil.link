@@ -2,6 +2,7 @@
 import sharp from "sharp"; import pg from "pg"; import crypto from "node:crypto";
 const BASE = process.env.BASE ?? "http://localhost:3200";
 const db = new pg.Client({ connectionString: process.env.DB }); await db.connect();
+const ORIG_MAX = (await db.query("select max_files_per_drop m from platform_settings")).rows[0].m; // restored after race tests
 const jar = {};
 const req = async (method, path, { json, form, headers = {} } = {}) => {
   const h = { ...headers }; const ck = Object.entries(jar).map(([k, v]) => `${k}=${v}`).join("; "); if (ck) h.cookie = ck;
@@ -23,7 +24,7 @@ for (const N of [10, 25]) {
   const n = (await db.query("select count(*)::int n from drop_files where drop_id=$1", [d.id])).rows[0].n;
   console.log(`[M1-08(race)] parallel ${N} uploads, limit=5: statuses 201=${rs.filter((r) => r.status === 201).length} 400=${rs.filter((r) => r.status === 400).length}; rows in DB=${n}`);
 }
-await db.query("UPDATE platform_settings SET max_files_per_drop=20");
+await db.query(`UPDATE platform_settings SET max_files_per_drop=${ORIG_MAX}`);
 const g = await req("GET", "/api/auth/google"); const cb = await req("GET", "/api/auth/google/callback?code=x&state=y");
 console.log(`[M1-02] GET /api/auth/google (no creds) => ${g.status} ${g.text}; callback => ${cb.status} location=${cb.headers.get("location")}`);
 const cols = (await db.query("select table_name, string_agg(column_name, ',' order by ordinal_position) c from information_schema.columns where table_schema='public' and table_name<>'schema_migrations' group by 1 order by 1")).rows;
