@@ -1,0 +1,20 @@
+[
+  {
+    "id": "ROLE-1",
+    "name": "documented/default setup (README: createuser unveil; createdb -O unveil) makes the app role the TABLE OWNER; here the safer setup: app role = non-owner, non-superuser, no TRUNCATE/DDL",
+    "result": "PASS",
+    "evidence": "app role qa_app: superuser=false, audit_log owner=qaowner, TRUNCATE priv=false, TRIGGER priv=false"
+  },
+  {
+    "id": "ROLE-2",
+    "name": "non-owner app role: every mutation/bypass is denied (UPDATE/DELETE by trigger; TRUNCATE by privilege+trigger; DISABLE/DROP TRIGGER, replace trigger function, ALTER/DROP TABLE, INHERITS child, CREATE TRIGGER, session_replication_role, COPY FROM PROGRAM, GRANT) ",
+    "result": "PASS",
+    "evidence": "18/18 denied: UPDATE✓ DELETE✓ TRUNCATE✓ TRUNCATE CASCADE (via admins)✓ DISABLE TRIGGER✓ DISABLE TRIGGER ALL/USER✓ DROP TRIGGER✓ DROP TRIGGER (truncate)✓ REPLACE FUNCTION✓ ALTER TABLE✓ DROP TABLE✓ RENAME✓ INHERITS child✓ session_replication_role✓ COPY FROM PROGRAM✓ ALTER OWNER✓ DROP admins guard trigger✓ ALTER ROLE superuser✓ GRANT TRUNCATE no-op✓; rows intact (18)"
+  },
+  {
+    "id": "ROLE-3",
+    "name": "whole app works as the non-owner role (login, audited clear-flag, failed-login audit + coalescing, logout, janitor audit) — i.e. the hardened setup is deployable",
+    "result": "PASS",
+    "evidence": "create-admin, --reset-password, login, failed login, clear-flag, logout all work as qa_app; audit actions: admin_created_cli,admin_password_reset_cli,admin_sessions_revoked,admin_login_failed,admin_login,seller_flag_cleared,admin_logout; plain-SQL disable by the app role succeeded and the SECURITY INVOKER trigger wrote its audit row (1)"
+  }
+]

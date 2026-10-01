@@ -1,0 +1,6 @@
+trial0: attacker HTTP codes {"200":7,"401":5}; sessions created after revoke committed & still live: 0; /api/admin/me==200 using OLD-password sessions: 0
+trial1: attacker HTTP codes {"200":8,"401":5}; sessions created after revoke committed & still live: 1; /api/admin/me==200 using OLD-password sessions: 1
+trial2: attacker HTTP codes {"200":8,"401":5}; sessions created after revoke committed & still live: 0; /api/admin/me==200 using OLD-password sessions: 0
+trial3: attacker HTTP codes {"200":8,"401":5}; sessions created after revoke committed & still live: 1; /api/admin/me==200 using OLD-password sessions: 1
+trial4: attacker HTTP codes {"200":8,"401":4}; sessions created after revoke committed & still live: 1; /api/admin/me==200 using OLD-password sessions: 1
+TRIALS WITH A SURVIVING OLD-PASSWORD SESSION: 3/5

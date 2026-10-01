@@ -1,0 +1,3860 @@
+{
+ "total": 3966,
+ "serverAliveAfter": true,
+ "fiveXX": [
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/original (id)",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/files/:id/preview",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/files/:id/signed-url",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/public/drops/:linkId",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "GET /api/drops/:id",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/publish (id)",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/unpublish",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/drops/:id/files (id)",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/webhooks/:provider",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag (id)",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /pay/mock/:sessionId",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /dashboard/drops/:id",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=s:lone-hi",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=s:lone-lo",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=s:lone-hi-end",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=s:email-surr",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=raw-%ff",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=raw-%c0%af",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=%zz",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=%",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "PAGE /admin/sellers/:id/transactions",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 500,
+   "note": "Internal Server Error"
+  },
+  {
+   "route": "origin POST /api/admin/login",
+   "payload": "Origin:http://localhost:3817\u0000",
+   "status": -1,
+   "note": "TypeError: Headers.append: \"http://localhost:3817\u0000\" is an invalid header value."
+  },
+  {
+   "route": "origin POST /api/admin/sellers/:id/clear-flag",
+   "payload": "Origin:http://localhost:3817\u0000",
+   "status": -1,
+   "note": "TypeError: Headers.append: \"http://localhost:3817\u0000\" is an invalid header value."
+  },
+  {
+   "route": "origin POST /api/drops",
+   "payload": "Origin:http://localhost:3817\u0000",
+   "status": -1,
+   "note": "TypeError: Headers.append: \"http://localhost:3817\u0000\" is an invalid header value."
+  },
+  {
+   "route": "origin POST /api/auth/logout",
+   "payload": "Origin:http://localhost:3817\u0000",
+   "status": -1,
+   "note": "TypeError: Headers.append: \"http://localhost:3817\u0000\" is an invalid header value."
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:huge-declared",
+   "status": -1,
+   "note": "TypeError: fetch failed"
+  },
+  {
+   "route": "RAW socket",
+   "payload": "path %zz",
+   "status": 500,
+   "note": "HTTP/1.1 500 Internal Server Error\r\nCache-Control: private, no-cache, no-store, max-age=0, must-reva"
+  },
+  {
+   "route": "RAW socket",
+   "payload": "path invalid utf8 %ff",
+   "status": 500,
+   "note": "HTTP/1.1 500 Internal Server Error\r\nCache-Control: private, no-cache, no-store, max-age=0, must-reva"
+  },
+  {
+   "route": "RAW socket",
+   "payload": "trace",
+   "status": 500,
+   "note": "HTTP/1.1 500 Internal Server Error\r\nContent-Security-Policy: default-src 'self'; script-src 'self' '"
+  }
+ ],
+ "stateChangeOn4xx": [],
+ "twoxx": [
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:uuid-bad-hex",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:uuid-nil",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:uuid-trailing-space",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:uuid-braces",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:emoji-zwj",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:fullwidth",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:homoglyph-email",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:sqli",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:xss",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:traversal",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:crlf",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:tmpl",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:localpart64+",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "password=s:email-emoji",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:dash36",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:uuid-bad-hex",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:uuid-nil",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:uuid-trailing-space",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:uuid-braces",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:uuid-nodash",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:emoji",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:emoji-zwj",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:rtl",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:nfd",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:fullwidth",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:homoglyph-email",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:sqli",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:xss",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:pct00",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:traversal",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:crlf",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:tmpl",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:proto",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:bom",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:email-emoji",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "displayName=s:json-in-str",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "ct:text/plain",
+   "status": 201
+  },
+  {
+   "route": "POST /api/auth/signup",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/auth/login",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "email=s:localpart64+",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:text/plain",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:application/x-www-form-urlencoded",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:multipart/form-data",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:multipart/form-data; boundary=",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:application/xml",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:application/json; charset=utf-16",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:application/json;charset=\"",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:(none)",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:application/jsonx",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:text/html",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:*/*",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "ct:application/x-www-form-urlencoded; a=b",
+   "status": 200
+  },
+  {
+   "route": "POST /api/auth/forgot-password",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/auth/reset-password",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:dash36",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:uuid-bad-hex",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:uuid-nil",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:uuid-trailing-space",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:uuid-braces",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:uuid-nodash",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:emoji",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:emoji-zwj",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:rtl",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:nfd",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:fullwidth",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:homoglyph-email",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:sqli",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:xss",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:pct00",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:traversal",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:crlf",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:tmpl",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:proto",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:bom",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:localpart64+",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:email-emoji",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "title=s:json-in-str",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:len513",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:dash36",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:uuid-bad-hex",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:uuid-nil",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:uuid-trailing-space",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:uuid-braces",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:uuid-nodash",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:emoji",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:emoji-zwj",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:rtl",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:nfd",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:fullwidth",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:homoglyph-email",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:sqli",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:xss",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:pct00",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:traversal",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:crlf",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:tmpl",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:proto",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:empty",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:space",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:tab",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:bom",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:bigemail",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:localpart64+",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:email-emoji",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "description=s:json-in-str",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "missing:description",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:text/plain",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:application/x-www-form-urlencoded",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:multipart/form-data",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:multipart/form-data; boundary=",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:application/xml",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:application/json; charset=utf-16",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:application/json;charset=\"",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:(none)",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:application/jsonx",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:text/html",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:*/*",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "ct:application/x-www-form-urlencoded; a=b",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "method:GET",
+   "status": 200
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "method:HEAD",
+   "status": 200
+  },
+  {
+   "route": "POST /api/drops",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/drops/:id/publish",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "email=s:localpart64+",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "confirmOver18=t:true",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "missing:dropId",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:text/plain",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:application/x-www-form-urlencoded",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:multipart/form-data",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:multipart/form-data; boundary=",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:application/xml",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:application/json; charset=utf-16",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:application/json;charset=\"",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:(none)",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:application/jsonx",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:text/html",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:*/*",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "ct:application/x-www-form-urlencoded; a=b",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:xss",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:proto",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:tab",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:bom",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "card=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:text/plain",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:application/x-www-form-urlencoded",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:multipart/form-data",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:multipart/form-data; boundary=",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:application/xml",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:application/json; charset=utf-16",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:application/json;charset=\"",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:(none)",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:application/jsonx",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:text/html",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:*/*",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "ct:application/x-www-form-urlencoded; a=b",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/pay",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/dev/payments/refund",
+   "payload": "missing:amountCents",
+   "status": 200
+  },
+  {
+   "route": "POST /api/dev/payments/refund",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/admin/login",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag",
+   "payload": "note=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "POST /api/admin/sellers/:id/clear-flag",
+   "payload": "method:OPTIONS",
+   "status": 204
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=%2e%2e",
+   "status": 200
+  },
+  {
+   "route": "PAGE /u/:linkId",
+   "payload": "path=dotdot",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:nul",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:nul-only",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:nul-1000",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:lone-hi",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:lone-lo",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:lone-hi-end",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:len513",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:len5000",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:xss",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:proto",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:empty",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:space",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:tab",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:bom",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:bigemail",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:localpart64+",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:email-nul",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:email-surr",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=raw-%ff",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=raw-%c0%af",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=%zz",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=%",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=%00x",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=%2e%2e",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=..%2f",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=%2f",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=%5c",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=uuid-valid-nonexistent",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=dots",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=dotdot",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=semicolon",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=question",
+   "status": 200
+  },
+  {
+   "route": "PAGE /reset-password?token=",
+   "payload": "path=hash",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:nul",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:nul-only",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:nul-1000",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:lone-hi",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:lone-lo",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:lone-hi-end",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:len513",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:len5000",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:xss",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:proto",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:empty",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:space",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:tab",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:bom",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:bigemail",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:localpart64+",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:email-nul",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:email-surr",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=raw-%ff",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=raw-%c0%af",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=%zz",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=%",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=%00x",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=%2e%2e",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=..%2f",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=%2f",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=%5c",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=%ed%a0%80(surrogate utf8)",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=uuid-valid-nonexistent",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=dots",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=dotdot",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=semicolon",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=question",
+   "status": 200
+  },
+  {
+   "route": "PAGE /login?error=",
+   "payload": "path=hash",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:xss",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:proto",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:tab",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:bom",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:localpart64+",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "id=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:nul",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:nul-only",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:lone-hi",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:lone-lo",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:lone-hi-end",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:xss",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:proto",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:tab",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:bom",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:email-nul",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:email-surr",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "created=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:xss",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:proto",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:tab",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:bom",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:localpart64+",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.transaction_id=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:xss",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:proto",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:tab",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:bom",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:localpart64+",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.related_transaction_id=t:null",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:xss",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:proto",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:tab",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:bom",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:localpart64+",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.reference=t:null",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.amount_cents=t:null",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.currency=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.currency=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.currency=s:space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:dash36",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:uuid-bad-hex",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:uuid-nil",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:uuid-trailing-space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:uuid-braces",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:uuid-nodash",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:emoji-zwj",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:rtl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:nfd",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:fullwidth",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:homoglyph-email",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:sqli",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:xss",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:pct00",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:traversal",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:crlf",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:tmpl",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:proto",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:empty",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:space",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:tab",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:bom",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:localpart64+",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:email-emoji",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=s:json-in-str",
+   "status": 200
+  },
+  {
+   "route": "POST /api/webhooks/mock (signed)",
+   "payload": "data.failure_code=t:null",
+   "status": 200
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=empty",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=empty",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=empty",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=garbage",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=garbage",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=garbage",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=three-dots",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=three-dots",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=three-dots",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=jwt-trunc",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=jwt-trunc",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=jwt-trunc",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=jwt-flip",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=jwt-flip",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=jwt-flip",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=huge-8k",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=huge-8k",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=huge-8k",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=quote",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=quote",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=quote",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=percent",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=percent",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=percent",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=semicolons",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=semicolons",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=semicolons",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=latin1",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=latin1",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=latin1",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=many",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=many",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=many",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=admin-tok-as-seller",
+   "status": 201
+  },
+  {
+   "route": "cookie GET /api/admin/me",
+   "payload": "unveil_admin=admin-tok-as-seller",
+   "status": 200
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=admin-tok-as-seller",
+   "status": 201
+  },
+  {
+   "route": "cookie GET /admin/sellers/flagged",
+   "payload": "unveil_admin=admin-tok-as-seller",
+   "status": 200
+  },
+  {
+   "route": "cookie GET /api/admin/sellers/flagged",
+   "payload": "unveil_admin=admin-tok-as-seller",
+   "status": 200
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=admin-tok-as-seller",
+   "status": 201
+  },
+  {
+   "route": "cookie GET /api/auth/me",
+   "payload": "unveil_session=seller-tok-as-admin",
+   "status": 200
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_session=seller-tok-as-admin",
+   "status": 201
+  },
+  {
+   "route": "cookie GET /dashboard",
+   "payload": "unveil_session=seller-tok-as-admin",
+   "status": 200
+  },
+  {
+   "route": "cookie GET /api/earnings",
+   "payload": "unveil_session=seller-tok-as-admin",
+   "status": 200
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_admin=seller-tok-as-admin",
+   "status": 201
+  },
+  {
+   "route": "cookie POST /api/checkout",
+   "payload": "unveil_buyer=seller-tok-as-admin",
+   "status": 201
+  },
+  {
+   "route": "origin POST /api/drops",
+   "payload": "Origin:https://localhost:3817",
+   "status": 201
+  },
+  {
+   "route": "origin POST /api/auth/logout",
+   "payload": "Origin:https://localhost:3817",
+   "status": 200
+  },
+  {
+   "route": "origin POST /api/drops",
+   "payload": "Origin:http://localhost:3817/path",
+   "status": 201
+  },
+  {
+   "route": "origin POST /api/auth/logout",
+   "payload": "Origin:http://localhost:3817/path",
+   "status": 200
+  },
+  {
+   "route": "origin POST /api/drops",
+   "payload": "Origin:http://LOCALHOST:3817",
+   "status": 201
+  },
+  {
+   "route": "origin POST /api/auth/logout",
+   "payload": "Origin:http://LOCALHOST:3817",
+   "status": 200
+  },
+  {
+   "route": "POST /api/checkout (Idempotency-Key)",
+   "payload": "key:(0)",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (Idempotency-Key)",
+   "payload": "key:\"quoted\"(8)",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (XFF)",
+   "payload": "xff:",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (XFF)",
+   "payload": "xff:not-an-ip",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (XFF)",
+   "payload": "xff:é",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (XFF)",
+   "payload": "xff:,,,",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (XFF)",
+   "payload": "xff:::ffff:1.2.3.4",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (XFF)",
+   "payload": "xff:999.999.999.999",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (XFF)",
+   "payload": "xff:aaaaaaaaaaaaaaaaaaaa",
+   "status": 201
+  },
+  {
+   "route": "POST /api/checkout (XFF)",
+   "payload": "xff:[::1]:80",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:ok-png",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:fname-nul",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:fname-surr",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:fname-long",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:fname-traversal",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:fname-quote-crlf",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:fname-emoji",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:mime-nul",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:mime-long",
+   "status": 201
+  },
+  {
+   "route": "POST /api/drops/:id/files",
+   "payload": "upload:polyglot",
+   "status": 201
+  },
+  {
+   "route": "xctx POST /api/admin/logout",
+   "payload": "anon",
+   "status": 200
+  },
+  {
+   "route": "xctx POST /api/admin/logout",
+   "payload": "seller",
+   "status": 200
+  },
+  {
+   "route": "xctx POST /api/admin/logout",
+   "payload": "other-seller",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/earnings",
+   "payload": "seller",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/earnings",
+   "payload": "other-seller",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/drops",
+   "payload": "seller",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/drops",
+   "payload": "other-seller",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/auth/me",
+   "payload": "seller",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/auth/me",
+   "payload": "other-seller",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/settings",
+   "payload": "anon",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/settings",
+   "payload": "seller",
+   "status": 200
+  },
+  {
+   "route": "xctx GET /api/settings",
+   "payload": "other-seller",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/settings",
+   "payload": "?a=%00",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/settings",
+   "payload": "?%ff=%fe",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/settings",
+   "payload": "?__proto__[x]=1",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/settings",
+   "payload": "?id[]=1&id[]=2",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/earnings",
+   "payload": "?a=%00",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/earnings",
+   "payload": "?%ff=%fe",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/earnings",
+   "payload": "?__proto__[x]=1",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/earnings",
+   "payload": "?id[]=1&id[]=2",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/drops",
+   "payload": "?a=%00",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/drops",
+   "payload": "?%ff=%fe",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/drops",
+   "payload": "?__proto__[x]=1",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/drops",
+   "payload": "?id[]=1&id[]=2",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/auth/me",
+   "payload": "?a=%00",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/auth/me",
+   "payload": "?%ff=%fe",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/auth/me",
+   "payload": "?__proto__[x]=1",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/auth/me",
+   "payload": "?id[]=1&id[]=2",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/me",
+   "payload": "?a=%00",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/me",
+   "payload": "?%ff=%fe",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/me",
+   "payload": "?__proto__[x]=1",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/me",
+   "payload": "?id[]=1&id[]=2",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/sellers/flagged",
+   "payload": "?a=%00",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/sellers/flagged",
+   "payload": "?%ff=%fe",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/sellers/flagged",
+   "payload": "?__proto__[x]=1",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/sellers/flagged",
+   "payload": "?id[]=1&id[]=2",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/transactions/review",
+   "payload": "?a=%00",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/transactions/review",
+   "payload": "?%ff=%fe",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/transactions/review",
+   "payload": "?__proto__[x]=1",
+   "status": 200
+  },
+  {
+   "route": "query GET /api/admin/transactions/review",
+   "payload": "?id[]=1&id[]=2",
+   "status": 200
+  },
+  {
+   "route": "RAW socket",
+   "payload": "dup host",
+   "status": 200
+  },
+  {
+   "route": "RAW socket",
+   "payload": "host with NUL-ish",
+   "status": 200
+  },
+  {
+   "route": "RAW socket",
+   "payload": "HTTP/0.9",
+   "status": 200
+  }
+ ],
+ "unexpected2xxCount": 0,
+ "unexpected2xx": [],
+ "histogram": {
+  "POST /api/auth/signup -> 400": 151,
+  "POST /api/auth/signup -> 409": 12,
+  "POST /api/auth/signup -> 201": 37,
+  "POST /api/auth/signup -> 405": 5,
+  "POST /api/auth/signup -> 204": 1,
+  "POST /api/auth/login -> 400": 107,
+  "POST /api/auth/login -> 401": 8,
+  "POST /api/auth/login -> 429": 31,
+  "POST /api/auth/login -> 405": 5,
+  "POST /api/auth/login -> 204": 1,
+  "POST /api/auth/forgot-password -> 400": 79,
+  "POST /api/auth/forgot-password -> 200": 13,
+  "POST /api/auth/forgot-password -> 405": 5,
+  "POST /api/auth/forgot-password -> 204": 1,
+  "POST /api/auth/reset-password -> 400": 146,
+  "POST /api/auth/reset-password -> 405": 5,
+  "POST /api/auth/reset-password -> 204": 1,
+  "POST /api/drops -> 400": 136,
+  "POST /api/drops -> 201": 64,
+  "POST /api/drops -> 200": 2,
+  "POST /api/drops -> 405": 3,
+  "POST /api/drops -> 204": 1,
+  "POST /api/drops/:id/publish -> 400": 254,
+  "POST /api/drops/:id/publish -> 405": 5,
+  "POST /api/drops/:id/publish -> 204": 1,
+  "POST /api/checkout -> 400": 239,
+  "POST /api/checkout -> 201": 15,
+  "POST /api/checkout -> 405": 5,
+  "POST /api/checkout -> 204": 1,
+  "POST /api/dev/payments/pay -> 400": 85,
+  "POST /api/dev/payments/pay -> 404": 25,
+  "POST /api/dev/payments/pay -> 200": 36,
+  "POST /api/dev/payments/pay -> 405": 5,
+  "POST /api/dev/payments/pay -> 204": 1,
+  "POST /api/dev/payments/refund -> 400": 132,
+  "POST /api/dev/payments/refund -> 404": 1,
+  "POST /api/dev/payments/refund -> 200": 1,
+  "POST /api/dev/payments/refund -> 409": 12,
+  "POST /api/dev/payments/refund -> 405": 5,
+  "POST /api/dev/payments/refund -> 204": 1,
+  "POST /api/admin/login -> 400": 108,
+  "POST /api/admin/login -> 401": 31,
+  "POST /api/admin/login -> 429": 7,
+  "POST /api/admin/login -> 405": 5,
+  "POST /api/admin/login -> 204": 1,
+  "POST /api/admin/sellers/:id/clear-flag -> 400": 57,
+  "POST /api/admin/sellers/:id/clear-flag -> 200": 1,
+  "POST /api/admin/sellers/:id/clear-flag -> 409": 34,
+  "POST /api/admin/sellers/:id/clear-flag -> 405": 5,
+  "POST /api/admin/sellers/:id/clear-flag -> 204": 1,
+  "GET /api/checkout/status?id= -> 404": 53,
+  "GET /api/checkout/status?id= -> 431": 2,
+  "GET /api/files/:id/original?exp&sig -> 403": 53,
+  "GET /api/files/:id/original?exp&sig -> 431": 2,
+  "GET /api/files/:id/original (id) -> 403": 40,
+  "GET /api/files/:id/original (id) -> 500": 9,
+  "GET /api/files/:id/original (id) -> 308": 1,
+  "GET /api/files/:id/original (id) -> 431": 2,
+  "GET /api/files/:id/original (id) -> 404": 3,
+  "GET /api/files/:id/preview -> 404": 43,
+  "GET /api/files/:id/preview -> 500": 9,
+  "GET /api/files/:id/preview -> 308": 1,
+  "GET /api/files/:id/preview -> 431": 2,
+  "POST /api/files/:id/signed-url -> 404": 43,
+  "POST /api/files/:id/signed-url -> 500": 9,
+  "POST /api/files/:id/signed-url -> 308": 1,
+  "POST /api/files/:id/signed-url -> 431": 2,
+  "GET /api/public/drops/:linkId -> 404": 40,
+  "GET /api/public/drops/:linkId -> 500": 9,
+  "GET /api/public/drops/:linkId -> 308": 4,
+  "GET /api/public/drops/:linkId -> 431": 2,
+  "GET /api/drops/:id -> 404": 40,
+  "GET /api/drops/:id -> 500": 9,
+  "GET /api/drops/:id -> 308": 4,
+  "GET /api/drops/:id -> 431": 2,
+  "POST /api/drops/:id/publish (id) -> 400": 40,
+  "POST /api/drops/:id/publish (id) -> 500": 9,
+  "POST /api/drops/:id/publish (id) -> 308": 1,
+  "POST /api/drops/:id/publish (id) -> 431": 2,
+  "POST /api/drops/:id/publish (id) -> 404": 2,
+  "POST /api/drops/:id/publish (id) -> 405": 1,
+  "POST /api/drops/:id/unpublish -> 404": 42,
+  "POST /api/drops/:id/unpublish -> 500": 9,
+  "POST /api/drops/:id/unpublish -> 308": 1,
+  "POST /api/drops/:id/unpublish -> 431": 2,
+  "POST /api/drops/:id/unpublish -> 405": 1,
+  "POST /api/drops/:id/files (id) -> 404": 42,
+  "POST /api/drops/:id/files (id) -> 500": 9,
+  "POST /api/drops/:id/files (id) -> 308": 1,
+  "POST /api/drops/:id/files (id) -> 431": 2,
+  "POST /api/drops/:id/files (id) -> 405": 1,
+  "POST /api/webhooks/:provider -> 404": 40,
+  "POST /api/webhooks/:provider -> 500": 9,
+  "POST /api/webhooks/:provider -> 308": 4,
+  "POST /api/webhooks/:provider -> 431": 2,
+  "POST /api/admin/sellers/:id/clear-flag (id) -> 400": 40,
+  "POST /api/admin/sellers/:id/clear-flag (id) -> 500": 9,
+  "POST /api/admin/sellers/:id/clear-flag (id) -> 308": 1,
+  "POST /api/admin/sellers/:id/clear-flag (id) -> 431": 2,
+  "POST /api/admin/sellers/:id/clear-flag (id) -> 404": 3,
+  "PAGE /u/:linkId -> 404": 40,
+  "PAGE /u/:linkId -> 500": 9,
+  "PAGE /u/:linkId -> 308": 2,
+  "PAGE /u/:linkId -> 431": 2,
+  "PAGE /u/:linkId -> 200": 2,
+  "PAGE /pay/mock/:sessionId -> 404": 40,
+  "PAGE /pay/mock/:sessionId -> 500": 9,
+  "PAGE /pay/mock/:sessionId -> 308": 4,
+  "PAGE /pay/mock/:sessionId -> 431": 2,
+  "PAGE /dashboard/drops/:id -> 404": 40,
+  "PAGE /dashboard/drops/:id -> 500": 9,
+  "PAGE /dashboard/drops/:id -> 308": 4,
+  "PAGE /dashboard/drops/:id -> 431": 2,
+  "PAGE /admin/sellers/:id/transactions -> 404": 43,
+  "PAGE /admin/sellers/:id/transactions -> 500": 9,
+  "PAGE /admin/sellers/:id/transactions -> 308": 1,
+  "PAGE /admin/sellers/:id/transactions -> 431": 2,
+  "PAGE /reset-password?token= -> 200": 53,
+  "PAGE /reset-password?token= -> 431": 2,
+  "PAGE /login?error= -> 200": 53,
+  "PAGE /login?error= -> 431": 2,
+  "GET /api/auth/google/callback -> 307": 53,
+  "GET /api/auth/google/callback -> 431": 2,
+  "POST /api/webhooks/mock (signed) -> 400": 366,
+  "POST /api/webhooks/mock (signed) -> 200": 164,
+  "POST /api/webhooks/mock (signed raw) -> 400": 7,
+  "POST /api/webhooks/mock (signed raw) -> 413": 2,
+  "POST /api/webhooks/mock (sig hdr) -> 401": 11,
+  "POST /api/webhooks/:provider (name) -> 401": 1,
+  "POST /api/webhooks/:provider (name) -> 404": 5,
+  "POST /api/webhooks/:provider (name) -> 308": 2,
+  "cookie GET /api/auth/me -> 401": 38,
+  "cookie GET /api/admin/me -> 401": 37,
+  "cookie POST /api/checkout -> 201": 39,
+  "cookie GET /admin/sellers/flagged -> 307": 38,
+  "cookie GET /dashboard -> 307": 38,
+  "cookie GET /api/admin/sellers/flagged -> 401": 37,
+  "cookie GET /api/earnings -> 401": 38,
+  "cookie GET /api/admin/me -> 200": 1,
+  "cookie GET /admin/sellers/flagged -> 200": 1,
+  "cookie GET /api/admin/sellers/flagged -> 200": 1,
+  "cookie GET /api/auth/me -> 200": 1,
+  "cookie GET /api/admin/me -> 403": 1,
+  "cookie GET /dashboard -> 200": 1,
+  "cookie GET /api/admin/sellers/flagged -> 403": 1,
+  "cookie GET /api/earnings -> 200": 1,
+  "origin POST /api/admin/login -> 403": 10,
+  "origin POST /api/admin/sellers/:id/clear-flag -> 403": 10,
+  "origin POST /api/drops -> 403": 10,
+  "origin POST /api/auth/logout -> 403": 10,
+  "origin POST /api/admin/login -> 401": 2,
+  "origin POST /api/admin/sellers/:id/clear-flag -> 400": 3,
+  "origin POST /api/drops -> 201": 3,
+  "origin POST /api/auth/logout -> 200": 3,
+  "origin POST /api/admin/login -> 429": 1,
+  "origin POST /api/admin/login -> -1": 1,
+  "origin POST /api/admin/sellers/:id/clear-flag -> -1": 1,
+  "origin POST /api/drops -> -1": 1,
+  "origin POST /api/auth/logout -> -1": 1,
+  "cron GET -> 401": 8,
+  "cron POST -> 401": 8,
+  "cron GET -> 431": 1,
+  "cron POST -> 431": 1,
+  "POST /api/checkout (Idempotency-Key) -> 201": 2,
+  "POST /api/checkout (Idempotency-Key) -> 400": 4,
+  "POST /api/admin/login (XFF) -> 401": 8,
+  "POST /api/checkout (XFF) -> 201": 8,
+  "POST /api/admin/login (XFF) -> 431": 1,
+  "POST /api/checkout (XFF) -> 431": 1,
+  "POST /api/drops/:id/files -> 201": 10,
+  "POST /api/drops/:id/files -> 400": 6,
+  "POST /api/drops/:id/files -> 415": 2,
+  "POST /api/drops/:id/files -> 413": 1,
+  "POST /api/drops/:id/files -> -1": 1,
+  "POST /api/drops/:id/files -> 404": 1,
+  "xctx GET /api/admin/me -> 401": 1,
+  "xctx GET /api/admin/me -> 403": 2,
+  "xctx GET /api/admin/sellers/flagged -> 401": 1,
+  "xctx GET /api/admin/sellers/flagged -> 403": 2,
+  "xctx GET /api/admin/transactions/review -> 401": 1,
+  "xctx GET /api/admin/transactions/review -> 403": 2,
+  "xctx POST /api/admin/logout -> 200": 3,
+  "xctx POST /api/admin/sellers/8f2d27fe-3394-426f-bb85-faeb71e0f279/clear-flag -> 401": 1,
+  "xctx POST /api/admin/sellers/8f2d27fe-3394-426f-bb85-faeb71e0f279/clear-flag -> 403": 2,
+  "xctx GET /api/earnings -> 401": 1,
+  "xctx GET /api/earnings -> 200": 2,
+  "xctx GET /api/drops -> 401": 1,
+  "xctx GET /api/drops -> 200": 2,
+  "xctx GET /api/auth/me -> 401": 1,
+  "xctx GET /api/auth/me -> 200": 2,
+  "xctx GET /api/settings -> 200": 3,
+  "query GET /api/settings -> 200": 4,
+  "query GET /api/settings -> 431": 1,
+  "query GET /api/earnings -> 200": 4,
+  "query GET /api/earnings -> 431": 1,
+  "query GET /api/drops -> 200": 4,
+  "query GET /api/drops -> 431": 1,
+  "query GET /api/auth/me -> 200": 4,
+  "query GET /api/auth/me -> 431": 1,
+  "query GET /api/admin/me -> 200": 4,
+  "query GET /api/admin/me -> 431": 1,
+  "query GET /api/admin/sellers/flagged -> 200": 4,
+  "query GET /api/admin/sellers/flagged -> 431": 1,
+  "query GET /api/admin/transactions/review -> 200": 4,
+  "query GET /api/admin/transactions/review -> 431": 1,
+  "RAW socket -> 500": 3,
+  "RAW socket -> 404": 1,
+  "RAW socket -> 400": 7,
+  "RAW socket -> 431": 3,
+  "RAW socket -> 200": 3,
+  "RAW socket -> 308": 1,
+  "RAW socket -> 0": 2,
+  "RAW socket -> 401": 1
+ }
+}

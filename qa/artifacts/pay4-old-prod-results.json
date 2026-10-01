@@ -1,0 +1,50 @@
+[
+  {
+    "id": "PROD-1 (M3 / mock disabled)",
+    "name": "NODE_ENV=production, no MOCK_PAYMENTS_ENABLED, localhost APP_URL: checkout 503, VALID-signature webhook 503 (no state change), dev pay 404, mock page 404",
+    "result": "PASS",
+    "evidence": "{\"checkout\":503,\"webhook\":503,\"pay\":404,\"page\":404}"
+  },
+  {
+    "id": "PROD-2",
+    "name": "production + MOCK_PAYMENTS_ENABLED=1 + PUBLIC APP_URL (https://unveil.link): still disabled",
+    "result": "PASS",
+    "evidence": "{\"checkout\":503,\"webhook\":503,\"pay\":404,\"page\":404}"
+  },
+  {
+    "id": "PROD-3",
+    "name": "production + flag + deceptive hosts (http://localhost.evil.com, http://localhost@evil.com, http://127.0.0.1.evil.com): still disabled",
+    "result": "PASS",
+    "evidence": "http://localhost.evil.com:ok http://localhost@evil.com:ok http://127.0.0.1.evil.com:ok http://evil.com/localhost:ok"
+  },
+  {
+    "id": "PROD-4 (config residual risk)",
+    "name": "mock allowed in production when flag=1 + localhost APP_URL (documented e2e exception). Verify that exception works and record the risk: a prod deploy that accidentally sets both is NOT guarded",
+    "result": "PASS",
+    "evidence": "exception works (201) — only when both flag and loopback APP_URL are set"
+  },
+  {
+    "id": "PROD-5 missing/short secret fails closed",
+    "name": "PAYMENT_WEBHOOK_SECRET 31 chars / empty / 5 chars (truly-unset not testable: Next auto-loads the worktree .env): checkout 503 + webhook 503 even in non-prod-flag mode (local build flag on)",
+    "result": "PASS",
+    "evidence": "31ch:503/503 0ch:503/503 5ch:503/503"
+  },
+  {
+    "id": "PROD-6 unknown PAYMENT_PROVIDER",
+    "name": "PAYMENT_PROVIDER=stripe / segpay (not registered) → checkout 503 (fails closed), not fallback to mock",
+    "result": "PASS",
+    "evidence": "503 payments_unavailable"
+  },
+  {
+    "id": "PROD-7 test card in prod",
+    "name": "no test-card acceptance in prod: /api/dev/payments/pay 404 for card 4242 (covered by PROD-1/2/3: pay=404) and no tx became succeeded",
+    "result": "PASS",
+    "evidence": "tx remained pending across all prod-mode probes"
+  },
+  {
+    "id": "PROD-8 non-'production' NODE_ENV",
+    "name": "R2: config.mockPaymentsAllowed is FALSE for NODE_ENV=staging (default-deny)",
+    "result": "PASS",
+    "evidence": "NODE_ENV=staging → mockPaymentsAllowed=false (R2: default-deny; was true in round 1)"
+  }
+]

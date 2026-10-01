@@ -1,0 +1,272 @@
+[
+  {
+    "id": "M3-11 / IDEM-1",
+    "name": "same sale webhook 3x (identical bytes) → 1 ledger posting (3 lines), 1 succeeded tx, balance credited once",
+    "result": "PASS",
+    "evidence": "outcomes processed,duplicate,duplicate; ledger lines 3, sum 1560"
+  },
+  {
+    "id": "IDEM-2",
+    "name": "12 concurrent identical deliveries → exactly one processed, 11 duplicates, 3 ledger lines, balance +1560 once",
+    "result": "PASS",
+    "evidence": "1 processed + 11 duplicate (all 200); seller ledger delta 1560"
+  },
+  {
+    "id": "IDEM-3",
+    "name": "12 concurrent deliveries with DIFFERENT event ids + different processor tx ids for the same payment → one sale posting",
+    "result": "PASS",
+    "evidence": "200:processed 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored 200:ignored"
+  },
+  {
+    "id": "IDEM-4",
+    "name": "same sale, new event id (sequential) → ignored/duplicate, not a second posting; same event id with different type isn't confused",
+    "result": "PASS",
+    "evidence": "second sale new evt: duplicate/undefined; new evt+new saleId: ignored/sale_succeeded_but_succeeded; fail-after-success: ignored/sale_failed_but_succeeded; refund reusing a sale's event id: duplicate/undefined (state succeeded/0/mocktx_768a2f873323df4608a5b809)"
+  },
+  {
+    "id": "IDEM-5",
+    "name": "amount mismatch sale (tampered amount in signed event) → rejected, tx stays pending, no ledger",
+    "result": "PASS",
+    "evidence": "mismatch→rejected/amount_mismatch; tx pending, no ledger"
+  },
+  {
+    "id": "IDEM-5b",
+    "name": "after a REJECTED amount-mismatch sale event, the correct sale event for the same payment (same processor tx id, new event id) is still processed",
+    "result": "PASS",
+    "evidence": "processed"
+  },
+  {
+    "id": "IDEM-5c",
+    "name": "currency mismatch (EUR) sale rejected with no state change",
+    "result": "PASS",
+    "evidence": "EUR→amount_mismatch"
+  },
+  {
+    "id": "IDEM-5d",
+    "name": "a sale_succeeded for an UNKNOWN reference (ignored) does not burn the dedupe key of a later legit sale with the same processor id",
+    "result": "PASS",
+    "evidence": "early ignored; legit processed"
+  },
+  {
+    "id": "M3-10 / SIG-1",
+    "name": "webhook rejected: missing header",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-2",
+    "name": "webhook rejected: empty header",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-3",
+    "name": "webhook rejected: garbage header",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-4",
+    "name": "webhook rejected: truncated v1 (63 hex)",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-5",
+    "name": "webhook rejected: truncated v1 (half)",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-6",
+    "name": "webhook rejected: empty v1",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-7",
+    "name": "webhook rejected: no t",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-8",
+    "name": "webhook rejected: wrong secret",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-9",
+    "name": "webhook rejected: empty-string secret",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-10",
+    "name": "webhook rejected: stale (-301s)",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-11",
+    "name": "webhook rejected: stale (-1 day)",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-12",
+    "name": "webhook rejected: future (+10min)",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-13",
+    "name": "webhook rejected: t tampered after signing",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-14",
+    "name": "webhook rejected: tampered body (amount changed after signing)",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-15",
+    "name": "webhook rejected: body with trailing whitespace after signing",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-16",
+    "name": "webhook rejected: uppercase-hex + valid secret but sig over different body",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-17",
+    "name": "webhook rejected: signature of body signed w/o timestamp prefix (raw HMAC)",
+    "result": "PASS",
+    "evidence": "401 invalid_signature"
+  },
+  {
+    "id": "M3-10 / SIG-18",
+    "name": "wrong content-type (text/plain, form-urlencoded, none) with VALID signature: not processed as an exploitable bypass",
+    "result": "PASS",
+    "evidence": "text/plain→200/processed (tx now succeeded; body is HMAC-verified JSON so content-type is not security relevant)"
+  },
+  {
+    "id": "SIG-19",
+    "name": "valid signature w/ OK body processes (control) and replay of the exact signed request later is duplicate",
+    "result": "PASS",
+    "evidence": "replay of byte-identical signed request inside window → duplicate"
+  },
+  {
+    "id": "SIG-20",
+    "name": "stale replay: previously valid request replayed > tolerance (simulated by old t) rejected even though event id is new",
+    "result": "PASS",
+    "evidence": "401"
+  },
+  {
+    "id": "SIG-21",
+    "name": "tolerance boundary: t=-290s accepted, t=+290s accepted",
+    "result": "PASS",
+    "evidence": "both 200"
+  },
+  {
+    "id": "SIG-22",
+    "name": "unknown provider paths → 404 no state change: /stripe /paypal /__proto__ /constructor /MOCK /mock%2f..",
+    "result": "PASS",
+    "evidence": "stripe:404 paypal:404 __proto__:404 constructor:404 toString:404 MOCK:404 mock%20:404 ..%2fmock:404 segpay:404 ccbill:404"
+  },
+  {
+    "id": "SIG-23",
+    "name": "timing-safe compare (code review): crypto.timingSafeEqual on equal-length buffers, always executed, constant-time candidate padding",
+    "result": "PASS",
+    "evidence": "signature.ts uses timingSafeEqual on 32-byte buffers; non-hex candidate compares against zero buffer"
+  },
+  {
+    "id": "SIG-24",
+    "name": "oversized body (300 KB) → 413 and nothing stored beyond cap; GET/PUT/DELETE method not allowed",
+    "result": "PASS",
+    "evidence": "POST 413, GET 405"
+  },
+  {
+    "id": "SIG-25",
+    "name": "rejected deliveries are logged (signature_valid=false, payload truncated ≤1KiB) and log flooding is limited (60/min/IP → 429)",
+    "result": "PASS",
+    "evidence": "60×401 then 10×429; max stored rejected payload 247 bytes"
+  },
+  {
+    "id": "SIG-26",
+    "name": "valid-signature but malformed payloads → 400 (schema), no state change: bad JSON, wrong types, negative/float/huge amounts, missing fields",
+    "result": "PASS",
+    "evidence": "amount float:400 amount negative:400 amount string:400 amount huge:400 type unknown:400 no data:400 currency 4 chars:400 badjson:400 array:400"
+  },
+  {
+    "id": "SEC-1 injection",
+    "name": "SQL injection / odd values in webhook reference, ids, failure_code: stored as data; no error, no schema damage",
+    "result": "PASS",
+    "evidence": "ref(' OR '1'='1):200/ignored ref('; DROP TABL):200/ignored ref(00000000-000):200/ignored ref(${{7*7}}):200/ignored ref(985f062a-a74):200/ignored ref(\\):200/ignored ref(é😀):200/ignored; tx still succeeded, failure_code=null"
+  },
+  {
+    "id": "SEC-1b NUL byte",
+    "name": "signed event containing U+0000 in id/reference/failure_code → clean 4xx or handled (not 500 retry-storm)",
+    "result": "PASS",
+    "evidence": "reference:400 event id:400 failure_code:400"
+  },
+  {
+    "id": "SEC-2 mass-assign",
+    "name": "extra/unknown fields in webhook JSON (status, seller_id, platform_fee_cents, amount_cents at top-level) cannot change fee split / destination",
+    "result": "PASS",
+    "evidence": "200 processed; split unchanged 1560/200"
+  },
+  {
+    "id": "OOO-5b",
+    "name": "refund WITHOUT merchant reference (processor sale id only) before the sale → parked; when sale (with processor id) arrives → applied",
+    "result": "PASS",
+    "evidence": "parked then applied via processor id match; refunded"
+  },
+  {
+    "id": "M3-12 / OOO-1",
+    "name": "refund (with reference) before sale → parked(200), then sale arrives → refund applied, final refunded & ledger nets 0",
+    "result": "PASS",
+    "evidence": "parked→applied: [{\"outcome\":\"processed\",\"outcome_detail\":\"applied_after_sale\"}]"
+  },
+  {
+    "id": "OOO-2",
+    "name": "chargeback before sale → parked, then sale → charged_back, ledger nets to 0 (no chargeback fee set)",
+    "result": "PASS",
+    "evidence": "charged_back, ledger 0"
+  },
+  {
+    "id": "OOO-3",
+    "name": "partial refund + chargeback + refund all arrive before sale, in order → applied in received order after sale; no over-reversal; state consistent",
+    "result": "PASS",
+    "evidence": "final succeeded reversed=1200 ledgerSum=624; events [\"500:processed/applied_after_sale\",\"700:processed/applied_after_sale\",\"1000:rejected/over_refund\"]"
+  },
+  {
+    "id": "OOO-4",
+    "name": "parked over-refund: refunds exceeding gross arrive before sale → excess rejected after sale, never over-refunds",
+    "result": "PASS",
+    "evidence": "reversed 1500, status succeeded, events [{\"outcome\":\"processed\",\"outcome_detail\":\"applied_after_sale\"},{\"outcome\":\"rejected\",\"outcome_detail\":\"over_refund\"}]"
+  },
+  {
+    "id": "OOO-5",
+    "name": "refund/chargeback for an unknown transaction uuid (ref matches nothing) → ignored, nothing created; refund w/o reference but with unknown related sale → parked (stays parked forever; note)",
+    "result": "PASS",
+    "evidence": "unknown ref: ignored/unknown_transaction; non-uuid ref: ignored/unknown_transaction"
+  },
+  {
+    "id": "OOO-6",
+    "name": "failed sale then success (retry with same checkout) accepted; success then failed ignored",
+    "result": "PASS",
+    "evidence": "failed(processed) → succeeded; ledger 3 lines"
+  },
+  {
+    "id": "S2-05 audit",
+    "name": "3 random transactions traceable: txn → webhook_events (claim+dups) → ledger lines linked by webhook_event_id → refund event",
+    "result": "PASS",
+    "evidence": "6665d96e:refunded wh=2 ledger=6; 0c998b8e:charged_back wh=2 ledger=6; c6775f86:succeeded wh=3 ledger=6 (no receipt record exists: receipt email not built)"
+  }
+]

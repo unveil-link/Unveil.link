@@ -1,0 +1,20 @@
+money exit 0
+webhooks exit 0
+refunds exit 0
+checkout exit 0
+payouts exit 0
+races exit 0
+session exit 0
+retry exit 0
+prod exit 0
+r2a exit 0
+r2b exit 0
+r2c exit 0
+r2d exit 0
+n1 exit 0
+n2 exit 0
+n3 exit 0
+ui exit 1
+dblclick exit 1
+adminui exit 1
+DONE

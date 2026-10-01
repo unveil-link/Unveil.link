@@ -1,0 +1,11 @@
+PASS    NEW2-0       ORIGINAL: NUL byte in clear-flag note (was 500 'invalid byte sequence 0x00') -> 400 invalid_input, flag untouched, 0 audit rows — HTTP 400 {"error":"Input contains invalid characters","code":"invalid_input"} (no state change)
+PASS    NEW2-0b      clear-flag note: lone surrogate / 501-char / 1-char / whitespace-only / array / object / null / number -> all 400 — HTTP 400 9 variants -> 400/400/400/400/400/400/400/400/400 (no state change)
+PASS    NEW2-1       [1/6] 36-dash id on POST /api/admin/sellers/:id/clear-flag (was 500)  — HTTP 404 {"error":"Seller not found","code":"not_found"} (no state change)
+PASS    NEW2-2       [2/6] 36-dash id on /admin/sellers/:id/transactions page (was 500) — HTTP 404 <!DOCTYPE html><html id="__next_error__"><head><meta charSet="utf-8"/><meta name="viewport (no state change)
+PASS    NEW2-3       [3/6] 36-dash id on GET /api/checkout/status?id= (was 500) — HTTP 404 {"error":"Not found"} (no state change)
+PASS    NEW2-4       [4/6] 36-dash id on GET /api/files/:id/preview (was 500) — HTTP 404 {"error":"Not found"} (no state change)
+PASS    NEW2-5       [5/6] NUL in /api/dev/payments/pay sessionId (was 500) and in card — HTTP 400 {"error":"Input contains invalid characters","code":"invalid_input"} (no state change)
+PASS    NEW2-6       [6/6] NUL in signup displayName (was 500) — HTTP 400 {"error":"Input contains invalid characters","code":"invalid_input"} (no state change)
+PASS    NEW2-7       siblings of the six: every uuid-consuming path with 36 dashes / other uuid-lookalikes -> 404 (never 500) — 108 requests, status histogram {"400":9,"403":9,"404":90}; POST /api/checkout dropId=36 dashes -> 400
+
+Saved pay4-six-results.json: PASS 9 FAIL 0 BLOCKED 0 NOTE 0

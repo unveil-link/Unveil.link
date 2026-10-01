@@ -1,0 +1,8 @@
+[
+  {
+    "id": "FLOOD-4",
+    "name": "D: hostile X-Forwarded-For values (non-IP strings, 5 KB, empty entries, IPv6, markup) are accepted as 'ip' text but truncated to 64 chars; no 5xx",
+    "result": "PASS",
+    "evidence": "statuses 401/401/401/401/401/401/401/401; max stored ip length 64 (<=64 ✓)"
+  }
+]

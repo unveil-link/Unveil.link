@@ -1,0 +1,3 @@
+PASS    FLOOD-4      D: hostile X-Forwarded-For values (non-IP strings, 5 KB, empty entries, IPv6, markup) are accepted as 'ip' text but truncated to 64 chars; no 5xx — statuses 401/401/401/401/401/401/401/401; max stored ip length 64 (<=64 ✓)
+
+Saved pay4-flood-results.json: PASS 1 FAIL 0 BLOCKED 0 NOTE 0

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "AUD-1a",
+    "name": "append-only: UPDATE / DELETE / TRUNCATE / TRUNCATE CASCADE / MERGE / INSERT..ON CONFLICT DO UPDATE all refused as the app role (table owner, non-superuser); 0 rows changed",
+    "result": "PASS",
+    "evidence": "16 mutation paths refused (UPDATE all✓, UPDATE admin_email✓, UPDATE created_at✓, UPDATE admin_id NULL✓, DELETE all✓, DELETE one✓, DELETE USING✓, TRUNCATE✓, TRUNCATE CASCADE✓, TRUNCATE admins CASCADE (FK-cascaded truncate)✓, TRUNCATE admins RESTART IDENTITY CASCADE✓, MERGE update✓, MERGE delete✓, INSERT ON CONFLICT DO UPDATE✓, UPDATE via CTE✓, UPDATE ... FROM✓); WHERE-false no-ops: UPDATE \"ok\", DELETE \"ok\" (no row to protect); md5 of whole table before==after (1789 rows)"
+  },
+  {
+    "id": "AUD-1b",
+    "name": "bypass attempts: DISABLE/DROP TRIGGER, ALTER..DISABLE, rename/replace function, inheritance child (INHERITS), ALTER TYPE, DROP TABLE: as OWNER (the app role in the documented single-role setup) these succeed (rolled back here); session_replication_role needs superuser",
+    "result": "PASS",
+    "evidence": "app role=unveil (superuser=false, audit_log owner=unveil); triggers enabled after probes: audit_log_fill_email,audit_log_no_truncate,audit_log_no_update. ALTER TABLE .. DISABLE TRIGGER audit_log_no_update + UPDATE: ALLOWED | DROP TRIGGER audit_log_no_truncate: ALLOWED | ALTER TABLE .. DISABLE TRIGGER ALL: ALLOWED | CREATE OR REPLACE FUNCTION audit_log_append_only (neutered): ALLOWED | CREATE TABLE child INHERITS (audit_log) + forged row + UPDATE through parent: ALLOWED | SET session_replication_role = replica: DENIED (permission denied to set parameter \"session_replic) | DROP TABLE audit_log CASCADE: ALLOWED | ALTER TABLE audit_log RENAME TO x: ALLOWED | COPY audit_log TO/FROM program (needs pg_execute_server_program): DENIED (permission denied to COPY to or from an external p). => As the TABLE OWNER the immutability can be removed (documented limit (a)); superuser-only: session_replication_role (denied here); non-owner result in AUD-14"
+  },
+  {
+    "id": "AUD-3",
+    "name": "admin_email snapshot: every actor row has it (login/logout/clear/create/reset), survives admin email rename (old rows keep OLD email, new rows NEW email), system rows have NULL admin_id+email, trigger fills it for raw inserts; no admin_id row lacks email",
+    "result": "PASS",
+    "evidence": "rename: 3 old rows keep \"adm-snap-mupxglha0…\", 2 new rows carry the new email; raw INSERT gets email by trigger; 0 actor rows w/o email. admin_id-NULL rows: admin_created_cli×1(email 0), admin_disabled×21(email 21), admin_enabled×12(email 12), admin_login_failed×1343(email 1343), admin_login_flood×3(email 0), payments_janitor_run×13(email 0), seller_flagged_repeat_chargebacks×68(email 0). INFO: an email RENAME by plain SQL is itself not audited (0 rows), only disable/enable are"
+  },
+  {
+    "id": "AUD-6",
+    "name": "failed-login rows: right reason/ip/email/timestamp; attempted PASSWORD never stored (grep whole table); email lower-cased, trimmed, capped at 100 chars; oversize/NUL/XSS email never reaches the table; hostile X-Forwarded-For is stored escaped-as-data (<=64 chars)",
+    "result": "PASS",
+    "evidence": "reason/ip/email/ts correct for unknown/bad_password/disabled; 3 rows; password strings (6) + bcrypt hashes absent from the entire audit_log; 213-char email stored as 100 chars; 5 markup/NUL/SQLi-looking emails -> HTTP 400/400/400/401/400 (400 by schema), 0 stored with <>\"/NUL; X-Forwarded-For is NOT validated as an IP: stored verbatim up to 64 chars (e.g. \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", len 64) -> any future audit viewer MUST escape the ip column (INFO)"
+  },
+  {
+    "id": "AUD-10",
+    "name": "concurrent create/reset/disable: 6 simultaneous createAdmin(same email) -> exactly 1 created; losers fail cleanly (raw DB error text in CLI output = INFO); 10 concurrent clear-flag on one seller -> exactly one 200 + one audit row; toggling disable/enable 20x writes 20 audit rows",
+    "result": "PASS",
+    "evidence": "createAdmin x6 concurrent -> 1 created, 5 rejected (4 with raw \"duplicate key … admins_email_key\" text — the CLI prints it verbatim: INFO); clear-flag x10 -> [200,409,409,409,409,409,409,409,409,409] with exactly one audit row; 20 disable/enable toggles -> 20 audit rows"
+  },
+  {
+    "id": "AUD-12",
+    "name": "create-admin CLI edges: duplicate (exit!=0, nothing written, no audit), bad emails (spaces, no TLD, 255 chars, empty), unicode/homoglyph emails (accepted by CLI but cannot log in via API = INFO), NUL in email/password (in-process; argv/env cannot carry NUL), lone surrogate, uppercase normalised; failed CLI writes no audit row",
+    "result": "PASS",
+    "evidence": "duplicate refused (case-insensitive) with clean message; 8 malformed emails exit≠0 (1/1/2/1/1/1/1/1) without stack traces; in-process: nul-email→\"invalid email\"; nul-pw→\"password contains invalid charac\"; surrogate-email→\"invalid email\"; surrogate-pw→\"password contains invalid charac\"; 300-char→\"invalid email\"; audit rows added == successful creates (3); INFO: unicode email ACCEPTED by CLI but API login -> 400 (zod email is ASCII-only: such an admin can never sign in); Cyrillic-homoglyph email ACCEPTED (look-alike of an existing admin identity in audit rows)"
+  }
+]

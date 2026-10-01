@@ -1,0 +1,6 @@
+trial0: attacker got 8 sessions; sessions created AFTER the revoke committed: 3; live sessions now: 3; /api/admin/me 200 with old-password sessions: 3
+trial1: attacker got 7 sessions; sessions created AFTER the revoke committed: 2; live sessions now: 2; /api/admin/me 200 with old-password sessions: 2
+trial2: attacker got 7 sessions; sessions created AFTER the revoke committed: 2; live sessions now: 2; /api/admin/me 200 with old-password sessions: 2
+trial3: attacker got 7 sessions; sessions created AFTER the revoke committed: 1; live sessions now: 1; /api/admin/me 200 with old-password sessions: 1
+trial4: attacker got 7 sessions; sessions created AFTER the revoke committed: 2; live sessions now: 2; /api/admin/me 200 with old-password sessions: 2
+TRIALS WITH A SURVIVING OLD-PASSWORD SESSION: 5/5

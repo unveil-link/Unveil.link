@@ -1,0 +1,188 @@
+[
+  {
+    "id": "BUG-1a",
+    "name": "12 concurrent identical checkouts (same drop+email, no key) → exactly one new txn (201), rest reuse (200, reused:true), 1 DB row",
+    "result": "PASS",
+    "evidence": "1×201 + 11×200 reused; 1 row; same session mocksess_e527d…"
+  },
+  {
+    "id": "BUG-1b",
+    "name": "12 concurrent with the SAME Idempotency-Key → one txn",
+    "result": "PASS",
+    "evidence": "1 txn"
+  },
+  {
+    "id": "BUG-1c",
+    "name": "Idempotency-Key sequential replay → 200 reused, identical body; different bodies (extra/ignored fields) with same key return same txn",
+    "result": "PASS",
+    "evidence": "201 then 200 reused"
+  },
+  {
+    "id": "BUG-1d",
+    "name": "same key, DIFFERENT drop (same email) → 409 idempotency_key_reused; same key via dropId vs linkId of same drop → same txn",
+    "result": "PASS",
+    "evidence": "409 + same txn for dropId variant"
+  },
+  {
+    "id": "BUG-1e",
+    "name": "same key + different EMAIL → separate txns (keys namespaced by email); same key across different sellers' drops with different emails fine; key from another buyer can't fetch their session",
+    "result": "PASS",
+    "evidence": "3 distinct txns/sessions"
+  },
+  {
+    "id": "BUG-1f",
+    "name": "key edge cases: 128 chars OK, 129 → 400, spaces/control/unicode → 400, quote/semicolon printable → OK (stored as data), whitespace-only → treated as no key, case-sensitive keys, email case-insensitive",
+    "result": "PASS",
+    "evidence": "128:201 129:400 \"has space\":400 \"tab\\there\":400 \"ünï\":400 sqli:201 blank:201"
+  },
+  {
+    "id": "BUG-1g",
+    "name": "after payment: same email+drop → NEW txn (201) not the paid one; same KEY after payment → returns the succeeded txn (200)",
+    "result": "PASS",
+    "evidence": "new after paid: 201; keyed replay after paid: 200 status=succeeded same=true (returns paid session URL; pay endpoint on it is idempotent)"
+  },
+  {
+    "id": "BUG-1h",
+    "name": "dead keyed txn (declined? expired) releases key: backdate 31 min → same key gets a NEW txn; old one failed/session_expired",
+    "result": "PASS",
+    "evidence": "new txn, old failed/session_expired, key released"
+  },
+  {
+    "id": "BUG-1i",
+    "name": "cross-drop: same email, two drops → two independent pending txns; and different emails on same drop don't see each other's session (no hijack)",
+    "result": "PASS",
+    "evidence": "isolated per (drop,email)"
+  },
+  {
+    "id": "BUG-1j",
+    "name": "stale price on reuse: seller changes price (SQL; no edit API on branch) after pending created → reuse returns the OLD pinned price/fees; a NEW buyer gets new price (record)",
+    "result": "PASS",
+    "evidence": "R3 by-design change (was INFO-1): same buyer after price change → old txn failed/superseded, new txn amount=5000; new buyer 5000; settled at 5000 (succeeded)"
+  },
+  {
+    "id": "BUG-1k",
+    "name": "reuse oracle (privacy): any caller who knows buyer email + drop gets reused:true and the buyer's live checkoutUrl",
+    "result": "PASS",
+    "evidence": "R3 NEW-1 FIXED: second client got 201 reused:false with its OWN session (24daeb1effed ≠ victim's); control same shape"
+  },
+  {
+    "id": "BUG-1l",
+    "name": "unique pending index / advisory-lock stress: 60 concurrent mixed requests (same email ±keys, 3 drops, 10 emails) → no 5xx, ≤1 pending per (drop,email)",
+    "result": "PASS",
+    "evidence": "60 reqs: 50 ok, 10 409 (key reused across drops – expected), 0×5xx, 0 duplicate pendings"
+  },
+  {
+    "id": "BUG-1m",
+    "name": "100 concurrent identical checkouts (pool pressure) complete without hang/5xx",
+    "result": "PASS",
+    "evidence": "100 reqs in 406 ms, 1 txn"
+  },
+  {
+    "id": "BUG-1n",
+    "name": "double-submit of the pay action on one reused session = one charge (end-to-end: 2 checkouts → pay both URLs concurrently)",
+    "result": "PASS",
+    "evidence": "one charge, 3 lines"
+  },
+  {
+    "id": "BUG-2a",
+    "name": "wrong-amount sale then correct sale (same processor txn id, NEW event id) → processed, tx succeeded, 1 posting",
+    "result": "PASS",
+    "evidence": "rejected → processed; ledger 1560"
+  },
+  {
+    "id": "BUG-2b",
+    "name": "sale for UNKNOWN reference first (ignored/unknown_transaction), then legit sale with same processor id → processed",
+    "result": "PASS",
+    "evidence": "ignored → processed"
+  },
+  {
+    "id": "BUG-2c",
+    "name": "currency mismatch then correct → processed",
+    "result": "PASS",
+    "evidence": "ok"
+  },
+  {
+    "id": "BUG-2d",
+    "name": "no double posting after releasing claims: 3 wrong events then 8 CONCURRENT correct events (different event ids) → exactly 1 posting; later replays duplicate/ignored",
+    "result": "PASS",
+    "evidence": "pddddddd"
+  },
+  {
+    "id": "BUG-2e",
+    "name": "genuine duplicates unchanged: same event id ×3 → processed,duplicate,duplicate; same sale new event id AFTER success → duplicate (one posting); refund event dedupe; rejected over-refund event replays don't re-post",
+    "result": "PASS",
+    "evidence": "ok"
+  },
+  {
+    "id": "BUG-2f",
+    "name": "12 concurrent identical deliveries still exactly one processed (regression of IDEM-2)",
+    "result": "PASS",
+    "evidence": "1+11"
+  },
+  {
+    "id": "BUG-2g",
+    "name": "released-claim abuse: an attacker with valid signature can't use rejected/ignored events to flood ledger: 200 rejected over-refund events → 0 ledger change, webhook_events rows grow (log noise)",
+    "result": "PASS",
+    "evidence": "50 rejected events → 50 log rows, ledger unchanged (rejected rows are stored once each; no dedupe → log growth only possible with valid signatures)"
+  },
+  {
+    "id": "BUG-3a",
+    "name": "NUL in data.reference / event id / transaction_id / related id / failure_code / currency → 400 (not 500), rejected row logged, no state change, claim not left",
+    "result": "PASS",
+    "evidence": "reference:400 event id:400 transaction_id:400 related_transaction_id:400 failure_code:400 currency:400; 6 rejected rows; legit sale afterwards processed"
+  },
+  {
+    "id": "BUG-3b",
+    "name": "lone surrogate (\\ud800), >512-char strings, emoji (valid) → 400/400/ok; error row has no stack/PII",
+    "result": "PASS",
+    "evidence": "surrogate:400 513ch:400 emoji/long-valid:200/duplicate"
+  },
+  {
+    "id": "BUG-3c",
+    "name": "rejected-invalid payloads are IP-rate-limited (WEBHOOK_REJECTED 60/min) so they can't flood the log",
+    "result": "PASS",
+    "evidence": "60×400 then 429"
+  },
+  {
+    "id": "BUG-4a",
+    "name": "2 chargebacks → NOT flagged; 3rd → flagged (detail seller_flagged_for_review, reason, audit_log row once); 4th → still one audit row; verification_status untouched; seller can still be bought from",
+    "result": "PASS",
+    "evidence": "details -,-,seller_flagged_for_review,-; reason=\"3 chargebacks within 90 days (threshold 3)\"; 1 audit row; still verified & purchasable (no auto-ban)"
+  },
+  {
+    "id": "BUG-4b",
+    "name": "chargeback REPLAY (same event ×3) counts once; second chargeback on the SAME txn (new id) counts once; refunds don't count",
+    "result": "PASS",
+    "evidence": "replay×3 + dup cb on same tx + 3 refunds + 1 more distinct cb = 2 distinct → not flagged"
+  },
+  {
+    "id": "BUG-4c",
+    "name": "window: chargebacks older than 90 days don't count (2 at 91 d + 1 new → not flagged); 2 at 89 d + 1 new → flagged",
+    "result": "PASS",
+    "evidence": "91 d: flagged=false; 89 d: flagged=true (seller_flagged_for_review) [ledger created_at backdated in throwaway DB with append-only trigger temporarily disabled]"
+  },
+  {
+    "id": "BUG-4d",
+    "name": "4 SIMULTANEOUS chargebacks (distinct txns) → no deadlock/5xx, flagged exactly once, one audit row",
+    "result": "PASS",
+    "evidence": "processed,processed,seller_flagged_for_review,processed"
+  },
+  {
+    "id": "BUG-4e",
+    "name": "concurrent chargebacks ACROSS sellers (6 sellers × 3) don't deadlock; each flagged once",
+    "result": "PASS",
+    "evidence": "18 concurrent, 6 flagged"
+  },
+  {
+    "id": "BUG-4f",
+    "name": "parked chargebacks applied when sale lands also flag at threshold; partial chargebacks count as distinct txns; settings change (threshold 1) flags on first",
+    "result": "PASS",
+    "evidence": "parked×3 → flagged; threshold=1 + partial cb → flagged (seller_flagged_for_review)"
+  },
+  {
+    "id": "BUG-4g",
+    "name": "settings CHECK constraints (threshold ≥1, window 1..3650, ttl 1..10080, grace 0..43200)",
+    "result": "PASS",
+    "evidence": "chargeback_flag_threshold=0 rejected, chargeback_flag_window_days=0 rejected, chargeback_flag_window_days=4000 rejected, checkout_session_ttl_minutes=0 rejected, checkout_late_success_grace_minutes=-1 rejected"
+  }
+]

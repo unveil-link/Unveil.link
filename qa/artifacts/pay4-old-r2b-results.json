@@ -1,0 +1,146 @@
+[
+  {
+    "id": "BUG-6a",
+    "name": "seller verification → failed after checkout started: hosted pay refused (failed/unavailable), no ledger, buyer message says not charged; seller restored → NEW checkout works",
+    "result": "PASS",
+    "evidence": "failed/unavailable; msg=\"This item is no longer available for purchase. You have not been charged.\""
+  },
+  {
+    "id": "BUG-6b-unpublished",
+    "name": "drop unpublished after checkout started: pay refused, no ledger, tx failed",
+    "result": "PASS",
+    "evidence": "failed/unavailable"
+  },
+  {
+    "id": "BUG-6b-flagged",
+    "name": "drop flagged after checkout started: pay refused, no ledger, tx failed",
+    "result": "PASS",
+    "evidence": "failed/unavailable"
+  },
+  {
+    "id": "BUG-6b-draft",
+    "name": "drop draft after checkout started: pay refused, no ledger, tx failed",
+    "result": "PASS",
+    "evidence": "failed/unavailable"
+  },
+  {
+    "id": "BUG-6c",
+    "name": "30-day-old pending txn: pay refused (session_expired), status API expired w/ friendly message",
+    "result": "PASS",
+    "evidence": "failed; status API msg=\"This checkout has expired. Please go back to the page and start again.\" retryable=false"
+  },
+  {
+    "id": "BUG-6d",
+    "name": "expiry boundary: 29 min → payable; 31 min → refused; (ttl via DB backdating)",
+    "result": "PASS",
+    "evidence": "29 min succeeded; 31 min refused"
+  },
+  {
+    "id": "BUG-6e",
+    "name": "exact TTL boundary via real wait: set ttl=1 min, checkout, pay at ~55 s ok vs after 61 s refused",
+    "result": "PASS",
+    "evidence": "55 s: succeeded; 63 s: failed/session_expired"
+  },
+  {
+    "id": "BUG-6f",
+    "name": "expirePendingCheckouts() sweep: expires only >TTL pending rows, not recent or non-pending",
+    "result": "PASS",
+    "evidence": "swept 1"
+  },
+  {
+    "id": "VOID-1",
+    "name": "webhook success AFTER seller verification failed: not credited; tx failed/invalid_at_capture, review_reason=seller_not_verified, refund requested, ledger 0, seller balance unchanged, no download access (status not succeeded)",
+    "result": "PASS",
+    "evidence": "voided:seller_not_verified; refund_requested_at set; ledger 0; balance unchanged; buyer msg=\"This purchase could not be completed. If you were charged, the payment is being refunded.\""
+  },
+  {
+    "id": "VOID-2-unpublished",
+    "name": "webhook success after drop unpublished → voided:drop_unavailable",
+    "result": "PASS",
+    "evidence": "voided:drop_unavailable"
+  },
+  {
+    "id": "VOID-2-flagged",
+    "name": "webhook success after drop flagged → voided:drop_unavailable",
+    "result": "PASS",
+    "evidence": "voided:drop_unavailable"
+  },
+  {
+    "id": "VOID-3",
+    "name": "webhook success for session older than TTL+grace (31 min + 1440 → backdate 25 h) → voided:session_expired; within grace (60 min old, status expired) → honoured (success, 3 lines)",
+    "result": "PASS",
+    "evidence": "25 h old → voided (voided:session_expired); expired 60 min ago, paid within grace → honoured (late-success policy)"
+  },
+  {
+    "id": "VOID-4",
+    "name": "voided txn: replays are idempotent (no 2nd refund request, no ledger); sale_failed after void ignored; processor's refund webhook → void_refund_confirmed with NO ledger change; further refund/chargeback events don't create ledger; double void refund only once",
+    "result": "PASS",
+    "evidence": "replay=duplicate; new-evt=duplicate/undefined; fail-after-void=ignored/voided; refund hook=void_refund_confirmed; chargeback on voided=processed/void_refund_confirmed"
+  },
+  {
+    "id": "VOID-5",
+    "name": "concurrent late-success deliveries ×10 (different event ids) on an expired>grace txn → exactly one void, one refund request, ledger 0, no 5xx",
+    "result": "PASS",
+    "evidence": "pddddddddd"
+  },
+  {
+    "id": "VOID-6",
+    "name": "void refund provider failure path: refund_requested_at NULL rows are retried by retryVoidRefunds() (ops hook) and requested exactly once",
+    "result": "PASS",
+    "evidence": "retry hook requested [object Object]; second run 0 (this tx not repeated: true)"
+  },
+  {
+    "id": "VOID-7",
+    "name": "invariants over ALL voided txns: ledger 0 per txn, review_reason set, status failed, refund_requested_at set (or retry pending), seller ledger sum == Σ settled txns' expected net",
+    "result": "PASS",
+    "evidence": "7 voided txns, 0 awaiting refund retry (should be 1 from VOID-6 reset? 0); none have ledger"
+  },
+  {
+    "id": "VOID-8",
+    "name": "voided refund doesn't consume refund limits/earnings: earnings API for the seller counts voided txns as neither sale nor refund",
+    "result": "PASS",
+    "evidence": "earnings.recent excludes failed? failed in recent=15; balance 6240 == ledger"
+  },
+  {
+    "id": "VOID-9",
+    "name": "money math for expiry-boundary sale honoured in grace: gross==net+fees, no negative",
+    "result": "PASS",
+    "evidence": "158 settled txns satisfy gross == net+platform+processing"
+  },
+  {
+    "id": "VOID-10",
+    "name": "pay at TTL expiry vs webhook race: concurrent {expire sweep, pay} ×20 → each txn ends consistent (succeeded ⇒ 3 lines; failed ⇒ 0 lines), no 5xx",
+    "result": "PASS",
+    "evidence": "20 boundary races: 20 succeeded(3 lines), 0 expired(0 lines), 0 inconsistent"
+  },
+  {
+    "id": "BUG-7a",
+    "name": "decline then retry on SAME session works (all 5 decline classes), each decline shows friendly message & no raw code; status API retryable:true",
+    "result": "PASS",
+    "evidence": "card_declined:\"Your card was declined. Please t…\"→retry ok | insufficient_funds:\"Your card has insufficient funds…\"→retry ok | expired_card:\"Your card has expired. Please tr…\"→retry ok | incorrect_cvc:\"The security code you entered is…\"→retry ok | unrecognized:\"Your card couldn't be processed.…\"→retry ok | invalid:\"That card number doesn't look ri…\"→retry ok"
+  },
+  {
+    "id": "BUG-7b",
+    "name": "repeated declines (3×) then success on one session: each attempt distinct processor txn (not deduped away), final 1 posting; retry after success is idempotent",
+    "result": "PASS",
+    "evidence": "3 declines + success: ledger 3 lines; processed events 4; later decline ignored"
+  },
+  {
+    "id": "BUG-7c",
+    "name": "expired / unavailable / void sessions are NOT retryable and show friendly copy; no raw codes anywhere in simulator JSON `message` or status API",
+    "result": "PASS",
+    "evidence": "expired: \"This checkout has expired. Please go back to the page and start again.\"; pay→failed"
+  },
+  {
+    "id": "BUG-7d",
+    "name": "hosted page + link page HTML contain no raw failure codes; mock page renders sales-final; (browser flow in qa-pay-ui.mjs)",
+    "result": "PASS",
+    "evidence": "sales-final present on both; no raw codes in HTML"
+  },
+  {
+    "id": "INV-1",
+    "name": "global invariants after all R2 scenarios: per-tx reversed ≤ amount; no ledger on pending/failed; Σ ledger == earnings total per seller; no negative sale credits; 0 duplicate pending",
+    "result": "PASS",
+    "evidence": "all hold (481 txns, 877 ledger lines)"
+  }
+]

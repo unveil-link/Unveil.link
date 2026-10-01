@@ -1,0 +1,32 @@
+applied 001-010: 10
+pre: audit rows 8, hash 4f2c7a4b54731940110f9d16f84e0620; old FK: n (n=SET NULL); old delete of admin with history would null the FK
+--- npm run migrate (010 -> 011)
+applied 011_audit_hardening.sql
+done (1 applied)
+post: rows 8; original columns hash unchanged: YES
+FK now: r (r=RESTRICT); triggers: audit_log_fill_email,audit_log_no_truncate,audit_log_no_update
+backfill admin_email: admin_created_cli=cli-only@example.test ; admin_created_cli=NULL ; admin_login=hist-admin@example.test ; admin_login=second-hist@example.test ; admin_password_reset_cli=cli-only@example.test ; seller_flag_cleared=hist-admin@example.test
+system rows (janitor/chargeback) stay NULL email: 2/2; orphan CLI row (admin gone) NULL: 1/1
+second admin with history snapshot: second-hist@example.test
+--- immutability on migrated rows
+  UPDATE audit_log SET target='x' -> ERROR:  audit_log is append-only (UPDATE blocked)
+  DELETE FROM audit_log -> ERROR:  audit_log is append-only (DELETE blocked)
+  TRUNCATE audit_log -> ERROR:  audit_log is append-only (TRUNCATE blocked)
+  DELETE FROM admins WHERE id='00000000-0000-0000-0000-0000000000e1' -> ERROR:  admin 00000000-0000-0000-0000-0000000000e1 has audit history and cannot be deleted; disable it instead
+  DELETE FROM admins WHERE id='00000000-0000-0000-0000-0000000000e3' -> ERROR:  admin 00000000-0000-0000-0000-0000000000e3 has audit history and cannot be deleted; disable it instead
+  DELETE admin with NO history -> DELETE 1 (rows now 0=0 expected)
+  disable/enable audited: admin_disabled:hist-admin@example.test,admin_enabled:hist-admin@example.test
+--- re-run migrate (no-op) + 011 SQL applied manually 2 more times (idempotent; existing rows/hash untouched)
+up to date
+run2 011 OK
+run3 011 OK
+rows before/after manual re-runs: 10 / 10; triggers: 3 (3 expected); immutability still on: ERROR:  audit_log is append-only (UPDATE blocked)
+--- failed 011 rolls back atomically (SELECT 1/0 appended) on a clone at 010
+broken 011: [migration 011_audit_hardening.sql failed: division by zero ] recorded 011: [0] (0 expected); leftovers: admin_email col 0 buckets table 0 append-only trigger 0 (all 0 = rolled back); legacy row still mutable: y
+--- concurrent runners (advisory lock): 4 simultaneous 'npm run migrate' on a fresh DB, plus 011 while another connection holds audit_log lock
+applied lines per runner: 0 0 11 0  (sum must be 11) errors: 0 schema_migrations rows: 11 triggers on audit_log: 3
+--- QA-authored down (none ships) + re-upgrade preserves rows
+after down: rows 10
+applied 011_audit_hardening.sql
+done (1 applied)
+re-upgraded: rows 10, emails backfilled 7, immutable ERROR:  audit_log is append-only (UPDATE blocked)
