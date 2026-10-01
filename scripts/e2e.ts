@@ -1218,20 +1218,33 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
 
   // ---------------------------------------------------------------- round 2: QA fixes (items 1-7) over real HTTP
   const freshEmail = (tag: string) => `pay-${tag}+${stamp}-${crypto.randomBytes(3).toString("hex")}@example.test`;
-  const coFor = (email: string, headers: Record<string, string> = {}) =>
-    new Client_().req("POST", "/api/checkout", { json: { linkId: payLink, email, confirmOver18: true }, headers });
+  const coFor = (email: string, headers: Record<string, string> = {}, who: Client_ = new Client_()) =>
+    who.req("POST", "/api/checkout", { json: { linkId: payLink, email, confirmOver18: true }, headers });
   const payVia = async (sessionId: string, card: string) => (await (await new Client_().req("POST", "/api/dev/payments/pay", { json: { sessionId, card } })).json());
   const sessionIdOf = (b: { checkoutUrl: string }) => b.checkoutUrl.split("/").pop()!;
 
   await check("[pay#1] concurrent identical POST /api/checkout (x8, same drop+email) -> ONE pending transaction/session; Idempotency-Key honoured (same key = same txn, other drop = 409)", async () => {
     const em = freshEmail("conc");
-    const rs = await Promise.all(Array.from({ length: 8 }, () => coFor(em)));
+    // a real double click = same browser: same Idempotency-Key header (BuyForm sends one per page load)
+    const dk = crypto.randomUUID();
+    const rs = await Promise.all(Array.from({ length: 8 }, () => coFor(em, { "idempotency-key": dk })));
     assert(rs.every((r) => r.status === 200 || r.status === 201), `statuses ${rs.map((r) => r.status)}`);
     const bodies = await Promise.all(rs.map((r) => r.json()));
     eq(new Set(bodies.map((b) => b.transactionId)).size, 1, "one transaction id");
     eq(new Set(bodies.map((b) => b.checkoutUrl)).size, 1, "one session");
     eq(rs.filter((r) => r.status === 201).length, 1, "exactly one 201 (new), the rest 200 (reused)");
     eq((await db.query("SELECT count(*)::int AS n FROM transactions WHERE lower(buyer_email)=lower($1)", [em])).rows[0].n, 1, "one row in the DB");
+    // same browser by cookie (no key): the first response set an httpOnly buyer cookie, later requests reuse the session
+    const br = new Client_();
+    const em3 = freshEmail("cookie");
+    const c1 = await coFor(em3, {}, br);
+    eq(c1.status, 201, "first");
+    const sc = c1.headers.getSetCookie().find((x) => x.startsWith("unveil_buyer="));
+    assert(sc && /httponly/i.test(sc) && /samesite=lax/i.test(sc), `buyer cookie is httpOnly: ${sc}`);
+    const reps = await Promise.all(Array.from({ length: 5 }, () => coFor(em3, {}, br)));
+    assert(reps.every((r) => r.status === 200), `cookie replays 200 ${reps.map((r) => r.status)}`);
+    eq(new Set((await Promise.all(reps.map((r) => r.json()))).map((b) => b.transactionId)).size, 1, "same txn for the same browser");
+    eq((await c1.json()).transactionId, (await reps[0].json()).transactionId, "same as the first");
     // Idempotency-Key
     const em2 = freshEmail("idem");
     const k = crypto.randomUUID();
@@ -1251,6 +1264,37 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const again = await coFor(em2);
     eq(again.status, 201, "after success a new purchase attempt gets a NEW pending session");
     assert((await again.json()).transactionId !== paid.transactionId, "new txn");
+  });
+
+  await check("[pay#1b] privacy (QA NEW-1): another client with the victim's email + drop gets its OWN session and never the victim's checkoutUrl/txn id; stale price supersedes", async () => {
+    const em = freshEmail("victim");
+    const victimBrowser = new Client_();
+    const v = await (await coFor(em, {}, victimBrowser)).json();
+    const attacker = await coFor(em); // no cookie, no key, different IP
+    eq(attacker.status, 201, "attacker gets a NEW checkout, not a 200 reuse");
+    const ab = await attacker.json();
+    assert(ab.transactionId !== v.transactionId && ab.checkoutUrl !== v.checkoutUrl, "independent session");
+    eq(ab.reused, false, "reused:false");
+    const raw = JSON.stringify(ab);
+    assert(!raw.includes(v.transactionId) && !raw.includes(sessionIdOf(v)), "victim's ids absent from the response");
+    // the victim's own browser still gets exactly its session back
+    const back = await coFor(em, {}, victimBrowser);
+    eq(back.status, 200, "owner reuse"); eq((await back.json()).checkoutUrl, v.checkoutUrl, "owner gets own url");
+    // a forged / guessed cookie token is not a credential
+    const forged = await new Client_().req("POST", "/api/checkout", { json: { linkId: payLink, email: em, confirmOver18: true }, headers: { cookie: "unveil_buyer=" + "A".repeat(43) } });
+    eq(forged.status, 201, "forged cookie -> new session");
+    assert((await forged.json()).transactionId !== v.transactionId, "forged cookie didn't reach the victim's txn");
+    // price change supersedes the owner's stale pending checkout
+    const dropId = (await db.query("SELECT id FROM drops WHERE public_link_id=$1", [payLink])).rows[0].id;
+    await db.query("UPDATE drops SET price_cents=2500 WHERE id=$1", [dropId]);
+    try {
+      const np = await coFor(em, {}, victimBrowser);
+      eq(np.status, 201, "new session after price change");
+      const nb = await np.json();
+      eq(nb.amountCents, 2500, "current price"); assert(nb.transactionId !== v.transactionId, "new txn");
+      const old = await txState(v.transactionId);
+      eq([old.status, old.failure_code].join(), "failed,superseded", "old pending txn superseded");
+    } finally { await db.query("UPDATE drops SET price_cents=2000 WHERE id=$1", [dropId]); }
   });
 
   await check("[pay#3] NUL byte / invalid strings in the event id or data.reference -> 400 (never 500) with a 'rejected' reconciliation row; garbage JSON -> 400; handler still healthy after", async () => {
