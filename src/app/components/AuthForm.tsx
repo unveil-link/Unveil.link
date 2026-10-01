@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { formatDuration } from "@/lib/format";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, Button, buttonClasses, Field, Input } from "@/components/ui";
@@ -120,7 +121,7 @@ export default function AuthForm({ mode, googleEnabled }: { mode: Mode; googleEn
 
   const locked = throttle.locked;
   const submitLabel = locked
-    ? `Try again in ${throttle.remaining}s`
+    ? `Try again in ${formatDuration(throttle.remaining)}`
     : isSignup
       ? "Create account"
       : "Sign in";

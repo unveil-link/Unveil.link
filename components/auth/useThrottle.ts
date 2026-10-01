@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { formatDurationLong } from "@/lib/format";
 import { useCountdown } from "@/lib/useCountdown";
 
 /**
@@ -23,7 +24,7 @@ export function useThrottle() {
 
   function lock(seconds: number, code?: string) {
     setReason(code === "login_delayed" ? "login_delayed" : "rate_limited");
-    setSrMessage(`Too many attempts. You can try again in ${seconds} second${seconds === 1 ? "" : "s"}.`);
+    setSrMessage(`Too many attempts. You can try again in ${formatDurationLong(seconds)}.`);
     cd.start(seconds);
   }
 

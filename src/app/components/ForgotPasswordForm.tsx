@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { formatDuration } from "@/lib/format";
 import Link from "next/link";
 import { Alert, Button, Field, Input } from "@/components/ui";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -77,7 +78,7 @@ export default function ForgotPasswordForm() {
           )}
         </Field>
         <Button type="submit" size="lg" loading={busy} disabled={throttle.locked} className="w-full">
-          {throttle.locked ? `Try again in ${throttle.remaining}s` : "Send reset link"}
+          {throttle.locked ? `Try again in ${formatDuration(throttle.remaining)}` : "Send reset link"}
         </Button>
       </form>
     </AuthShell>

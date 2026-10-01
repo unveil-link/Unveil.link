@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { formatDuration } from "@/lib/format";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Alert, Button, ButtonLink, Field } from "@/components/ui";
@@ -91,7 +92,7 @@ export default function ResetPasswordForm() {
         </Field>
         <PasswordStrength id="pw-strength" password={password} rejected={rejectedPw !== null && rejectedPw === password} />
         <Button type="submit" size="lg" loading={busy} disabled={throttle.locked} className="w-full">
-          {throttle.locked ? `Try again in ${throttle.remaining}s` : "Update password"}
+          {throttle.locked ? `Try again in ${formatDuration(throttle.remaining)}` : "Update password"}
         </Button>
       </form>
     </AuthShell>

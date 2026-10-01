@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Alert, Button, Checkbox, LockIcon } from "@/components/ui";
 import { api } from "@/lib/api";
-import { usd } from "@/lib/format";
+import { formatDuration, formatDurationLong, usd } from "@/lib/format";
 import { useCountdown } from "@/lib/useCountdown";
 
 /**
@@ -28,8 +28,9 @@ export function BuyPanel({ linkId, priceCents }: { linkId: string; priceCents: n
     setBusy(false);
     if (res.ok) return; // not reachable until payments exist
     if (res.status === 429) {
-      cd.start(res.retryAfter ?? 30);
-      return setNotice({ tone: "danger", title: "Please slow down", body: "Too many attempts. You can try again shortly." });
+      const wait = res.retryAfter ?? 30;
+      cd.start(wait);
+      return setNotice({ tone: "danger", title: "Please slow down", body: `Too many attempts. You can try again in ${formatDurationLong(wait)}.` });
     }
     if (res.code === "not_implemented" || res.status === 501) {
       return setNotice({
@@ -53,7 +54,7 @@ export function BuyPanel({ linkId, priceCents }: { linkId: string; priceCents: n
       {showErr && !agreed && <p role="alert" className="-mt-1 text-sm font-medium text-danger">Please confirm to continue.</p>}
       <Button size="lg" className="w-full" onClick={buy} loading={busy} disabled={cd.active} data-testid="buy-button">
         <LockIcon className="size-5" />
-        {cd.active ? `Try again in ${cd.remaining}s` : `Buy for ${usd(priceCents)}`}
+        {cd.active ? `Try again in ${formatDuration(cd.remaining)}` : `Buy for ${usd(priceCents)}`}
       </Button>
       <p className="text-center text-xs text-muted">Pay by card · No account needed · Instant download</p>
       {notice && (

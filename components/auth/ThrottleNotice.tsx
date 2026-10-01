@@ -1,3 +1,4 @@
+import { formatDuration } from "@/lib/format";
 import { Alert } from "@/components/ui";
 import { ClockIcon } from "@/components/ui/icons";
 
@@ -21,7 +22,7 @@ export function ThrottleNotice({ remaining, reason, srMessage }: { remaining: nu
             </div>
             <div aria-hidden="true" className="flex shrink-0 flex-col items-center rounded-md bg-white/70 px-3 py-1.5 text-warning">
               <ClockIcon className="size-4" />
-              <span className="text-lg font-bold leading-tight tabular-nums" data-testid="countdown">{remaining}s</span>
+              <span className="text-lg font-bold leading-tight tabular-nums" data-testid="countdown">{formatDuration(remaining)}</span>
             </div>
           </div>
         </Alert>
