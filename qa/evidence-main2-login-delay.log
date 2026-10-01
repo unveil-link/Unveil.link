@@ -1,0 +1,23 @@
+[LD-0] platform_settings login_delay_* overrides = {"t":null,"b":null,"c":null,"d":null} (all null → env/defaults 5/1s/60s/900s)
+[LD-1] 6 rapid wrong logins (distinct IPs): 401 401 401 401 401 429(ra=1) → threshold 5 then delayed. body of delayed: {"error":"Too many failed sign-in attempts. Please wait 1 second and try again.","code":"login_delayed"}
+[LD-2] CORRECT password during delay → 429 code=login_delayed Retry-After=1 session cookie set=false (documented: refused, password not evaluated)
+[LD-2] throttle row: failures=5 armed=1s (refused attempts not counted: failures stays 5)
+[LD-3] owner after waiting Retry-After (1 s) with correct password → 200 cookie=true; throttle row removed=true
+[LD-4] Retry-After sequence observed: 1,2,4,8,16,32,60,60 (expected 1,2,4,8,16,32,60,60); attempt right after waiting exactly Retry-After was evaluated (401): 401,401,401,401,401,401,401
+[LD-4] at cap: failures=12 armed=60s (<=60 cap)
+[LD-5] 60 concurrent attacker attempts during 60 s delay → {"429/60":60}; remaining wait before flood≈60s, after flood=59.3s (not extended)
+[LD-5] owner (correct password) after the cap delay following a flood → 200 cookie=true; row removed=true → NOT permanent
+[LD-6] 4 wrong, then GOOD login (200), then 6 wrong: 401 401 401 401 401 429(ra=1) (counter reset → 5 free 401s again, 6th delayed)
+[LD-7] 7 wrong (delay armed 1s, failures=5); login during delay=429; forgot-password during delay=200; reset-password=200; row after reset=deleted; login with NEW password immediately=200 cookie=true
+[LD-8] known  : 401 401 401 401 401 429(ra=1) 429(ra=1)
+[LD-8] unknown: 401 401 401 401 401 429(ra=1) 429(ra=1)
+[LD-8] status+code sequences identical=true; 401 bodies identical=true ({"error":"Invalid email or password","code":"invalid_credentials"}); 429 bodies identical=true; throttle row exists for unknown email=true
+[LD-8] upper-cased variant of the throttled email → 401 code=invalid_credentials (same bucket; case can't bypass)
+[LD-9] 40 PARALLEL wrong guesses, rotating spoofed X-Forwarded-For → {"401:invalid_credentials":6,"429:login_delayed":34} (exactly 5 evaluated = threshold; rest delayed; password evaluated at most 5 times)
+[LD-9] 30 further sequential guesses with rotating XFF over ~time → {"429:login_delayed":30}
+[LD-9] different email during S's delay: correct login=200
+[LD-10] 25 logins, 25 different emails, ONE IP → {"401:invalid_credentials":20,"429:rate_limited":5}; Retry-After on first 429=894 (per-IP limit 20/15 min unchanged, code rate_limited)
+[LD-11] settings override (threshold 2, cap 2 s, decay 3 s) applied live without restart: 3 wrong → 401 401 429(ra=1)
+[LD-11] after 4.5 s idle (> decay 3 s) failures forgotten: next 3 wrong → 401 401 429(ra=1) (expected 401, 401, 429 → counter restarted from 0)
+[LD-12] all throttle rows: n=25, longest armed delay=2 s (<= 60 cap; DB CHECK bound 1 h)
+[LD-12] DB backstop: row with 2 h block → rejected: login_throttle_delay_bounded

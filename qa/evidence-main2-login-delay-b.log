@@ -1,0 +1,6 @@
+[LD-9b] 40 parallel: 401=5 429=35; evaluated attempts finished at t(ms)=891,2123,2173,2174,2174; 429 request start times span 363..375 ms
+[LD-9b] throttle failures=5 (== evaluated count 5; each admitted attempt counted once)
+[LD-9b] repeat 1: evaluated=5 within 1733 ms (5 free + 0 more admitted after 1 s/2 s delays elapsed)
+[LD-9b] repeat 2: evaluated=5 within 1713 ms (5 free + 0 more admitted after 1 s/2 s delays elapsed)
+[LD-9b] repeat 3: evaluated=5 within 1722 ms (5 free + 0 more admitted after 1 s/2 s delays elapsed)
+[LD-8b] right after 5 failures: same-case=429:login_delayed(ra=1); UPPER-CASE=429:login_delayed(ra=1); padded-with-spaces=400:invalid_input (padded fails zod email validation → 400 before throttle: expected)

@@ -11,11 +11,11 @@ await Promise.all([p.waitForURL("**/dashboard"), p.click('button[type="submit"]'
 await p.fill('input[name="title"]', "UI drop"); await p.fill('input[name="price"]', "20");
 await p.click('button:has-text("Create draft")'); await p.waitForURL("**/dashboard/drops/**", { timeout: 10000 }).catch(() => {});
 console.log("[M2-01] after create URL:", p.url());
-const jpg = "/workspace/qa-run3/out/ui.jpg"; await sharp({ create: { width: 600, height: 400, channels: 3, background: "#a55" } }).jpeg().toFile(jpg);
+const jpg = "/workspace/qa-run4/out/ui.jpg"; await sharp({ create: { width: 600, height: 400, channels: 3, background: "#a55" } }).jpeg().toFile(jpg);
 await p.setInputFiles('input[type=file]', jpg); await p.click('button:has-text("Upload")'); await p.waitForTimeout(1500);
 console.log("[M1-05] body after upload shows file/preview imgs:", await p.locator("img").count(), "| progress element:", await p.locator('progress,[role=progressbar]').count());
 console.log("[M2-03] UI page text excerpt:", (await p.locator("main").innerText()).replace(/\n+/g, " | ").slice(0, 400));
-await p.screenshot({ path: "/workspace/qa-run3/out/ui-drop.png", fullPage: true });
+await p.screenshot({ path: "/workspace/qa-run4/out/ui-drop.png", fullPage: true });
 await p.setViewportSize({ width: 390, height: 844 });
 console.log("[M6-02] CSP violations / page errors in headless Chrome:", cspErrors.length, cspErrors.slice(0, 3));
 console.log("[M6-02] CSP violations / page errors in headless Chrome:", cspErrors.length, cspErrors.slice(0, 3));

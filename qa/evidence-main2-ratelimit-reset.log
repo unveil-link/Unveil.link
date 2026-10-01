@@ -1,0 +1,12 @@
+[M2-17] signup 201
+[M2-17] 15 wrong logins, same IP+email -> {"401":5,"429":10} Retry-After=1
+[M2-17] correct password from the throttled IP/email -> 429 (legit user locked out while window open)
+[M2-17] 15 logins, 15 different emails, same IP -> {"401":15}
+[M2-17] 25 logins with ROTATING spoofed X-Forwarded-For, 25 emails -> {"401":25} (per-IP limit bypassable when app is directly exposed; per-email limit still holds)
+[M2-17] 25 wrong logins for ONE email with rotating XFF -> {"401":1,"429":24}
+[M2-17] 80 sequential /original (bad sig) same IP -> {"403":60,"429":20}
+[M2-17] other IP unaffected: 403
+[M2-17] /api/checkout x14 -> {"429":4,"501":10}
+[M1-04] forgot-password=200; mails before=6; mail to qa-rs-248f2c@example.com found=true; link present=true; mail text has no marketing/adult wording: true
+[M1-04] reset=200; token reuse=400; pre-reset session now 401; old password login=401; new password login=200
+[M1-04] bogus token=400 {"error":"This reset link is invalid or has expired. Request a new one.","code":"invalid_token"}
