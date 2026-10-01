@@ -755,7 +755,10 @@ describe.skipIf(!available)("QA-4 repeated chargebacks flag the seller for revie
       expect((await flag(s.sellerId))!.risk_flagged_at).not.toBeNull();
       expect((await flag(other.sellerId))!.risk_flagged_at).toBeNull();
     } finally { await setSetting("chargeback_flag_threshold", 3); }
-    // window: with a 1-day window a chargeback whose ledger rows are older than 1 day doesn't count (simulated by a 0-day... use window 1 + backdated)
+  });
+  it("the settings have CHECK constraints (threshold >= 1, window 1..3650) so flagging can't be silently disabled by a bad value", async () => {
+    await expect(setSetting("chargeback_flag_threshold", 0)).rejects.toThrow(/check constraint/);
+    await expect(setSetting("chargeback_flag_window_days", 0)).rejects.toThrow(/check constraint/);
   });
   it("concurrent chargebacks cannot all slip under the threshold: 4 simultaneous -> flagged exactly once", async () => {
     const s = await seed();

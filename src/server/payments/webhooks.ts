@@ -289,7 +289,7 @@ async function invalidAtCapture(c: PoolClient, txId: string, ctx: ApplyCtx): Pro
 /**
  * Spec M5-08: repeated chargebacks on a seller's drops flag the ACCOUNT FOR REVIEW (no auto-ban: nothing else changes).
  * Counts distinct charged-back transactions of the seller within the window; flags once (risk_flagged_at IS NULL guard),
- * writes an audit_log row. The seller row is locked first so concurrent chargebacks can't each miss the threshold.
+ * writes an audit_log row. The seller row is locked (FOR NO KEY UPDATE) first so concurrent chargebacks can't each miss the threshold.
  */
 async function flagSellerIfRepeatChargebacks(c: PoolClient, sellerId: string, ctx: ApplyCtx): Promise<boolean> {
   // FOR NO KEY UPDATE (not FOR UPDATE): this transaction already holds a KEY SHARE lock on the seller through the ledger_entries FK,
