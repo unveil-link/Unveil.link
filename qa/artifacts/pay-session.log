@@ -1,0 +1,5 @@
+FAIL    SESS-1       pending checkout older than 30 days can still be paid (no session expiry) — 30-day-old pending session was payable (status succeeded); pending sessions never expire - ledger posted 3 lines
+FAIL    SESS-2       seller loses verification (failed/manual_review) after checkout started: payment still completes — sale succeeded for a seller whose verification is now 'failed' (webhook path re-checks nothing)
+PASS    SESS-3       pending tx never auto-expire: count of pending older than 1 day is 0 after cleanup job? (no cleanup job exists) — none
+
+Saved pay-session-results.json: PASS 1 FAIL 2 BLOCKED 0 NOTE 0

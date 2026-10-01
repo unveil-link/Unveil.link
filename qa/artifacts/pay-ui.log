@@ -1,0 +1,9 @@
+FAIL  M3-18 — No 'all sales final' / refund-policy statement anywhere on link page or hosted checkout page
+PASS  M3-15 UI — unticked 18+ box blocks submit (HTML required); server also 400 (API case AGE-1)
+PASS  M3-03 UI — declined card message: "Payment failed: card_declined" (raw failure_code shown to buyer; copy is not buyer-friendly)
+FAIL  M3-03 UI retry — re-submitting a good card on the SAME declined session: "Payment failed: failed" (declined session is terminal; buyer must go back and restart checkout; UX issue, LOW)
+PASS  M3-02 UI — fresh checkout with default 4242 card: "Payment succeeded (mock)."
+BLOCKED M3-02 redirect — No redirect to a download page after success: download/unlock delivery not built (documented known gap)
+BLOCKED M3-20 / S2-02 — link→paid (mock, mobile viewport, local, no typing delay) took 0.3s; link→checkout redirect 0.2s; cannot reach 'download' step (not built)
+BLOCKED M3-19 UI — mock page posts card to our own origin (3 requests to /api/dev/payments/pay); hosted-field requirement can only be assessed against a real processor
+PASS  console — no console errors

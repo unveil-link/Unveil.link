@@ -1,0 +1,4 @@
+PASS    M3-12 retry  event that 500s (DB error from NUL byte in event id) leaves NO claim/partial ledger; error row logged; corrected retry for same payment is processed — 500 → no claim, no ledger; error rows logged=0; retry processed
+PASS    M6-08 queue  'queued with retry' is the processor's at-least-once redelivery (no internal queue/retry worker exists); parked events are re-applied inside the sale transaction; retryParkedEvents() is a service function only (no route/cron) — parked row visible; applied automatically when the sale lands (OOO-1..4); no cron for stragglers whose sale never arrives (NOTE)
+
+Saved pay-retry-results.json: PASS 2 FAIL 0 BLOCKED 0 NOTE 0

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "M3-18",
+    "result": "FAIL",
+    "evidence": "No 'all sales final' / refund-policy statement anywhere on link page or hosted checkout page"
+  },
+  {
+    "id": "M3-15 UI",
+    "result": "PASS",
+    "evidence": "unticked 18+ box blocks submit (HTML required); server also 400 (API case AGE-1)"
+  },
+  {
+    "id": "M3-03 UI",
+    "result": "PASS",
+    "evidence": "declined card message: \"Payment failed: card_declined\" (raw failure_code shown to buyer; copy is not buyer-friendly)"
+  },
+  {
+    "id": "M3-03 UI retry",
+    "result": "FAIL",
+    "evidence": "re-submitting a good card on the SAME declined session: \"Payment failed: failed\" (declined session is terminal; buyer must go back and restart checkout; UX issue, LOW)"
+  },
+  {
+    "id": "M3-02 UI",
+    "result": "PASS",
+    "evidence": "fresh checkout with default 4242 card: \"Payment succeeded (mock).\""
+  },
+  {
+    "id": "M3-02 redirect",
+    "result": "BLOCKED",
+    "evidence": "No redirect to a download page after success: download/unlock delivery not built (documented known gap)"
+  },
+  {
+    "id": "M3-20 / S2-02",
+    "result": "BLOCKED",
+    "evidence": "link→paid (mock, mobile viewport, local, no typing delay) took 0.3s; link→checkout redirect 0.2s; cannot reach 'download' step (not built)"
+  },
+  {
+    "id": "M3-19 UI",
+    "result": "BLOCKED",
+    "evidence": "mock page posts card to our own origin (3 requests to /api/dev/payments/pay); hosted-field requirement can only be assessed against a real processor"
+  },
+  {
+    "id": "console",
+    "result": "PASS",
+    "evidence": "no console errors"
+  }
+]

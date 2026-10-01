@@ -1,0 +1,123 @@
+## outcomes
+  outcome  |                  outcome_detail                   | count 
+-----------+---------------------------------------------------+-------
+ processed |                                                   |   265
+ rejected  | signature_malformed                               |   186
+ ignored   | sale_succeeded_but_succeeded                      |    41
+ rejected  | over_refund                                       |    32
+ rejected  | signature_bad_signature                           |    31
+ processed | applied_after_sale                                |    27
+ rejected  | invalid_payload                                   |    24
+ ignored   | sale_failed_but_succeeded                         |    18
+ rejected  | signature_stale                                   |    12
+ ignored   | unknown_transaction                               |    11
+ duplicate | duplicate of 045615f3-8abd-421e-a27e-914c8e1f394f |    11
+ duplicate | duplicate of 0b357e03-46db-46b0-b23e-6c4690d1821a |    11
+ duplicate | duplicate of 9cda89ea-4a17-428e-8deb-d9382e3509fa |    11
+ duplicate | duplicate of dfafe40a-25ca-4467-8a40-e2de3b76f52f |     8
+ rejected  | amount_mismatch                                   |     7
+ rejected  | signature_missing                                 |     6
+ duplicate | duplicate of 873e96c3-5f2d-404b-8e8e-96849546bb24 |     6
+ duplicate | duplicate of fa3818b5-ec24-414a-bd96-16cf7c7e9363 |     6
+ duplicate | duplicate of 5ad3adc7-bfcd-40d5-936d-035ea01ee147 |     6
+ duplicate | duplicate of 35f89847-2534-41c6-a4c6-008c69c1b1a3 |     6
+ duplicate | duplicate of 9eb7a4ea-26ad-444e-a0e2-7d7c45cfb31a |     5
+ rejected  | invalid_json                                      |     3
+ parked    | sale_not_seen_yet                                 |     2
+ duplicate | duplicate of 48c327cf-2956-42c8-b1fe-067b406bbda8 |     2
+ duplicate | duplicate of 579e355c-bc77-4266-9b8d-70304da6aae6 |     2
+ duplicate | duplicate of 713fca52-e6c4-4623-9ef4-2308ee92a643 |     2
+ duplicate | duplicate of 0bfb9598-76ee-4c77-97b2-06eba02b09ce |     2
+ duplicate | duplicate of dd30ccc8-d72f-4317-aa8d-15e4b7814d81 |     2
+ duplicate | duplicate of 6f2bd295-5594-4c18-8ebe-f5f6e1c4645f |     2
+ duplicate | duplicate of b2f921b0-5bdc-4d17-8c75-4f5feb174102 |     2
+ ignored   | reversal_of_failed_sale                           |     2
+ duplicate | duplicate of 299a99a5-f597-4c00-84dd-e0b30b6d974d |     2
+ duplicate | duplicate of 8ba676fd-a591-4d88-a330-bc7b5b67eda1 |     1
+ duplicate | duplicate of eb56bafb-49d2-4a61-9d94-855676e3e60c |     1
+ duplicate | duplicate of 691ac6f4-3486-4375-a4c3-8c175d8c7fe1 |     1
+ duplicate | duplicate of e8bbc42e-31a3-4a5b-9692-c41773484d84 |     1
+ duplicate | duplicate of dace6e00-6e71-4f70-8bb6-93f1e04daa6a |     1
+ duplicate | duplicate of 8120fc86-acfd-4914-970b-801595d48383 |     1
+ duplicate | duplicate of 52f09a3d-77f0-4f72-ab3c-3bff66bd3127 |     1
+ duplicate | duplicate of b2cdbc06-06e2-4ef4-80e5-a34f7e0da974 |     1
+ duplicate | duplicate of 39237158-ba5c-4e4c-af15-024858fa5104 |     1
+ duplicate | duplicate of 13385e3b-c7de-4a71-93b0-c85cc8e3648e |     1
+ duplicate | duplicate of eeee3e99-0880-40d8-895f-979fe3779026 |     1
+ duplicate | duplicate of c40894f3-7504-4a98-96de-d3935c8e8b09 |     1
+ duplicate | duplicate of 21b25408-37d1-4a43-a667-bb280c743c57 |     1
+ duplicate | duplicate of 76afe0d8-4952-47fe-90a9-51a7d1200617 |     1
+ duplicate | duplicate of a01199fe-5be2-4f3e-948b-fd069c49878a |     1
+ duplicate | duplicate of 8dce7ec1-a498-4772-9b93-86b8d0782f33 |     1
+ duplicate | duplicate of 9ed60ade-cfe1-43b3-b290-7ddb9400254a |     1
+ duplicate | duplicate of fa8de1e9-d952-4a46-8b14-887487c1f171 |     1
+ duplicate | duplicate of adff5172-9c8c-4272-8538-9dc8c5542998 |     1
+ duplicate | duplicate of 3462c082-b982-43a7-b2e0-aa723a90565f |     1
+ duplicate | duplicate of 3dc2ddce-b4b9-4919-a73e-10b9c0e27227 |     1
+ duplicate | duplicate of e5e774a0-107b-4edd-bfc5-c52e403a10af |     1
+ duplicate | duplicate of 36625376-1714-44a2-8e78-45c50ea465bb |     1
+ duplicate | duplicate of 1f72e3b0-60fd-4dd8-8b38-83ef585911f5 |     1
+ duplicate | duplicate of 9d19f8e5-bf44-47be-ba63-91502588f5d9 |     1
+ duplicate | duplicate of 95aa3e03-ad32-4d19-8736-09265e5c2aed |     1
+ duplicate | duplicate of e12e3fa8-f010-4d20-9a1a-601cebcd353a |     1
+ duplicate | duplicate of eabc8160-c046-418d-a3fb-68bceaebb9ac |     1
+ duplicate | duplicate of 796da941-4dd5-44c0-8dc5-a72753793d94 |     1
+ duplicate | duplicate of 20605fb1-b7ab-488d-8e7e-b895d8f830b4 |     1
+ duplicate | duplicate of 14d66cf5-efc2-4ee0-94cc-585ac5c0202d |     1
+ duplicate | duplicate of f64e615a-8609-40d3-9bf7-f1cdba321940 |     1
+ duplicate | duplicate of 344a5537-d03a-4a08-b294-469bf7ce9382 |     1
+(65 rows)
+
+## tx status
+    status    | count | gross  | plat  | proc  |  net   
+--------------+-------+--------+-------+-------+--------
+ refunded     |    29 |  70000 |  7000 |  8400 |  54600
+ charged_back |    14 |  34997 |  3500 |  4200 |  27297
+ succeeded    |   139 | 397494 | 39750 | 47700 | 310044
+ pending      |   141 | 381350 | 39015 | 45582 | 296753
+ failed       |    19 |  38000 |  3800 |  4560 |  29640
+(5 rows)
+
+## ledger by type
+     entry_type      |   component    | count |   sum   
+---------------------+----------------+-------+---------
+ chargeback_fee      | chargeback_fee |     1 |   -1500
+ chargeback_reversal | gross          |    14 |  -32297
+ chargeback_reversal | platform_fee   |    14 |    3230
+ chargeback_reversal | processing_fee |    14 |    3876
+ payout_debit        | payout         |    28 | -110700
+ payout_reversal     | payout         |     6 |   16800
+ platform_fee        | platform_fee   |   182 |  -50250
+ processing_fee      | processing_fee |   182 |  -60300
+ refund_reversal     | gross          |    62 |  -87100
+ refund_reversal     | platform_fee   |    62 |    8710
+ refund_reversal     | processing_fee |    62 |   10452
+ sale_credit         | gross          |   182 |  502491
+(12 rows)
+
+## per-seller reconciliation (ledger sum vs payouts)
+              seller_id               | ledger 
+--------------------------------------+--------
+ b4ad5590-d1d1-42ae-9eaa-bf1ca34b60bc |  21060
+ d1f54707-6f16-4bb9-9b3f-3c4c69fdffbd |  19734
+ 8ff513b9-0d8a-45eb-a0b2-3f93f8dfd921 |  19734
+ 555e54ec-6364-4949-a0c0-31139db8a2d7 |  19734
+ d22fb83f-3bd0-4c6d-8dd2-710a2f060a4f |  15600
+(5 rows)
+
+## payouts
+  status   | count |  sum  
+-----------+-------+-------
+ failed    |     6 | 16800
+ paid      |     3 | 15000
+ requested |    19 | 78900
+(3 rows)
+
+## rejected payload sample
+ signature_valid |     outcome_detail      |                             left                             
+-----------------+-------------------------+--------------------------------------------------------------
+ f               | signature_bad_signature | {"id":"evt_c3d398ec2240ca76e67da59e","type":"sale.succeeded"
+ f               | signature_malformed     | {"id":"evt_da4be69fd087242641e11ec2","type":"sale.succeeded"
+ f               | signature_malformed     | {"id":"evt_da4be69fd087242641e11ec2","type":"sale.succeeded"
+(3 rows)
+

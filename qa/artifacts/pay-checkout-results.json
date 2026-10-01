@@ -1,0 +1,194 @@
+[
+  {
+    "id": "M3-01",
+    "name": "guest (no account, no cookies) can open link, see buy form and start checkout; no login redirect",
+    "result": "PASS",
+    "evidence": "201 + hosted card page 200 (no cookies sent)"
+  },
+  {
+    "id": "M3-02",
+    "name": "card 4242 4242 4242 4242 → tx succeeded; ledger 3 lines; status API agrees",
+    "result": "PASS",
+    "evidence": "tx f9b33436 succeeded/null"
+  },
+  {
+    "id": "M3-03a",
+    "name": "card 4000 0000 0000 0002 → tx failed (card_declined); ledger none; status API agrees",
+    "result": "PASS",
+    "evidence": "tx 35b64eea failed/card_declined"
+  },
+  {
+    "id": "M3-03b",
+    "name": "card 4000000000009995 → tx failed (insufficient_funds); ledger none; status API agrees",
+    "result": "PASS",
+    "evidence": "tx 2c43215a failed/insufficient_funds"
+  },
+  {
+    "id": "M3-03c",
+    "name": "card 4000000000000069 → tx failed (expired_card); ledger none; status API agrees",
+    "result": "PASS",
+    "evidence": "tx fef0afac failed/expired_card"
+  },
+  {
+    "id": "M3-03d",
+    "name": "card 4000000000000127 → tx failed (incorrect_cvc); ledger none; status API agrees",
+    "result": "PASS",
+    "evidence": "tx 2809aa93 failed/incorrect_cvc"
+  },
+  {
+    "id": "CARD-x",
+    "name": "card 4111 1111 1111 1111 → tx failed (unrecognized_test_card); ledger none; status API agrees",
+    "result": "PASS",
+    "evidence": "tx b97e8538 failed/unrecognized_test_card"
+  },
+  {
+    "id": "CARD-y",
+    "name": "card abc → tx failed (invalid_card_number); ledger none; status API agrees",
+    "result": "PASS",
+    "evidence": "tx d760f274 failed/invalid_card_number"
+  },
+  {
+    "id": "CARD-z",
+    "name": "card 5555-5555-5555-4242 → tx succeeded; ledger 3 lines; status API agrees",
+    "result": "PASS",
+    "evidence": "tx 255eb578 succeeded/null"
+  },
+  {
+    "id": "M3-03e",
+    "name": "after a decline: same session can't be re-paid (session terminal) and a new checkout with 4242 succeeds; no succeeded tx for the failed one",
+    "result": "PASS",
+    "evidence": "second attempt on same session → failed (buyer must restart checkout; UX note)"
+  },
+  {
+    "id": "M3-15 / AGE-1",
+    "name": "18+ required: missing / false / 'true' string / 1 / null → 400; no tx rows created",
+    "result": "PASS",
+    "evidence": "undefined:400 false:400 \"true\":400 1:400 null:400 \"on\":400 [true]:400"
+  },
+  {
+    "id": "M3-15 / AGE-2",
+    "name": "18+ recorded: buyer_confirmed_18_at set on tx; UI checkbox 'required' attr present on buy form",
+    "result": "PASS",
+    "evidence": "buyer_confirmed_18_at set; checkbox required"
+  },
+  {
+    "id": "EMAIL-1",
+    "name": "buyer_email validation: invalid forms → 400; valid incl. plus-address/uppercase accepted & lower-cased; 255-char rejected",
+    "result": "PASS",
+    "evidence": "\"\":400 \" \":400 \"plain\":400 \"a@\":400 \"@b.com\":400 \"a b@c.com\":400 \"a@b\":400 \"<script>@x.com\":400 \"a@b.com\\r\\nBcc: x:400 \"xxxxxxxxxxxxxxxxx:400 | valid → lowercased, trimmed"
+  },
+  {
+    "id": "PRICE-1",
+    "name": "price tamper: amount/amountCents/price/priceCents/total/seller_net/platform_fee fields in body ignored; DB price used",
+    "result": "PASS",
+    "evidence": "all tamper fields ignored → 2000/200/1560 pending"
+  },
+  {
+    "id": "PRICE-2",
+    "name": "price edited by seller after link is shown: checkout uses current DB price",
+    "result": "PASS",
+    "evidence": "checkout amount 1500 (DB price); note: no PATCH /api/drops/:id on this branch"
+  },
+  {
+    "id": "DROP-1",
+    "name": "unpublished / draft / flagged drops can't be bought (404) by linkId or dropId; unverified seller → 409; unknown link 404; malformed link 400",
+    "result": "PASS",
+    "evidence": "draft/dropId:404 unpublished/linkId:404 unpublished/dropId:404 flagged/linkId:404 flagged/dropId:404 malformed:400 unknown:404 both-ids:400 unverified-seller:409"
+  },
+  {
+    "id": "DROP-2",
+    "name": "drop unpublished AFTER checkout started: pending tx can still be paid? (record behaviour)",
+    "result": "PASS",
+    "evidence": "payment on a now-unpublished drop's pending session → succeeded (note: money captured for an unlistable drop; no download delivery exists to honor it)"
+  },
+  {
+    "id": "DROP-3",
+    "name": "drop flagged AFTER checkout started: sale succeeded for flagged drop",
+    "result": "PASS",
+    "evidence": "status succeeded (flagged drop can still be paid from an earlier session - NOTE)"
+  },
+  {
+    "id": "DUP-1",
+    "name": "double-click submit: 2 concurrent POST /api/checkout (same buyer, same drop) → ??? one pending tx expected per idempotency key",
+    "result": "FAIL",
+    "evidence": "NO checkout idempotency: 2 submits → 2 separate pending transactions/sessions (b97a6353, 4d269575); POST body has no idempotency key and no Idempotency-Key header is honoured"
+  },
+  {
+    "id": "DUP-2",
+    "name": "Idempotency-Key header honoured on /api/checkout",
+    "result": "FAIL",
+    "evidence": "header ignored: two different transactions for the same Idempotency-Key"
+  },
+  {
+    "id": "DUP-3",
+    "name": "double-click PAY on the same session (10 concurrent approve posts) → exactly one charge/ledger posting",
+    "result": "PASS",
+    "evidence": "one charge; webhook outcomes [{\"outcome\":\"duplicate\",\"count\":\"8\"},{\"outcome\":\"processed\",\"count\":\"1\"}]"
+  },
+  {
+    "id": "DUP-4",
+    "name": "concurrent approve + decline on the same session: final state consistent with ledger (no ledger without succeeded, no succeeded w/o ledger)",
+    "result": "PASS",
+    "evidence": "succeeded/3 succeeded/3 succeeded/3 succeeded/3 succeeded/3 succeeded/3"
+  },
+  {
+    "id": "M3-19 / PAN-1",
+    "name": "card data never stored: PAN/CVC sent to pay endpoint & checkout; grep full DB dump and server logs for the full numbers/CVC",
+    "result": "PASS",
+    "evidence": "pg_dump (934 KiB) and app logs contain no PAN; only payload hashes/fixed fields stored in webhook_events"
+  },
+  {
+    "id": "M3-19 / PAN-2",
+    "name": "card number is POSTed to OUR server (/api/dev/payments/pay) by the mock hosted page (mock only; real processor must host card fields)",
+    "result": "PASS",
+    "evidence": "mock page → same-origin /api/dev/payments/pay with card in body (dev-only, 404 in prod); acceptable for mock, M3-19 for real processor BLOCKED until Segpay/CCBill"
+  },
+  {
+    "id": "PAN-3",
+    "name": "webhook_events.payload / normalized contain no Luhn-valid 13-19 digit standalone numbers (card-like)",
+    "result": "PASS",
+    "evidence": "763 webhook_events rows scanned, 0 card-like numbers (long digit runs seen were uuid/hex fragments and a 1e12 amount)"
+  },
+  {
+    "id": "M3-16 / RL-1",
+    "name": "checkout limiter (default 10/60s per IP): 10 allowed then 429 + Retry-After; other IP unaffected; single legit buyer fine",
+    "result": "PASS",
+    "evidence": "codes 201,201,201,201,201,201,201,201,201,201,429,429,429, Retry-After 60, other IP 201"
+  },
+  {
+    "id": "RL-2 invalid requests count",
+    "name": "limiter runs BEFORE validation: invalid requests also consume the budget (e2e already relies on this)",
+    "result": "PASS",
+    "evidence": "400,400,400,400,400,400,400,400,400,400,429,429"
+  },
+  {
+    "id": "RL-3 XFF spoof (note)",
+    "name": "X-Forwarded-For handling: rotating a single client-supplied XFF value bypasses the limiter; prepending extra entries does not (TRUSTED_PROXY_HOPS=1 takes right-most)",
+    "result": "PASS",
+    "evidence": "rotating single XFF: 201,201,201,201,201,201,201,201,201,201,201,201,201,201,201 (no 429 → trivially bypassable when app is NOT behind a proxy that overwrites XFF); prepended spoof with fixed right-most: 201,201,201,201,201,201,201,201,201,201,429,429,429"
+  },
+  {
+    "id": "AUTHZ-1",
+    "name": "/api/earnings: anonymous → 401; seller A sees only own ledger/transactions; seller B's data not leaked; no buyer emails",
+    "result": "PASS",
+    "evidence": "A total 1560, B total 2340; sellerId param ignored; no emails"
+  },
+  {
+    "id": "AUTHZ-2",
+    "name": "/api/checkout/status leaks only status/amount/failure_code (UUID capability); random uuid 404; SQLi id 404",
+    "result": "PASS",
+    "evidence": "ok"
+  },
+  {
+    "id": "SEC-3 checkout injection",
+    "name": "SQLi / mass-assignment in checkout JSON (dropId/linkId/email) → 400/404, tables intact",
+    "result": "PASS",
+    "evidence": "400 400 400 201 201 nonjson:400 text/plain:201"
+  },
+  {
+    "id": "SEC-4 CSRF/origin",
+    "name": "cross-origin POST /api/checkout and /api/dev/payments/pay blocked (403)",
+    "result": "PASS",
+    "evidence": "403"
+  }
+]

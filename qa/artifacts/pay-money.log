@@ -1,0 +1,13 @@
+PASS    M3-06/MONEY-1 pure sweep: every cent 100..50000 × 14 fee-% combos: gross == net+platform+processing, ints, none negative, matches BigInt reference — 698614 (amount, rate) cases, 0 mismatches vs reference, 0 negative, 0 non-integer
+PASS    M3-05/MONEY-2 defaults $20.00 => net 1560 / platform 200 / processing 240; $0.99,$9.99,$19.99,$499.99 spot values — 99→77/10/12 999→779/100/120 1999→1559/200/240 49999→38999/5000/6000 100→78/10/12 50000→39000/5000/6000
+PASS    MONEY-3      rounding direction: half-cent rounds UP consistently for both fees (e.g. 5¢@10% → 1 (0.5), 15¢@10% → 2 (1.5)) — half-up verified on both fees; seller absorbs remainder
+PASS    MONEY-4      refund reversal property: random sale × random partial-refund sequences (incl 1¢ steps) sum exactly to original postings; cumulative never negative/decreasing — 6000 random sequences exact; 999×1¢ refunds reverse exactly net 779
+PASS    MONEY-5      float/NaN inputs rejected by money layer — rejects floats/negatives/NaN/inf/unsafe and malformed percents
+PASS    M3-05/M3-06 e2e HTTP checkout stores integer-cent split in transactions: odd prices incl 99¢→skipped (min 100), 999, 1999, 49999; sums exact; $20 == 1560/200/240 — 13 prices OK (net/plat/proc): 100:78/10/12 101:79/10/12 199:155/20/24 999:779/100/120 1000:780/100/120 1999:1559/200/240 2000:1560/200/240 3333:2600/333/400 4999:3899/500/600 12345:9629/1235/1481 49999:38999/5000/6000 50000:39000/5000/6000 777:606/78/93
+PASS    M3-06 bounds price below $1 (0.99 → 99¢) and above $500 rejected at drop creation; 100 and 50000 accepted — 99→400, 50001→400, 999.5→400, -5→400
+PASS    M3-07/S2-03  change platform fee 10%→15% and processing 12%→3%: new sale uses new rates (fee_percent snapshot), old transactions unchanged, no deploy; sums exact — pending tx snapshot 200/240/1560 stays after settings change & settles at 1560; new tx @15%/3% = 300/60/1640
+PASS    MONEY-6      fee-percent settings: invalid platform_settings values (fee_percent 101, -1, 'abc') are rejected by DB constraints — 101 rejected, -1 rejected, proc 100.5 rejected
+PASS    MONEY-7      fee 100% platform + 12% processing cap: net never negative at HTTP level — 999¢ @100%/12% → net 0 plat 879 proc 120
+PASS    MONEY-8      DB columns are integer cents (no numeric/float money columns in transactions/ledger/payouts) — ledger_entries.amount_cents:integer, payouts.amount_cents:integer, transactions.amount_cents:integer, transactions.platform_fee_cents:integer, transactions.processing_fee_cents:integer, transactions.reversed_cents:integer, transactions.seller_net_cents:integer
+
+Saved pay-money-results.json: PASS 11 FAIL 0 BLOCKED 0 NOTE 0

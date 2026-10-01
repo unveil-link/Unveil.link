@@ -1,0 +1,34 @@
+PASS    M3-01        guest (no account, no cookies) can open link, see buy form and start checkout; no login redirect — 201 + hosted card page 200 (no cookies sent)
+PASS    M3-02        card 4242 4242 4242 4242 → tx succeeded; ledger 3 lines; status API agrees — tx f9b33436 succeeded/null
+PASS    M3-03a       card 4000 0000 0000 0002 → tx failed (card_declined); ledger none; status API agrees — tx 35b64eea failed/card_declined
+PASS    M3-03b       card 4000000000009995 → tx failed (insufficient_funds); ledger none; status API agrees — tx 2c43215a failed/insufficient_funds
+PASS    M3-03c       card 4000000000000069 → tx failed (expired_card); ledger none; status API agrees — tx fef0afac failed/expired_card
+PASS    M3-03d       card 4000000000000127 → tx failed (incorrect_cvc); ledger none; status API agrees — tx 2809aa93 failed/incorrect_cvc
+PASS    CARD-x       card 4111 1111 1111 1111 → tx failed (unrecognized_test_card); ledger none; status API agrees — tx b97e8538 failed/unrecognized_test_card
+PASS    CARD-y       card abc → tx failed (invalid_card_number); ledger none; status API agrees — tx d760f274 failed/invalid_card_number
+PASS    CARD-z       card 5555-5555-5555-4242 → tx succeeded; ledger 3 lines; status API agrees — tx 255eb578 succeeded/null
+PASS    M3-03e       after a decline: same session can't be re-paid (session terminal) and a new checkout with 4242 succeeds; no succeeded tx for the failed one — second attempt on same session → failed (buyer must restart checkout; UX note)
+PASS    M3-15 / AGE-1 18+ required: missing / false / 'true' string / 1 / null → 400; no tx rows created — undefined:400 false:400 "true":400 1:400 null:400 "on":400 [true]:400
+PASS    M3-15 / AGE-2 18+ recorded: buyer_confirmed_18_at set on tx; UI checkbox 'required' attr present on buy form — buyer_confirmed_18_at set; checkbox required
+PASS    EMAIL-1      buyer_email validation: invalid forms → 400; valid incl. plus-address/uppercase accepted & lower-cased; 255-char rejected — "":400 " ":400 "plain":400 "a@":400 "@b.com":400 "a b@c.com":400 "a@b":400 "<script>@x.com":400 "a@b.com\r\nBcc: x:400 "xxxxxxxxxxxxxxxxx:400 | valid → lowercased, trimmed
+PASS    PRICE-1      price tamper: amount/amountCents/price/priceCents/total/seller_net/platform_fee fields in body ignored; DB price used — all tamper fields ignored → 2000/200/1560 pending
+PASS    PRICE-2      price edited by seller after link is shown: checkout uses current DB price — checkout amount 1500 (DB price); note: no PATCH /api/drops/:id on this branch
+PASS    DROP-1       unpublished / draft / flagged drops can't be bought (404) by linkId or dropId; unverified seller → 409; unknown link 404; malformed link 400 — draft/dropId:404 unpublished/linkId:404 unpublished/dropId:404 flagged/linkId:404 flagged/dropId:404 malformed:400 unknown:404 both-ids:400 unverified-seller:409
+PASS    DROP-2       drop unpublished AFTER checkout started: pending tx can still be paid? (record behaviour) — payment on a now-unpublished drop's pending session → succeeded (note: money captured for an unlistable drop; no download delivery exists to honor it)
+PASS    DROP-3       drop flagged AFTER checkout started: sale succeeded for flagged drop — status succeeded (flagged drop can still be paid from an earlier session - NOTE)
+FAIL    DUP-1        double-click submit: 2 concurrent POST /api/checkout (same buyer, same drop) → ??? one pending tx expected per idempotency key — NO checkout idempotency: 2 submits → 2 separate pending transactions/sessions (b97a6353, 4d269575); POST body has no idempotency key and no Idempotency-Key header is honoured
+FAIL    DUP-2        Idempotency-Key header honoured on /api/checkout — header ignored: two different transactions for the same Idempotency-Key
+PASS    DUP-3        double-click PAY on the same session (10 concurrent approve posts) → exactly one charge/ledger posting — one charge; webhook outcomes [{"outcome":"duplicate","count":"8"},{"outcome":"processed","count":"1"}]
+PASS    DUP-4        concurrent approve + decline on the same session: final state consistent with ledger (no ledger without succeeded, no succeeded w/o ledger) — succeeded/3 succeeded/3 succeeded/3 succeeded/3 succeeded/3 succeeded/3
+PASS    M3-19 / PAN-1 card data never stored: PAN/CVC sent to pay endpoint & checkout; grep full DB dump and server logs for the full numbers/CVC — pg_dump (934 KiB) and app logs contain no PAN; only payload hashes/fixed fields stored in webhook_events
+PASS    M3-19 / PAN-2 card number is POSTed to OUR server (/api/dev/payments/pay) by the mock hosted page (mock only; real processor must host card fields) — mock page → same-origin /api/dev/payments/pay with card in body (dev-only, 404 in prod); acceptable for mock, M3-19 for real processor BLOCKED until Segpay/CCBill
+PASS    PAN-3        webhook_events.payload / normalized contain no Luhn-valid 13-19 digit standalone numbers (card-like) — 763 webhook_events rows scanned, 0 card-like numbers (long digit runs seen were uuid/hex fragments and a 1e12 amount)
+PASS    M3-16 / RL-1 checkout limiter (default 10/60s per IP): 10 allowed then 429 + Retry-After; other IP unaffected; single legit buyer fine — codes 201,201,201,201,201,201,201,201,201,201,429,429,429, Retry-After 60, other IP 201
+PASS    RL-2 invalid requests count limiter runs BEFORE validation: invalid requests also consume the budget (e2e already relies on this) — 400,400,400,400,400,400,400,400,400,400,429,429
+PASS    RL-3 XFF spoof (note) X-Forwarded-For handling: rotating a single client-supplied XFF value bypasses the limiter; prepending extra entries does not (TRUSTED_PROXY_HOPS=1 takes right-most) — rotating single XFF: 201,201,201,201,201,201,201,201,201,201,201,201,201,201,201 (no 429 → trivially bypassable when app is NOT behind a proxy that overwrites XFF); prepended spoof with fixed right-most: 201,201,201,201,201,201,201,201,201,201,429,429,429
+PASS    AUTHZ-1      /api/earnings: anonymous → 401; seller A sees only own ledger/transactions; seller B's data not leaked; no buyer emails — A total 1560, B total 2340; sellerId param ignored; no emails
+PASS    AUTHZ-2      /api/checkout/status leaks only status/amount/failure_code (UUID capability); random uuid 404; SQLi id 404 — ok
+PASS    SEC-3 checkout injection SQLi / mass-assignment in checkout JSON (dropId/linkId/email) → 400/404, tables intact — 400 400 400 201 201 nonjson:400 text/plain:201
+PASS    SEC-4 CSRF/origin cross-origin POST /api/checkout and /api/dev/payments/pay blocked (403) — 403
+
+Saved pay-checkout-results.json: PASS 30 FAIL 2 BLOCKED 0 NOTE 0

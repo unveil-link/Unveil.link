@@ -1,0 +1,105 @@
+▲ Next.js 16.3.8
+- Local:         http://localhost:3517
+- Network:       http://172.30.0.2:3517
+✓ Ready in 160ms
+✓ Running next.config.ts took 36ms
+webhook processing failed error: invalid byte sequence for encoding "UTF8": 0x00
+    at async (.next-qa/server/chunks/[root-of-the-server]__15dts_q._.js:6:671)
+    at async c (.next-qa/server/chunks/_1-l25y8._.js:3:1499)
+    at async m (.next-qa/server/chunks/[root-of-the-server]__15dts_q._.js:6:636)
+    at async (.next-qa/server/chunks/_0z8i_4h._.js:1:189)
+    at async (.next-qa/server/chunks/_0a_z9yo._.js:1:20251)
+    at async Q (.next-qa/server/chunks/_0z8i_4h._.js:1:3539) {
+  length: 150,
+  severity: 'ERROR',
+  code: '22021',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'unnamed portal parameter $5',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'mbutils.c',
+  line: '1849',
+  routine: 'report_invalid_encoding_int'
+}
+webhook processing failed error: invalid byte sequence for encoding "UTF8": 0x00
+    at async (.next-qa/server/chunks/[root-of-the-server]__15dts_q._.js:6:671)
+    at async c (.next-qa/server/chunks/_1-l25y8._.js:3:1499)
+    at async m (.next-qa/server/chunks/[root-of-the-server]__15dts_q._.js:6:636)
+    at async (.next-qa/server/chunks/_0z8i_4h._.js:1:189)
+    at async (.next-qa/server/chunks/_0a_z9yo._.js:1:20251)
+    at async Q (.next-qa/server/chunks/_0z8i_4h._.js:1:3539) {
+  length: 150,
+  severity: 'ERROR',
+  code: '22021',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'unnamed portal parameter $5',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'mbutils.c',
+  line: '1849',
+  routine: 'report_invalid_encoding_int'
+}
+webhook processing failed error: invalid byte sequence for encoding "UTF8": 0x00
+    at async (.next-qa/server/chunks/[root-of-the-server]__15dts_q._.js:6:671)
+    at async c (.next-qa/server/chunks/_1-l25y8._.js:3:1499)
+    at async m (.next-qa/server/chunks/[root-of-the-server]__15dts_q._.js:6:636)
+    at async (.next-qa/server/chunks/_0z8i_4h._.js:1:189)
+    at async (.next-qa/server/chunks/_0a_z9yo._.js:1:20251)
+    at async Q (.next-qa/server/chunks/_0z8i_4h._.js:1:3539) {
+  length: 150,
+  severity: 'ERROR',
+  code: '22021',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'unnamed portal parameter $2',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'mbutils.c',
+  line: '1849',
+  routine: 'report_invalid_encoding_int'
+}
+webhook processing failed error: invalid byte sequence for encoding "UTF8": 0x00
+    at async (.next-qa/server/chunks/[root-of-the-server]__15dts_q._.js:6:671)
+    at async c (.next-qa/server/chunks/_1-l25y8._.js:3:1499)
+    at async m (.next-qa/server/chunks/[root-of-the-server]__15dts_q._.js:6:636)
+    at async (.next-qa/server/chunks/_0z8i_4h._.js:1:189)
+    at async (.next-qa/server/chunks/_0a_z9yo._.js:1:20251)
+    at async Q (.next-qa/server/chunks/_0z8i_4h._.js:1:3539) {
+  length: 150,
+  severity: 'ERROR',
+  code: '22021',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'unnamed portal parameter $5',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'mbutils.c',
+  line: '1849',
+  routine: 'report_invalid_encoding_int'
+}
