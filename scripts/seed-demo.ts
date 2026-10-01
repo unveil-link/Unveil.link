@@ -82,6 +82,15 @@ async function main() {
   await sale(spring.id, 1200, 18);
   await sale(studio.id, 2500, 7);
   await sale(travel.id, 800, 5);
+  // One refunded and one charged-back sale (fees on these were returned, so they must not change fee totals/net).
+  for (const [i, st, cents] of [[0, "refunded", 5000], [1, "charged_back", 2500]] as const) {
+    const platform = Math.round(cents * 0.1), processing = Math.round(cents * 0.029 + 30);
+    await db.query(
+      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, processor_ref, status, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now() - interval '3 days')`,
+      [studio.id, mayaId, `reversed${i}@example.test`, cents, platform, processing, cents - platform - processing, `demo_${stamp}_rev_${i}`, st],
+    );
+  }
   await db.query("INSERT INTO payouts (seller_id, amount_cents, status, provider_ref) VALUES ($1, 15000, 'paid', $2), ($1, 6000, 'pending', $3)", [mayaId, `po_${stamp}_1`, `po_${stamp}_2`]);
 
   // --- Seller B: brand-new (empty state), pending verification

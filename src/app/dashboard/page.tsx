@@ -3,10 +3,11 @@ import { redirect } from "next/navigation";
 import { getSessionSellerId } from "@/server/auth/session";
 import { getSellerById } from "@/server/services/sellers";
 import { listDropsForSeller } from "@/server/services/drops";
-import { Alert, Badge, ButtonLink, Card, CardDescription, CardTitle, ChartIcon, ClockIcon, CoinIcon, PlusIcon, StatCard, WalletIcon } from "@/components/ui";
+import { Alert, Badge, ButtonLink, Card, CardDescription, CardTitle, CardIcon, ChartIcon, ClockIcon, CoinIcon, PlusIcon, StatCard, WalletIcon } from "@/components/ui";
 import { DropList } from "@/components/dashboard/DropList";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { VERIFICATION_META, type DropRow } from "@/components/dashboard/types";
+import { breakdownLine, reversalsLabel } from "@/lib/earnings";
 import { usd } from "@/lib/format";
 import { getDropStats, getDropThumbs, getEarnings } from "./data";
 
@@ -30,6 +31,7 @@ export default async function DashboardOverview() {
   const v = VERIFICATION_META[seller.verification_status];
   const first = seller.display_name.split(" ")[0];
   const e = earnings;
+  const reversals = reversalsLabel(e);
   const published = rows.filter((r) => r.status === "published").length;
 
   return (
@@ -57,18 +59,34 @@ export default async function DashboardOverview() {
 
       <section aria-labelledby="earn-h" className="mb-10">
         <h2 id="earn-h" className="sr-only">Earnings</h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4" data-testid="earnings-breakdown">
           <StatCard label="Gross sales" value={usd(e.grossCents)} icon={<ChartIcon />} tone="primary"
-            hint={`${e.salesCount} sale${e.salesCount === 1 ? "" : "s"}${e.refundedCents ? ` · ${usd(e.refundedCents)} refunded` : ""}`} />
-          <StatCard label={`Your ${e.sellerPercent}%`} value={usd(e.netCents)} icon={<CoinIcon />} tone="accent"
-            hint={`After the ${e.feePercent}% platform fee & processing`} />
+            hint={`${e.salesCount} sale${e.salesCount === 1 ? "" : "s"}${e.reversedCount ? ` · ${e.reversedCount} reversed` : ""}`} />
+          <StatCard label="Platform fee" value={usd(e.platformFeeCents)} icon={<CoinIcon />}
+            hint={e.platformFeePct === null ? "Charged on each sale" : `${e.platformFeePct}% of completed sales`} />
+          <StatCard label="Processing fees" value={usd(e.processingFeeCents)} icon={<CardIcon />}
+            hint={e.processingFeePct === null ? "Paid to the card processor" : `${e.processingFeePct}% of completed sales · card processor`} />
+          <StatCard label="Your earnings (net)" value={usd(e.netCents)} icon={<CoinIcon />} tone="accent"
+            hint={e.keepPct === null ? "After fees" : `${e.keepPct}% of completed sales, after fees`} />
+        </div>
+        <p className="mt-3 text-sm text-muted" data-testid="net-breakdown">
+          {breakdownLine(e)}
+        </p>
+        {reversals && (
+          <p className="mt-1 text-sm text-muted" data-testid="reversals">
+            Reversed sales: {reversals}. Fees on reversed sales are returned, so they are not counted above.
+          </p>
+        )}
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           <StatCard label="Available" value={usd(e.availableCents)} icon={<WalletIcon />}
-            hint={e.availableCents > 0 ? "Ready for your next payout" : "Nothing to pay out yet"} />
+            hint={e.availableCents > 0 ? "Net earnings not yet in a payout" : "Nothing to pay out yet"} />
           <StatCard label="Pending payouts" value={usd(e.pendingPayoutCents)} icon={<ClockIcon />}
-            hint={e.paidOutCents ? `${usd(e.paidOutCents)} paid out so far` : "No payouts yet"} />
+            hint={e.pendingPayoutCents ? "Requested, not yet paid" : "None in progress"} />
+          <StatCard label="Paid out" value={usd(e.paidOutCents)} icon={<WalletIcon />}
+            hint={e.paidOutCents ? "Sent to you so far" : "No payouts yet"} className="col-span-2 lg:col-span-1" />
         </div>
         <p className="mt-3 text-xs text-muted">
-          You keep {e.sellerPercent}% of each sale; the {e.feePercent}% platform fee is shown before payment processing costs. Payouts are not enabled yet — balances will appear here as sales come in.
+          Net earnings = gross sales − platform fee − card-processing fees. Payouts are not enabled yet — balances will appear here as sales come in.
         </p>
       </section>
 
