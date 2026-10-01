@@ -21,6 +21,8 @@ export E2E_MAIL_DIR="$PWD/.e2e/mail"
 # Throwaway secret, generated per run (never committed).
 export PAYMENT_PROVIDER=mock
 export PAYMENT_WEBHOOK_SECRET="${PAYMENT_WEBHOOK_SECRET_E2E:-$(openssl rand -hex 32)}"
+# Cron trigger secret for the payments janitor route (throwaway, per run, never committed).
+export CRON_SECRET="${CRON_SECRET_E2E:-$(openssl rand -hex 32)}"
 mkdir -p .e2e proof
 rm -rf "$E2E_STORAGE_DIR" "$E2E_MAIL_DIR"
 
