@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
 import sharp from "sharp";
-import { query, queryOne } from "../db";
+import { queryOne, withTx } from "../db";
 import { HttpError } from "../errors";
 import { storage } from "../storage";
-import { getSettings } from "./settings";
+import { getSettings, type PlatformSettings } from "./settings";
 import { getOwnedDrop } from "./drops";
 
 const FORMAT_TO_MIME: Record<string, string> = {
@@ -27,6 +27,28 @@ export async function makeBlurredPreview(input: Buffer): Promise<Buffer> {
     .modulate({ saturation: 0.9 })
     .jpeg({ quality: 55, mozjpeg: true })
     .toBuffer();
+}
+
+/**
+ * Per-drop quota accounting (pure, unit-tested): at most `max_files_per_drop` files and
+ * `max_total_bytes_per_drop` total bytes (originals) including the incoming file.
+ */
+export function assertDropQuota(
+  current: { count: number; totalBytes: number },
+  incomingBytes: number,
+  limits: Pick<PlatformSettings, "max_files_per_drop" | "max_total_bytes_per_drop">,
+): void {
+  if (current.count + 1 > limits.max_files_per_drop) {
+    throw new HttpError(400, `A drop can have at most ${limits.max_files_per_drop} files`, "too_many_files");
+  }
+  if (current.totalBytes + incomingBytes > limits.max_total_bytes_per_drop) {
+    const gb = (limits.max_total_bytes_per_drop / 1024 ** 3).toFixed(2).replace(/\.?0+$/, "");
+    throw new HttpError(
+      413,
+      `A drop can hold at most ${limits.max_total_bytes_per_drop >= 1024 ** 2 ? gb + " GB" : limits.max_total_bytes_per_drop + " bytes"} in total`,
+      "drop_too_large",
+    );
+  }
 }
 
 export async function addImageToDrop(
@@ -54,10 +76,12 @@ export async function addImageToDrop(
     throw new HttpError(415, "Only JPG, PNG and WebP images are allowed", "unsupported_type");
   }
 
-  const count = await queryOne<{ n: number }>("SELECT count(*)::int AS n FROM drop_files WHERE drop_id=$1", [drop.id]);
-  if ((count?.n ?? 0) >= s.max_files_per_drop) {
-    throw new HttpError(400, `A drop can have at most ${s.max_files_per_drop} files`, "too_many_files");
-  }
+  // Cheap early reject (not authoritative: the locked re-check inside the insert transaction below is).
+  const pre = await queryOne<{ n: number; total: number }>(
+    "SELECT count(*)::int AS n, COALESCE(sum(size_bytes),0)::float8 AS total FROM drop_files WHERE drop_id=$1",
+    [drop.id],
+  );
+  assertDropQuota({ count: pre?.n ?? 0, totalBytes: pre?.total ?? 0 }, file.data.length, s);
 
   let preview: Buffer;
   try {
@@ -76,13 +100,32 @@ export async function addImageToDrop(
 
   const safeName = file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 200) || `upload.${EXT[mime]}`;
   try {
-    const rows = await query<{ id: string }>(
-      `INSERT INTO drop_files (id, drop_id, storage_key, filename, mime, size_bytes, blurred_preview_key, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE((SELECT max(sort_order)+1 FROM drop_files WHERE drop_id=$2),0))
-       RETURNING id`,
-      [id, drop.id, storageKey, safeName, mime, file.data.length, previewKey],
-    );
-    return { id: rows[0].id, filename: safeName, mime, sizeBytes: file.data.length };
+    // Serialise per drop: the row lock makes count + size check + insert atomic, so parallel
+    // uploads cannot overshoot the limits. NOTE: nothing in here may use the pool (only `c`),
+    // otherwise concurrent uploads could exhaust the pool while holding locks.
+    const out = await withTx(async (c) => {
+      await c.query("SELECT id FROM drops WHERE id = $1 FOR UPDATE", [drop.id]);
+      const cur = (
+        await c.query<{ n: number; total: number }>(
+          "SELECT count(*)::int AS n, COALESCE(sum(size_bytes),0)::float8 AS total FROM drop_files WHERE drop_id=$1",
+          [drop.id],
+        )
+      ).rows[0];
+      const live = (
+        await c.query<Pick<PlatformSettings, "max_files_per_drop" | "max_total_bytes_per_drop">>(
+          "SELECT max_files_per_drop, max_total_bytes_per_drop::float8 AS max_total_bytes_per_drop FROM platform_settings WHERE id = 1",
+        )
+      ).rows[0];
+      assertDropQuota({ count: cur.n, totalBytes: cur.total }, file.data.length, live);
+      const rows = await c.query<{ id: string }>(
+        `INSERT INTO drop_files (id, drop_id, storage_key, filename, mime, size_bytes, blurred_preview_key, sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE((SELECT max(sort_order)+1 FROM drop_files WHERE drop_id=$2),0))
+         RETURNING id`,
+        [id, drop.id, storageKey, safeName, mime, file.data.length, previewKey],
+      );
+      return rows.rows[0];
+    });
+    return { id: out.id, filename: safeName, mime, sizeBytes: file.data.length };
   } catch (e) {
     await st.delete(storageKey);
     await st.delete(previewKey);

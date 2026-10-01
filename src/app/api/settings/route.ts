@@ -12,6 +12,7 @@ export const GET = api(async () => {
     priceMaxCents: s.price_max_cents,
     maxImageSizeBytes: s.max_image_size_bytes,
     maxFilesPerDrop: s.max_files_per_drop,
+    maxTotalBytesPerDrop: s.max_total_bytes_per_drop,
     allowedImageMimes: s.allowed_image_mimes,
   });
 });
