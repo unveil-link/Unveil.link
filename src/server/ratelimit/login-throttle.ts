@@ -84,12 +84,15 @@ export async function admitLoginAttempt(email: string, cfg?: LoginDelayConfig): 
   const c = cfg ?? (await getLoginDelayConfig());
   const key = loginThrottleKey(email);
   const out = await withTx(async (tx) => {
-    await tx.query("INSERT INTO login_throttle (key, failures) VALUES ($1, 0) ON CONFLICT (key) DO NOTHING", [key]);
+    // ONE statement that creates-or-locks the row and returns it. (Previously INSERT ... DO NOTHING followed by SELECT ... FOR UPDATE: a concurrent
+    // successful login's DELETE could commit in between, the SELECT then found no row and `rows[0].wait` threw -> HTTP 500, QA NEW-5.)
+    // ON CONFLICT DO UPDATE waits for a concurrent DELETE/UPDATE to finish and re-inserts if the row vanished, so a row is always returned and locked.
     const { rows } = await tx.query<{ failures: number; stale: boolean; wait: number }>(
-      `SELECT failures,
-              last_attempt_at < now() - make_interval(secs => $2) AS stale,
-              ceil(extract(epoch FROM (next_allowed_at - now())))::int AS wait
-         FROM login_throttle WHERE key = $1 FOR UPDATE`,
+      `INSERT INTO login_throttle (key, failures) VALUES ($1, 0)
+         ON CONFLICT (key) DO UPDATE SET key = EXCLUDED.key
+       RETURNING failures,
+                 last_attempt_at < now() - make_interval(secs => $2) AS stale,
+                 ceil(extract(epoch FROM (next_allowed_at - now())))::int AS wait`,
       [key, c.decaySec],
     );
     const r = rows[0];
