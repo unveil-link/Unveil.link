@@ -1,0 +1,74 @@
+
+> unveil@0.1.0 build
+> next build
+
+▲ Next.js 16.3.8 (Turbopack)
+- Environments: .env
+✓ Running next.config.ts took 28ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.6s
+  Running TypeScript ...
+  Finished TypeScript in 5.1s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/9) ...
+  Generating static pages using 7 workers (2/9) 
+  Generating static pages using 7 workers (4/9) 
+  Generating static pages using 7 workers (6/9) 
+✓ Generating static pages using 7 workers (9/9) in 245ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/login
+├ ƒ /admin/sellers/[id]/transactions
+├ ƒ /admin/sellers/flagged
+├ ƒ /api/admin/login
+├ ƒ /api/admin/logout
+├ ƒ /api/admin/me
+├ ƒ /api/admin/sellers/[id]/clear-flag
+├ ƒ /api/admin/sellers/flagged
+├ ƒ /api/admin/transactions/review
+├ ƒ /api/auth/forgot-password
+├ ƒ /api/auth/google
+├ ƒ /api/auth/google/callback
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/me
+├ ƒ /api/auth/reset-password
+├ ƒ /api/auth/signup
+├ ƒ /api/checkout
+├ ƒ /api/checkout/status
+├ ƒ /api/dev/payments/pay
+├ ƒ /api/dev/payments/refund
+├ ƒ /api/drops
+├ ƒ /api/drops/[id]
+├ ƒ /api/drops/[id]/files
+├ ƒ /api/drops/[id]/publish
+├ ƒ /api/drops/[id]/unpublish
+├ ƒ /api/earnings
+├ ƒ /api/files/[id]/original
+├ ƒ /api/files/[id]/preview
+├ ƒ /api/files/[id]/signed-url
+├ ƒ /api/internal/cron/payments-janitor
+├ ƒ /api/public/drops/[linkId]
+├ ƒ /api/settings
+├ ƒ /api/webhooks/[provider]
+├ ƒ /dashboard
+├ ƒ /dashboard/drops/[id]
+├ ○ /design
+├ ƒ /forgot-password
+├ ƒ /login
+├ ○ /manifest.webmanifest
+├ ƒ /pay/mock/[sessionId]
+├ ƒ /reset-password
+├ ○ /robots.txt
+├ ƒ /signup
+└ ƒ /u/[linkId]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

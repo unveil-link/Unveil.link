@@ -1,0 +1,29 @@
+=== qa-backend-1
+< [M1-07] hostile filename upload=201 stored filename=".._.._etc_script_x.jpg"
+> [M1-07] hostile filename upload=201 stored filename="_script_22x.jpg"
+< [M1-08] no per-drop total size limit exists in code/schema (grep: none). drop total bytes=9190
+> [M1-08] no per-drop total size limit exists in code/schema (grep: none). drop total bytes=9230
+<          /<link>/originals/<uuid>/c5a6c136- -> 404
+>          /<link>/originals/<uuid>/7a7a0801- -> 404
+<          /_next/static/originals/<uuid>/c5a6c136- -> 404
+>          /_next/static/originals/<uuid>/7a7a0801- -> 404
+< [M1-12] disk: /workspace/qa-m2/<link>/originals/<uuid>/<uuid>.jpg mode=600; inside public/? no (public/ has only icons)
+> [M1-12] disk: /workspace/STORE/originals/<uuid>/<uuid>.jpg mode=600; inside public/? no (public/ has only icons)
+< [M2-07] public API 200: {"drop":{"publicLinkId":"GNnhcsrzBbvx","url":"/u/<link>","title":"QA drop","description":"d","priceCents":2000},"seller":{"displayName":"QA unv","display_name":"QA unv","avatar":null},"summary":{"fileCount":3,"imageCount":3,"videoCount":0,"otherCount":0,"label":"3 files: 3 images"},"previews":[{"id":"<u
+> [M2-07] public API 200: {"drop":{"publicLinkId":"IgSmzC1JrxXu","url":"/u/<link>","title":"QA drop","description":"d","priceCents":2000},"seller":{"displayName":"QA unv","display_name":"QA unv","avatar":null},"summary":{"fileCount":3,"imageCount":3,"videoCount":0,"otherCount":0,"label":"3 files: 3 images"},"previews":[{"id":"<u
+< [M2-10] edit endpoints: PATCH /api/drops/:id=405, PUT /api/drops/:id=405 (only GET exists on /api/drops/:id)
+> [M2-10] edit endpoints: PATCH /api/drops/:id=200, PUT /api/drops/:id=405 (only GET exists on /api/drops/:id)
+< [M2-13] DELETE /api/drops/:id => 405
+> [M2-13] DELETE /api/drops/:id => 200
+=== qa-backend-1b
+< [M1-06] MP4 upload => 415 {"error":"Not a valid image","code":"invalid_image"}
+> [M1-06] MP4 upload => 201 {"file":{"id":"<uuid>","filename":"t.mp4","mime":"video/mp4","sizeBytes":N,"durationSec":2}}
+=== qa-backend-1c
+< [M1-02] GET /api/auth/google (no creds) => 501 {"error":"Google sign-in is not configured (set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)"}; callback => 307 location=http://localhost:3264/login?error=google_not_configured
+> [M1-02] GET /api/auth/google (no creds) => 501 {"error":"Google sign-in is not configured (set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)"}; callback => 307 location=http://localhost:3260/login?error=google_not_configured
+=== qa-backend-1d
+< [PROBE] seller edit/delete endpoints: DELETE drop=405 DELETE file=404 DELETE /api/files/:id=404 PATCH /api/auth/me=405 PUT /api/auth/me=405
+> [PROBE] seller edit/delete endpoints: DELETE drop=200 DELETE file=404 DELETE /api/files/:id=404 PATCH /api/auth/me=405 PUT /api/auth/me=405
+=== qa-fixes-1
+< [M1-08] total-size cap race: 12 parallel -> 201=3, rejected=9 (codes 413:drop_too_large,201:); stored n=3 total=<N>B <= cap 389773: true
+> [M1-08] total-size cap race: 12 parallel -> 201=2, rejected=10 (codes 201:,413:drop_too_large); stored n=2 total=<N>B <= cap 389182: true

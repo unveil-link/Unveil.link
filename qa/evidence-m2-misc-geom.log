@@ -1,0 +1,8 @@
+PASS    V-geom-huge110mp.mp4 11000x10000 (110 MP, > 100 MP limit) — 415 invalid_video in 264 ms Not a valid MP4 video
+PASS    V-geom-big8k.mp4 8192x8192 (67 MP) — 201  in 867 ms preview 320x320 dur=2 
+PASS    V-geom-tiny16.mp4 16x16 — 201  in 186 ms preview 16x16 dur=3 
+PASS    V-geom-long10h.mp4 36000 s (10 h) duration — 201  in 191 ms preview 64x64 dur=36000 
+PASS    V-geom-bigmeta.mp4 60 KB title metadata — 201  in 209 ms preview 320x180 dur=3 
+PASS    V-orient   rotated (rot90) video preview orientation = displayed orientation (portrait), blurred — preview 180x320; source stream|width=640|height=360|side_datum/display_matrix:rotation=90 
+
+Saved misc-geom.json: PASS 6 FAIL 0 NOTE 0 BLOCKED 0

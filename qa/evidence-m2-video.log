@@ -1,0 +1,81 @@
+PASS    M1-06      upload 1 valid MP4 (H.264/AAC 1280x720 4 s, with title/GPS-style metadata) -> 201, listed, mime video/mp4 — 201 {"file":{"id":"537ec6db-9999-4833-a461-40e45cbd3236","filename":"good.mp4","mime":"video/mp4","sizeBytes":1458961,"durationSec":4}} | list: {"id":"537ec6db-9999-4833-a461-40e45cbd3236","drop_id":"356697c8-b0f9-4931-919c-9abd7d626092","filename":"good.mp4","mime":"video/mp4","size_bytes":1458961,"sort_order":0,"has_preview":true}
+PASS    M1-06b     stored original is byte-identical, private (0600), outside public/.next static; temp spool removed — sha256 equal; mode 600; key originals/<drop>/537ec6db-9999-4833-a461-40e45cbd3236.mp4; tmp empty
+PASS    M1-11      blurred preview generated from the video: JPEG <=320px, truly blurred (high-pass energy vs raw frame), no EXIF/ICC/XMP, source metadata strings absent — jpeg 320x180 2429 B; no exif/icc/xmp/iptc; metadata strings absent; high-pass energy preview/raw = 0.140 (limit 0.25) [artifacts video-preview-blurred.jpg vs video-raw-frame.png]
+PASS    M1-11b     preview is not the original: cannot recover original bytes/frames from the preview file; preview key differs, stored under previews/ — preview 2429 B (original 1458961 B); previews/ key; 320px-max
+PASS    V-ok-mp42.mp4 valid MP4 variant accepted (brand mp42) — 201; preview 320x180
+PASS    V-ok-good-noFast.mp4 valid MP4 variant accepted (moov at end) — 201; preview 320x180
+PASS    V-ok-small.mp4 valid MP4 variant accepted (640x360 2 s) — 201; preview 320x180
+PASS    V-ok-rot90.mp4 valid MP4 variant accepted (rotate metadata) — 201; preview 320x180
+PASS    V-ok-hevc.mp4 valid MP4 variant accepted (HEVC in MP4 (hvc1)) — 201; preview 320x240
+PASS    V-ok-av1.mp4 valid MP4 variant accepted (AV1 in MP4) — 201; preview 320x240
+PASS    V-zero-img zero-byte image -> 400 empty_file (baseline for the zero-byte .mp4 -> 415 note) — 400 {"error":"Empty file","code":"empty_file"}
+PASS    V-rej-fake-ftyp-random.mp4 valid ftyp then random bytes — 415 invalid_video "Not a valid MP4 video" (80 ms), nothing stored, tmp empty
+PASS    V-rej-fake-ftyp-zeros.mp4 ftyp + zeros — 415 invalid_video "Not a valid MP4 video" (80 ms), nothing stored, tmp empty
+PASS    V-rej-fake-ftyp-jpeg.mp4 ftyp + JPEG body — 415 invalid_video "Not a valid MP4 video" (82 ms), nothing stored, tmp empty
+PASS    V-rej-fake-ftyp-text.mp4 ftyp + text — 415 invalid_video "Not a valid MP4 video" (78 ms), nothing stored, tmp empty
+PASS    V-rej-fake-ftyp-only.mp4 ftyp box only — 415 invalid_video "Not a valid MP4 video" (78 ms), nothing stored, tmp empty
+PASS    V-rej-fake-ftyp-hugebox.mp4 ftyp + moov box with size 4 GB lie — 415 invalid_video "Not a valid MP4 video" (94 ms), nothing stored, tmp empty
+PASS    V-rej-fake-ftyp-largesize.mp4 ftyp with size=1 (64-bit) + random — 415 invalid_video "Not a valid MP4 video" (79 ms), nothing stored, tmp empty
+PASS    V-rej-trunc-half.mp4 valid MP4 truncated at 50% — ACCEPTED 201 (245 ms) preview 200 2429 B — playable-enough for ffmpeg
+PASS    V-rej-trunc-100b.mp4 truncated at 100 B — 415 invalid_video "Not a valid MP4 video" (77 ms), nothing stored, tmp empty
+PASS    V-rej-trunc-ftyp-only.mp4 truncated at 32 B — 415 invalid_video "Not a valid MP4 video" (77 ms), nothing stored, tmp empty
+PASS    V-rej-trunc-12b.mp4 truncated at 12 B (just the sniff window) — 415 invalid_video "Not a valid MP4 video" (80 ms), nothing stored, tmp empty
+PASS    V-rej-trunc-11b.mp4 truncated at 11 B — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (7 ms), nothing stored, tmp empty
+PASS    V-rej-jpeg-as.mp4 JPEG renamed .mp4 (type video/mp4) — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-png-as.mp4 PNG renamed .mp4 — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-text-as.mp4 text renamed .mp4 — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-exe-as.mp4 EXE-like (MZ) renamed .mp4 — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-webm-as.mp4 WebM renamed .mp4 — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (7 ms), nothing stored, tmp empty
+PASS    V-rej-mkv-as.mp4 Matroska renamed .mp4 — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (8 ms), nothing stored, tmp empty
+PASS    V-rej-avi-as.mp4 AVI renamed .mp4 — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-mov-as.mp4 QuickTime MOV renamed .mp4 — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (5 ms), nothing stored, tmp empty
+PASS    V-rej-qt.mov QuickTime .mov video/quicktime — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (7 ms), nothing stored, tmp empty
+PASS    V-rej-clip.webm WebM video/webm — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-clip.mkv MKV video/x-matroska — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-clip.avi AVI video/x-msvideo — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (5 ms), nothing stored, tmp empty
+PASS    V-rej-clip.3gp 3GP video/3gpp — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-audio.m4a M4A audio/mp4 — 415 invalid_image "Not a valid image" (8 ms), nothing stored, tmp empty
+PASS    V-rej-audio-as.mp4 M4A renamed .mp4 — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (6 ms), nothing stored, tmp empty
+PASS    V-rej-audio-only-isom.mp4 MP4 (isom) with audio only — 415 invalid_video "Not a valid MP4 video" (87 ms), nothing stored, tmp empty
+PASS    V-rej-coveronly.mp4 MP4 whose only 'video' stream is cover art (attached_pic) — 415 invalid_video "Not a valid MP4 video" (80 ms), nothing stored, tmp empty
+PASS    V-rej-zero.mp4 zero-byte .mp4 (415 unsupported_type; a zero-byte .jpg gives 400 empty_file - see V-zero-img) — 415 unsupported_type "Only MP4 videos are allowed (file is not a valid MP4)" (5 ms), nothing stored, tmp empty
+PASS    V-rej-mdat-corrupt.mp4 valid headers, first 20 kB of mdat corrupted — 415 invalid_video (397 ms), nothing stored
+PASS    V-rej-moov-size-lie.mp4 moov box size lies (0xfffffff0) — ACCEPTED 201 (256 ms) preview 200 2429 B — playable-enough for ffmpeg
+PASS    V-rej-tkhd-zero-dim.mp4 tkhd width/height zeroed — ACCEPTED 201 (268 ms) preview 200 2429 B — playable-enough for ffmpeg
+PASS    V-rej-mvhd-timescale0.mp4 mvhd timescale 0 — ACCEPTED 201 (247 ms) preview 200 2429 B — playable-enough for ffmpeg
+PASS    V-rej-mvhd-duration-max.mp4 mvhd duration 0xffffffff — ACCEPTED 201 (246 ms) preview 200 2429 B — playable-enough for ffmpeg
+PASS    V-rej-stts-huge-entries.mp4 stts entry_count 0x7fffffff — 415 invalid_video (88 ms), nothing stored
+PASS    V-rej-stsz-huge-count.mp4 stsz sample_count 0x7fffffff — 415 invalid_video (86 ms), nothing stored
+PASS    V-rej-nested-box-bomb.mp4 3000 nested udta boxes — 415 invalid_video "Not a valid MP4 video" (88 ms), nothing stored, tmp empty
+NOTE    V-rej-time all rejection probes total time — 8356 ms for 38 uploads
+PASS    V-claim    image file claiming video/mp4 MIME is judged on content (JPEG body, type video/mp4, name .jpg) — 415 unsupported_type
+PASS    V-claim2   real MP4 sent as image/jpeg with .jpg or .png name or no extension is still recognised by content (stored as video/mp4, filename sane) — mp4-as.jpg:201 video/mp4 mp4-as.jpg | mp4-as.png:201 video/mp4 mp4-as.png | mp4-noext:201 video/mp4 mp4-noext
+PASS    V-image-regress JPG/PNG/WebP still upload; GIF/PDF/EXE-renamed-.jpg still rejected (image path unchanged) — jpeg:201 png:201 webp:201 gif:415 pdf:415 exe.jpg:415
+PASS    V-mp-edge  multipart edge cases: no file part, wrong field name, 2 file parts, non-multipart body, JSON body, empty body, missing boundary -> 4xx, never 5xx; no leftovers — nofile:400/missing_file wrongfield:400/missing_file two-files:400/too_many_parts json:400/bad_form empty:400/bad_form noboundary:400/bad_form octet:400/bad_form bad-body:400/bad_form
+PASS    V-authz    upload to someone else's drop -> 404 (body not stored); unauthenticated -> 401; nonexistent/non-UUID drop id -> 404/400 — other:404 anon:401 missing:404 baduuid:404
+PASS    V-csrf     cross-origin upload (Origin: https://evil.example) -> 403 bad_origin, nothing stored — 403 bad_origin
+PASS    V-unverified unverified seller can upload video to own draft (same as images); publish still blocked — upload 201; publish 403 verification_required
+PASS    V-names    filename tricks (../, \, quotes, CRLF, NUL, unicode, 600 chars, leading dots) never reach storage keys / headers; DB filename sanitised — "../../../etc/passw"→"passwd.mp4" | "..\\..\\win.mp4"→"win.mp4" | "a\"b;c=d.mp4"→"a_22b_c_d.mp4" | "x\r\nSet-Cookie: pwn"→"x_0D_0ASet-Cookie_ pwn" | "%2e%2e%2fetc.mp4"→"_2e_2e_2fetc.mp4" | "名前🎬.mp4"→"_.mp4" | "AAAAAAAAAAAAAAAAAA"→"AAAAAAAAAAAAAAAAAAAAAA" | ".mp4"→".mp4" | "..."→"..." | "con.mp4"→"con.mp4" | "a b  c.mp4"→"a b  c.mp4" | "<script>alert(1)</"→"script_.mp4" | "file.mp4.jpg"→"file.mp4.
+PASS    M1-12v     video original unreachable pre-purchase: guessable paths, no-signature, forged signature, owner cookie without signature, public API/page contain no storage path or signed URL — /originals/225f7fbf-70bc-4bf5-86f7-046fd→404 /originals/225f7fbf-70bc-4bf5-86f7-046fd→404 /storage/originals/225f7fbf-70bc-4bf5-86→404 /public/originals/225f7fbf-70bc-4bf5-86f→404 /_next/static/originals/225f7fbf-70bc-4b→404 /api/files/9a044813-4f80-4a6f-96ae-e9de7→403 /api/files/9a044813-4f80-4a6f-96ae-e9de7→403 /api/files/9a044813-4f80-4a6f-96ae-e9de7→403 /api/files/9a044813-4f80-4a6f-96ae-e9de7
+PASS    V-signed   owner-minted signed URL streams the exact bytes; Range 206/suffix/open-ended/416; multi-range+garbage ignored (200); expired 410; tampered sig 403; response headers safe — bytes=0-99→206 bytes=1000-→206 bytes=-500→206 bytes=1458960-1459960→206 bytes=1458961-→416 bytes=0-1,5-9→200 bytes=abc→200 bytes=5-2→200 bytes=-0→416 HEAD→200 tampered→403 expired→403
+PASS    M1-08a     11th file blocked (mixed 6 images + 4 videos fill 10; 11th video AND 11th image -> 400 too_many_files, no leftovers) — 11th video:400/too_many_files 11th image:400/too_many_files | message: A drop can have at most 10 files
+PASS    M1-08b     parallel burst: 14 simultaneous video+image uploads into an empty drop land exactly 10 (no overshoot, no orphan objects/temp files) — 201×10, rejected 400/too_many_files,400/too_many_files,400/too_many_files,400/too_many_files; rows 10, objects 20, tmp empty
+PASS    M1-08c     per-video cap 500 MiB (524288000): cap-1 and cap accepted (streamed 500 MB), cap+1 -> 413 file_too_large with nothing stored; server RSS stays flat — cap-1:201 (3214 ms) | cap(exact 524288000):413/file_too_large (3022 ms) | cap+1:413/file_too_large (2515 ms) | RSS base 239 MB peak 243 MB (uploads 3x ~500 MB)
+FAIL    M1-08c2    a video of EXACTLY the cap (524288000 B = 500 MiB) is accepted (cap is inclusive: 'files up to 500 MB') — exact-cap video status (cap-1 accepted, cap+1 rejected; see M1-08c): expected 201, got 413
+PASS    M1-08d     oversized body is cut off: 700 MB stream (ftyp + zeros) -> 413 quickly (declared size > cap+64 KB rejected up-front; undeclared/chunked stops at cap), no temp left — declared-length: 413 0.006784 | chunked 700 MB: 413 {"error":"File exceeds limit of 524288000 byfile:///workspace/unveil/qa/scripts/qa-m2-video.mjs:8
+const rss = (pid) => Number(fs.readFileSync(`/proc/${pid}/status`, "utf8").match(/VmRSS:\s+(\d+)/)[1]) / 1024;
+                                                                                                  ^
+
+TypeError: Cannot read properties of null (reading '1')
+    at rss (file:///workspace/unveil/qa/scripts/qa-m2-video.mjs:8:99)
+    at file:///workspace/unveil/qa/scripts/qa-m2-video.mjs:161:136
+
+Node.js v20.19.2
+ject, temp spool removed — temp files right after abort: 1; after 1.5 s: 0; rows 0; objects 0
+PASS    M1-09b     abort during an image-sized body and abort right after headers (no body) -> no 5xx noise, nothing stored, server still healthy — nothing stored; server healthy
+PASS    M1-09c     resumable upload (tus-style) — spec M1-09: not provided by this branch (single multipart POST; no Range/PATCH resume endpoint) — PATCH:405 HEAD:405 PUT:405 OPTIONS:204 (resume not implemented -> M1-09 stays BLOCKED)
+PASS    V-mem      memory: 4 parallel 500 MB uploads -> server RSS delta < 250 MB (body streamed to disk) — 4 x 500 MB parallel in 11665 ms; RSS base 257 MB, peak 259 MB (delta 2); tmp empty
+PASS    V-meta-big valid MP4 with a 20 MB 'free' box before moov, and box-bomb inputs, processed within the time budget; no 5xx — 415 invalid_video in 1670 ms
+
+Saved video.json: PASS 69 FAIL 1 NOTE 1 BLOCKED 0
+finished

@@ -17,15 +17,15 @@ Acceptance: Seller can sign up, upload files, see blurred previews.
 | M1-02 | BE/FE | Sign up / sign in with Google OAuth | Account created/logged in; same session behavior as email | NOT RUN |
 | M1-03 | BE | Sign up with already-used email; weak password; malformed email | Clear validation errors; no duplicate account | NOT RUN |
 | M1-04 | BE/FE | Log out, log back in, reset password | All work; old session invalid after logout | NOT RUN |
-| M1-05 | FE | Upload 1 JPG, then PNG, then WebP to a draft drop | Each uploads with progress bar; appears in file list | NOT RUN |
-| M1-06 | FE | Upload 1 MP4 | Uploads with progress; appears in list | NOT RUN |
-| M1-07 | BE/FE | Upload unsupported types (GIF, PDF, EXE, renamed .exe as .jpg) | Rejected with clear message; server validates content, not just extension | NOT RUN |
-| M1-08 | BE/FE | Upload file over 500 MB; drop total over 2 GB; 11th file | Each blocked with clear limit message | NOT RUN |
-| M1-09 | FE/BE | Interrupt an upload (kill network / close tab) and resume | Upload resumes from where it stopped (tus-style), no restart | NOT RUN |
-| M1-10 | BE | After image upload, view generated blurred preview | Preview exists, is actually blurred (text/faces unreadable), original not recoverable from preview file | NOT RUN |
-| M1-11 | BE | After MP4 upload, view generated preview | Blurred thumbnail generated from video | NOT RUN |
-| M1-12 | BE | Try to fetch a stored original by guessing the storage URL / public bucket path | Denied; files only reachable via signed URLs | NOT RUN |
-| M1-13 | BE | Check another seller's draft/files via direct ID (IDOR test) | 403/404; no data leaked | NOT RUN |
+| M1-05 | FE | Upload 1 JPG, then PNG, then WebP to a draft drop | Each uploads with progress bar; appears in file list | **PASS** (m2-media 6c3e8c0, image regression: JPG/PNG/WebP still 201, GIF/PDF/EXE 415) — see qa/results-backend-m2-media.md |
+| M1-06 | FE | Upload 1 MP4 | Uploads with progress; appears in list | **PASS** (BE, m2-media 6c3e8c0): valid MP4 201, byte-identical 0600 private original; UI upload progress not tested — see qa/results-backend-m2-media.md |
+| M1-07 | BE/FE | Upload unsupported types (GIF, PDF, EXE, renamed .exe as .jpg) | Rejected with clear message; server validates content, not just extension | **PASS** (BE, m2-media 6c3e8c0): GIF/PDF/EXE/renamed, MOV/WebM/MKV/AVI/3GP/M4A, fake ftyp, truncated all 415, nothing stored — see qa/results-backend-m2-media.md |
+| M1-08 | BE/FE | Upload file over 500 MB; drop total over 2 GB; 11th file | Each blocked with clear limit message | **PASS** (BE, m2-media 6c3e8c0): 11th file (mixed) 400, 2 GiB exact 413 drop_too_large, 500 MiB+1 413; Low BUG-24: a video of exactly 524288000 B is rejected — see qa/results-backend-m2-media.md |
+| M1-09 | FE/BE | Interrupt an upload (kill network / close tab) and resume | Upload resumes from where it stopped (tus-style), no restart | **BLOCKED** (resumable/tus-style upload not implemented; abort mid-upload cleanup PASS) — see qa/results-backend-m2-media.md |
+| M1-10 | BE | After image upload, view generated blurred preview | Preview exists, is actually blurred (text/faces unreadable), original not recoverable from preview file | **PASS** (BE, m2-media 6c3e8c0, image preview regression: blurred, no EXIF, original not recoverable) — see qa/results-backend-m2-media.md |
+| M1-11 | BE | After MP4 upload, view generated preview | Blurred thumbnail generated from video | **PASS** (BE, m2-media 6c3e8c0): 320 px JPEG from ~1 s frame, high-pass energy 0.14 of raw (limit 0.25), no metadata — see qa/results-backend-m2-media.md |
+| M1-12 | BE | Try to fetch a stored original by guessing the storage URL / public bucket path | Denied; files only reachable via signed URLs | **PASS** (BE, m2-media 6c3e8c0): video + image originals only via signed URL (Range/416/expiry/tamper verified) — see qa/results-backend-m2-media.md |
+| M1-13 | BE | Check another seller's draft/files via direct ID (IDOR test) | 403/404; no data leaked | **PASS** (BE, m2-media 6c3e8c0): IDOR on upload/PATCH/DELETE/signed-url all 404, no existence oracle — see qa/results-backend-m2-media.md |
 | M1-14 | BE | Confirm CI/CD, hosting, HTTPS, DB schema match section 11 entities | All entities/fields present; HTTP redirects to HTTPS | NOT RUN |
 
 ## M2 Drops + links (wk 3-4)
@@ -33,8 +33,8 @@ Acceptance: Full seller -> link -> buyer download path works end-to-end in test 
 
 | ID | Owner | Steps | Expected | Result |
 |---|---|---|---|---|
-| M2-01 | FE/BE | Create drop: title, price $20, description, cover image | Saved as draft | NOT RUN |
-| M2-02 | BE | Price boundaries: $0.99, $1, $500, $500.01, negative, non-numeric | $1 and $500 accepted; others rejected | NOT RUN |
+| M2-01 | FE/BE | Create drop: title, price $20, description, cover image | Saved as draft | **PASS** (BE, m2-media 6c3e8c0, PATCH price/title/description edit path; create path unchanged) — see qa/results-backend-m2-media.md |
+| M2-02 | BE | Price boundaries: $0.99, $1, $500, $500.01, negative, non-numeric | $1 and $500 accepted; others rejected | **PASS** (BE, m2-media 6c3e8c0): PATCH 99/50001/0/negative/float/string/null/huge rejected, 100 and 50000 accepted — see qa/results-backend-m2-media.md |
 | M2-03 | BE | Publish as unverified seller | Blocked: must verify 18+ first (see M4) | NOT RUN |
 | M2-04 | BE/FE | Publish as verified seller (test override acceptable before M4) | Link generated in form unveil.link/u/<12 chars> | NOT RUN |
 | M2-05 | BE | Publish without ticking all attestation boxes | Blocked; with all ticked, attestation stored per drop with timestamp | NOT RUN |
@@ -42,14 +42,14 @@ Acceptance: Full seller -> link -> buyer download path works end-to-end in test 
 | M2-07 | FE | Open link in logged-out browser | Page shows blurred preview, title, file count + types, price, seller display name; no originals exposed | NOT RUN |
 | M2-08 | BE/FE | Inspect link page source/network for original file URLs | None present | NOT RUN |
 | M2-09 | BE | Check link page for noindex (meta and X-Robots-Tag), no sitemap entry, no directory/search | noindex present; no public listing anywhere | NOT RUN |
-| M2-10 | FE/BE | Edit price and description of published drop | Changes reflected on link page | NOT RUN |
-| M2-11 | FE/BE | Unpublish drop | Link shows unavailable page; buying disabled | NOT RUN |
-| M2-12 | BE | Buy, then unpublish, then use buyer's download link | Existing buyer download still works | NOT RUN |
-| M2-13 | FE/BE | Delete a drop | Drop removed from dashboard; link dead; behavior for prior buyers documented and consistent | NOT RUN |
-| M2-14 | FE/BE | Download page: each file individual button + Download all | Each file downloads intact (checksum matches original); zip contains all files | NOT RUN |
-| M2-15 | BE | Download URL expiry (24h, configurable) — use time override or short config | Expired link rejected; receipt link generates a fresh one | NOT RUN |
-| M2-16 | BE | Exceed 5 download attempts | 6th attempt blocked with clear message | NOT RUN |
-| M2-17 | BE | Rate limiting on download endpoint (rapid repeat requests) | 429 after threshold | NOT RUN |
+| M2-10 | FE/BE | Edit price and description of published drop | Changes reflected on link page | **PASS** (BE, m2-media 6c3e8c0): PATCH on published drop reflected on public API and /u page; existing sales/ledger unchanged; UI edit button absent — see qa/results-backend-m2-media.md |
+| M2-11 | FE/BE | Unpublish drop | Link shows unavailable page; buying disabled | **PASS** (BE, m2-media 6c3e8c0, unpublish/republish regression with edits) — see qa/results-backend-m2-media.md |
+| M2-12 | BE | Buy, then unpublish, then use buyer's download link | Existing buyer download still works | **BLOCKED** (no buyer download flow yet; DELETE of a drop with sales is refused 409, unpublish still works) — see qa/results-backend-m2-media.md |
+| M2-13 | FE/BE | Delete a drop | Drop removed from dashboard; link dead; behavior for prior buyers documented and consistent | **PASS** (BE, m2-media 6c3e8c0): owner delete removes rows + originals + previews, link dead, 409 with sales/open report, 403 flagged; Low BUG-22/BUG-23 (races); UI delete button absent — see qa/results-backend-m2-media.md |
+| M2-14 | FE/BE | Download page: each file individual button + Download all | Each file downloads intact (checksum matches original); zip contains all files | **BLOCKED** (buyer download page not built) — see qa/results-backend-m2-media.md |
+| M2-15 | BE | Download URL expiry (24h, configurable) — use time override or short config | Expired link rejected; receipt link generates a fresh one | **BLOCKED** (buyer receipt flow absent; signed-URL expiry itself PASS) — see qa/results-backend-m2-media.md |
+| M2-16 | BE | Exceed 5 download attempts | 6th attempt blocked with clear message | **BLOCKED** (download attempt counter not built) — see qa/results-backend-m2-media.md |
+| M2-17 | BE | Rate limiting on download endpoint (rapid repeat requests) | 429 after threshold | NOT RUN on this branch (download endpoint rate limit was verified earlier on main; original route now streams — test instance ran with limits off) — see qa/results-backend-m2-media.md |
 | M2-18 | FE | Link page on iOS Safari, Android Chrome (responsive, no layout breaks) | Usable, readable, Buy button reachable | NOT RUN |
 | M2-19 | FE | Link page load time on throttled 4G | Under 2s to usable | NOT RUN |
 

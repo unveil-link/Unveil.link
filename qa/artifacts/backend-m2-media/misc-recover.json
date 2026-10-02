@@ -1,0 +1,8 @@
+[
+  {
+    "id": "V-ffmpeg-recover",
+    "name": "ffmpeg installed AFTER the server started: uploads recover without restart (availability not cached forever)",
+    "result": "FAIL",
+    "evidence": "still 503 video_unavailable after ffmpeg became available (negative availability result cached for the process lifetime; restart required)"
+  }
+]

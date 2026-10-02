@@ -1,0 +1,3 @@
+FAIL    V-ffmpeg-recover ffmpeg installed AFTER the server started: uploads recover without restart (availability not cached forever) — still 503 video_unavailable after ffmpeg became available (negative availability result cached for the process lifetime; restart required)
+
+Saved misc-recover.json: PASS 0 FAIL 1 NOTE 0 BLOCKED 0

@@ -1,0 +1,8 @@
+[
+  {
+    "id": "V-ffmpeg-timeout",
+    "name": "ffmpeg/ffprobe wall-clock timeout (FFMPEG_TIMEOUT_MS=150): a heavy video (8192x8192) -> clean JSON 4xx (invalid_video 'could not be analysed in time'), no hang, nothing stored, temp removed, no lingering ffmpeg procs; small video and images unaffected",
+    "result": "PASS",
+    "evidence": "big8k → 415 {\"error\":\"Video could not be analysed in time\",\"code\":\"invalid_video\"} in 203 ms; small.mp4 → 201; lingering ffmpeg/ffprobe procs: 0"
+  }
+]

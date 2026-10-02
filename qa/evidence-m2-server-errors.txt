@@ -1,0 +1,11 @@
+    233 unhandled api error error: insert or update on table "transactions" violates foreign key constraint "transactions_drop_id_fkey"
+    233     at async (.next/server/chunks/_04ap371._.js:4:257)
+      6     at async n.put (.next/server/chunks/[root-of-the-server]__1rgbyjs._.js:26:587)
+      3 unhandled api error Error: ENOENT: no such file or directory, open '<STORAGE>/previews/<uuid>/<uuid>.jpg'
+      3 unhandled api error Error: ENOENT: no such file or directory, open '<STORAGE>/originals/<uuid>/<uuid>.png'
+      1 unhandled api error Error: ENOENT: no such file or directory, mkdir '<STORAGE>/previews/<uuid>'
+      1 unhandled api error Error: ENOENT: no such file or directory, mkdir '<STORAGE>/originals/<uuid>'
+      1 unhandled api error Error: ENOENT: no such file or directory, copyfile '/workspace/qa-m2/tmp/<uuid>.part' -> '<STORAGE>/originals/<uuid>/<uuid>.mp4'
+      1     at async n.putFile (.next/server/chunks/[root-of-the-server]__1rgbyjs._.js:26:958)
+      1     at async n.putFile (.next/server/chunks/[root-of-the-server]__1rgbyjs._.js:26:1026)
+      1     at async n.put (.next/server/chunks/[root-of-the-server]__1rgbyjs._.js:26:519)

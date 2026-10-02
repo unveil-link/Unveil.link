@@ -1,0 +1,2 @@
+[M2-15] valid(+60s)=200 expired(-10s)=410 expired(-1d)=410 10y-future=200
+[PROBE] seller edit/delete endpoints: DELETE drop=200 DELETE file=404 DELETE /api/files/:id=404 PATCH /api/auth/me=405 PUT /api/auth/me=405

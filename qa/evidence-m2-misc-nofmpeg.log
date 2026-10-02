@@ -1,0 +1,5 @@
+PASS    V-ffmpeg-missing ffmpeg/ffprobe missing (FFMPEG_PATH=/nonexistent): valid MP4 -> 503 video_unavailable, generic message (no binary path / spawn error), nothing stored, no temp left; instance stays healthy — 503 {"error":"Video uploads are temporarily unavailable on this server (video tooling missing)","code":"video_unavailable"}
+PASS    V-ffmpeg-missing2 same instance: fake MP4 still rejected 415 before ffmpeg; non-video types 415; images (sharp, no ffmpeg) still upload; sniff-level checks unaffected — fake-ftyp→503/video_unavailable webm→415/unsupported_type png→201
+PASS    V-ffmpeg-missing3 ffmpeg missing: no repeated expensive spawn per request (availability cached) and 10 parallel uploads all 503, no leftovers — 10 x 503
+
+Saved misc-nofmpeg.json: PASS 3 FAIL 0 NOTE 0 BLOCKED 0

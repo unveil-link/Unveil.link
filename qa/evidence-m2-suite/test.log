@@ -1,0 +1,13 @@
+
+> unveil@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.3 /workspace/qa-m2media
+
+
+ Test Files  13 passed (13)
+      Tests  243 passed (243)
+   Start at  20:40:07
+   Duration  54.96s (tests 91%, import 7%, transform 2%)
+

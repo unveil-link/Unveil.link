@@ -1,0 +1,128 @@
+[
+  {
+    "id": "M2-11a",
+    "name": "DELETE draft with 2 images + 1 video: 200 {deleted,deletedFiles:3,storageErrors:0}; drop+file rows gone; originals AND previews AND per-drop dirs gone from disk; tmp empty; audit drop_deleted",
+    "result": "PASS",
+    "evidence": "{\"deleted\":true,\"deletedFiles\":3,\"storageErrors\":0}; disk objects 6→0, dirs gone; audit: drop:ebc5ef52-e233-4cec-bb2d-d8f26e6f9a07 seller:4ef6ca4e-1060-4996-bd6f-c80e33ce39c2 status:draft files:3; old signed URL → 404"
+  },
+  {
+    "id": "M2-11b",
+    "name": "DELETE published drop: public link/page/preview/checkout/dashboard behave sanely afterwards (404s, no 500, no stale cache)",
+    "result": "PASS",
+    "evidence": "GET /api/public/drops/<link>→404 | GET /u/<link>→404 | GET /api/files/<f>/preview→404 | GET /api/files/<f>/original→403 | POST /api/checkout→404 | dashboard GET→404 | PATCH after delete→404 | publish after delete→404 | upload after delete→404"
+  },
+  {
+    "id": "M2-11c",
+    "name": "second DELETE of the same drop -> 404 (idempotent: no 500, no extra audit row)",
+    "result": "PASS",
+    "evidence": "200 → 404 → 404; 1 audit row"
+  },
+  {
+    "id": "M2-13d",
+    "name": "DELETE authz: other seller -> 404 (rows+files survive, same as nonexistent); anonymous -> 401; bad/nonexistent uuid -> 404; garbage cookie 401; admin-less",
+    "result": "PASS",
+    "evidence": "other 404; anon 401; garbage 401; bad-uuid 404; all survive"
+  },
+  {
+    "id": "V-del-csrf",
+    "name": "DELETE with foreign/null/garbage Origin -> 403 and drop survives; DELETE with body/query junk ignored; no-Origin allowed",
+    "result": "PASS",
+    "evidence": "https://evil.example→403 null→403 garbage→403 ; same-origin with junk query/body → 200"
+  },
+  {
+    "id": "V-del-method",
+    "name": "GET / link prefetch cannot delete: GET /api/drops/:id never mutates; HEAD ok",
+    "result": "PASS",
+    "evidence": "GET/HEAD safe"
+  },
+  {
+    "id": "M2-12a",
+    "name": "DELETE with a SUCCEEDED sale -> 409 drop_has_sales; drop, files, transaction, ledger, earnings untouched; unpublish still works afterwards",
+    "result": "PASS",
+    "evidence": "409 {\"error\":\"This drop has sales and cannot be deleted. Unpublish it instead.\",\"code\":\"drop_has_sales\"}; after unpublish still 409; earnings identical ({\"pendingCents\":1560,\"availableCents\":0,\"totalCents\":1560})"
+  },
+  {
+    "id": "M2-12b",
+    "name": "DELETE with ONLY a pending / failed / expired / refunded / chargeback transaction -> 409 drop_has_sales (any transaction row blocks) — documents the rule",
+    "result": "PASS",
+    "evidence": "pending→409/drop_has_sales failed→409/drop_has_sales refunded→409/drop_has_sales charged_back→409/drop_has_sales"
+  },
+  {
+    "id": "M2-12c",
+    "name": "DELETE with an OPEN or REVIEWING report -> 409 drop_has_open_report (files survive); actioned/dismissed reports do not block and are cascade-deleted",
+    "result": "PASS",
+    "evidence": "open→409/drop_has_open_report reviewing→409/drop_has_open_report actioned→200 dismissed→200 (note: deleting a drop with a closed report removes the report evidence row — see Notes)"
+  },
+  {
+    "id": "M2-12d",
+    "name": "DELETE of a FLAGGED drop -> 403 flagged (rows+files intact); admin-side status unaffected",
+    "result": "PASS",
+    "evidence": "403 {\"error\":\"Drop is flagged and under review\",\"code\":\"flagged\"}"
+  },
+  {
+    "id": "M2-12e",
+    "name": "precedence: flagged + sales -> ? ; flagged + open report -> ? (documented)",
+    "result": "PASS",
+    "evidence": "flagged+sales→403/flagged; flagged+open-report→403/flagged"
+  },
+  {
+    "id": "M2-11d",
+    "name": "delete drop with NO files, and with file rows whose objects are already missing on disk -> 200, storageErrors 0, no 500",
+    "result": "PASS",
+    "evidence": "no files → {\"deleted\":true,\"deletedFiles\":0,\"storageErrors\":0}; objects pre-removed → {\"deleted\":true,\"deletedFiles\":2,\"storageErrors\":0}"
+  },
+  {
+    "id": "M2-11e",
+    "name": "storage cleanup failure (originals dir made read-only): still 200 (DB delete committed, no resurrection), storageErrors>0, audit drop_storage_orphans; response/logs don't leak path to client; later cleanup possible",
+    "result": "PASS",
+    "evidence": "{\"deleted\":true,\"deletedFiles\":2,\"storageErrors\":2}; audit drop_deleted,drop_storage_orphans; orphaned objects left on disk: 2 (previews cleaned: true)"
+  },
+  {
+    "id": "V-del-conc1",
+    "name": "concurrent DELETE x12 of one drop: exactly one 200, the rest 404, no 5xx, one audit row, no leftover objects",
+    "result": "PASS",
+    "evidence": "codes 200,404,404,404,404,404,404,404,404,404,404,404"
+  },
+  {
+    "id": "V-del-conc2",
+    "name": "DELETE vs PATCH race (20 trials): no 5xx; after a 200 delete every later PATCH is 404; no zombie rows",
+    "result": "PASS",
+    "evidence": "20 trials clean"
+  },
+  {
+    "id": "V-del-conc3",
+    "name": "DELETE vs CHECKOUT race on a published drop (30 trials, 4 parallel checkouts + delete): no 5xx from checkout/delete; outcome consistent (deleted ⇒ no transaction rows; has tx ⇒ drop+files survive and delete was 409); no orphan transactions",
+    "result": "FAIL",
+    "evidence": "29/30 trials with 500 from checkout (FK violation transactions_drop_id_fkey in server log; deleted 29, blocked 1); orphan/inconsistent rows: 0; e.g. del:200/ co:500,500,500,500 || del:200/ co:500,500,500,500"
+  },
+  {
+    "id": "V-del-conc4",
+    "name": "DELETE vs PURCHASE (webhook) race: pending checkout exists, then DELETE races the paid webhook x15: never a deleted drop with a ledger/transaction; sale either completes (409) — no 5xx",
+    "result": "PASS",
+    "evidence": "15 trials: delete always 409 (tx exists), webhook 15/15 succeeded, no 5xx"
+  },
+  {
+    "id": "V-del-conc5",
+    "name": "DELETE vs UPLOAD race (15 trials: 3 parallel uploads + delete): no 5xx; no orphan rows/objects left for the drop afterwards",
+    "result": "FAIL",
+    "evidence": "1/15 trials with a 500 on an upload; 1/15 trials left an orphan stored object/row after a successful delete; e.g. 5xx 500,404,200,404,404 || deleted but rows 0 objs 1 codes 500,404,200,404,404"
+  },
+  {
+    "id": "V-del-earn",
+    "name": "deleting one drop leaves another drop's sales, ledger and /api/earnings byte-identical (seller with a sold drop + a deletable drop)",
+    "result": "PASS",
+    "evidence": "earnings identical; ledger {\"n\":51,\"s\":26520}"
+  },
+  {
+    "id": "V-del-pending-token",
+    "name": "after deleting a drop, a buyer who had a pending checkout (no 409 possible because tx exists) — and a buyer holding only the public link — see sane errors; pay page for pending session still loads",
+    "result": "PASS",
+    "evidence": "delete → 409; pay page 200"
+  },
+  {
+    "id": "V-del-sealed",
+    "name": "limits after delete: deleting frees the per-drop quota only for that drop; creating many drops + deleting them leaves no stray dirs under storage/",
+    "result": "PASS",
+    "evidence": "files before 452 after 452; empty leftover dirs: 0"
+  }
+]

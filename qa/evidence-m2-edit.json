@@ -1,0 +1,176 @@
+[
+  {
+    "id": "M2-10",
+    "name": "PATCH title/description/price on a DRAFT -> 200, returns updated drop, persisted, other fields untouched",
+    "result": "PASS",
+    "evidence": "200 [\"id\",\"seller_id\",\"public_link_id\",\"title\",\"description\",\"price_cents\",\"cover_url\",\"status\",\"created_at\"]"
+  },
+  {
+    "id": "M2-10b",
+    "name": "PATCH on a PUBLISHED drop is reflected on /api/public/drops/:linkId and /u/:linkId; status/published_at/attestation untouched",
+    "result": "PASS",
+    "evidence": "public API + page show new title/price; HTML escaped"
+  },
+  {
+    "id": "M2-10c",
+    "name": "PATCH is audited (drop_edited, admin_id NULL, price old->new, no title/description text) and does not change attestation history",
+    "result": "PASS",
+    "evidence": "drop:112c8beb-e9c7-4729-95e1-907f0e92bf11 seller:44b363ef-0c79-4845-9291-3063ccbec450 status:published title changed (9->7 chars); description changed; price_cents: 3000 -> 4000"
+  },
+  {
+    "id": "M2-10d",
+    "name": "description: null clears; description '' / whitespace clears; title unchanged",
+    "result": "PASS",
+    "evidence": "cleared by null, \"\", \"   \""
+  },
+  {
+    "id": "M2-01",
+    "name": "price boundaries via PATCH: 99->400, 100/101/49999/50000 ok, 50001/0/negative/float/huge/string/null/bool/array/object -> 400 price_out_of_range|invalid_input; failures leave price unchanged",
+    "result": "PASS",
+    "evidence": "99→400/price_out_of_range 100→200 101→200 49999→200 50000→200 50001→400/price_out_of_range 0→400/price_out_of_range -1→400/price_out_of_range -2500→400/price_out_of_range 12.5→400/invalid_input 1e+21→400/invalid_input 9007199254740992→400/invalid_input 9007199254740991→400/price_out_of_range \"1200\"→400/invalid_input null→400/invalid_input true→400/invalid_input [1200]→400/invalid_input {\"v\":1}→400/invalid_input"
+  },
+  {
+    "id": "M2-02",
+    "name": "raw JSON number forms of price: 1e2 (=100) ok, 1.0e3 ok, 5e4 ok, 1e-2, 0x64 / 100n invalid JSON, NaN/Infinity invalid JSON, '100.0' string rejected, price_cents alias works, both keys -> 400",
+    "result": "PASS",
+    "evidence": "{\"priceCents\":1e2}→200 {\"priceCents\":1.0e3}→200 {\"priceCents\":5e4}→200 {\"priceCents\":1e-2}→400 {\"priceCents\":0x64}→400 {\"priceCents\":NaN}→400 {\"priceCents\":Infinity}→400 {\"priceCents\":\"100.0\"}→400 {\"priceCents\":-0}→400 {\"priceCents\":100.00000000000001}→400"
+  },
+  {
+    "id": "M2-10e",
+    "name": "title boundaries: 1 char ok, 120 ok, 121 -> 400, '' / whitespace-only / tab-newline-only -> 400, non-string -> 400; description 2000 ok, 2001 -> 400",
+    "result": "PASS",
+    "evidence": "t1→200 t120→200 t121→400 t0→400 tws→400 ttabnl→400 tnum→400 tnull→400 tarr→400 t120+ws (trimmed before length)→200 d2000→200 d2001→400 dnum→400 d1000 emoji (2000 UTF-16 units)→200 d1001 emoji (2002 units)→400"
+  },
+  {
+    "id": "M2-10f",
+    "name": "control chars / NUL / lone surrogates / bidi / zero-width / HTML in title+description: no 500; NUL & lone surrogate -> 400; others stored literally and escaped on the public page",
+    "result": "PASS",
+    "evidence": "NUL title→400 NUL desc→400 lone surrogate title→400 C0 title→200 newlines desc→200 RLO bidi title→200 zero-width title→200 html→200 stored title \"<img src=x onerror=alert(1)>\\\"'</script><script>alert(2)</script>\""
+  },
+  {
+    "id": "M2-10g",
+    "name": "C0 control characters in title are stored (policy note): same handling as POST /api/drops (creation) — compare",
+    "result": "PASS",
+    "evidence": "create 201, patch 200 (both accept C0 chars: consistent)"
+  },
+  {
+    "id": "M2-10h",
+    "name": "mass assignment: owner/status/fee/flagged/id/link/attestation/timestamps/cover keys -> 400 (strict) and the row is byte-identical afterwards",
+    "result": "PASS",
+    "evidence": "seller_id:400 sellerId:400 owner:400 status:400 id:400 public_link_id:400 publicLinkId:400 fee_percent:400 feePercent:400 platform_fee_cents:400 flagged:400 is_flagged:400 published_at:400 created_at:400 updated_at:400 attested_at:400 attestation:400 attestation_history:400 cover_url:400 verification_status:400 role:400 isAdmin:400 constructor:400 title.x:400 $set:400 title :400 Title:400 PRICECENTS:400"
+  },
+  {
+    "id": "M2-10i",
+    "name": "whitelisted + extra key in one body is rejected as a whole (no partial apply)",
+    "result": "PASS",
+    "evidence": "400 {\"error\":\"body: Unrecognized key: \\\"status\\\"\",\"code\":\"invalid_input\"}"
+  },
+  {
+    "id": "M2-10j",
+    "name": "empty / non-object bodies: {} -> 400 empty_patch; [] / null / 5 / 'str' / invalid JSON / empty body -> 400; no 500",
+    "result": "PASS",
+    "evidence": "{}→400/empty_patch []→400 null→400 5→400 \"str\"→400 {→400 <empty>→400 true→400 {\"title\":}→400 {'title':'x'}→400 {\"title\":\"a\",\"title\":\"b\"}→200 dup-key title stored=\"b\""
+  },
+  {
+    "id": "M2-10k",
+    "name": "oversized body (5 MB JSON) and deeply nested JSON -> 4xx, no 500/crash",
+    "result": "PASS",
+    "evidence": "5MB desc → 400/invalid_input; nested → 400/invalid_input"
+  },
+  {
+    "id": "M2-13a",
+    "name": "PATCH authz: anonymous -> 401; other seller -> 404 (same body as a nonexistent id); malformed/nonexistent uuid -> 404; row untouched; other seller's valid body not applied",
+    "result": "PASS",
+    "evidence": "anon 401; other 404; nonexistent 404; invalid-body-on-foreign 400"
+  },
+  {
+    "id": "M2-13b",
+    "name": "PATCH with an invalid body on another seller's drop returns the same 404 as valid body (no existence oracle via validation order)",
+    "result": "PASS",
+    "evidence": "foreign+invalid → 400 invalid_input; nonexistent+invalid → 400 invalid_input (identical)"
+  },
+  {
+    "id": "M2-13c",
+    "name": "session handling: expired/garbage cookie -> 401; suspended/other-role cookie not accepted; admin cookie name not accepted",
+    "result": "PASS",
+    "evidence": "garbage cookie → 401; session cookie names unveil_session"
+  },
+  {
+    "id": "V-csrf",
+    "name": "CSRF: cross-origin / null / garbage Origin -> 403 bad_origin; same-origin ok; no Origin allowed (non-browser)",
+    "result": "PASS",
+    "evidence": "https://evil.example→403 null→403 garbage→403 http://localhost:3260.evil.example→403 no-origin+sec-fetch-site:cross-site→200 DELETE evil→403"
+  },
+  {
+    "id": "BUG-13",
+    "name": "BUG-13 pattern: PATCH with Content-Type text/plain / form-urlencoded / multipart / none + no Origin (cookie auth) — is the body processed?",
+    "result": "PASS",
+    "evidence": "OPEN (BUG-13 carried over to PATCH): text/plain body accepted → text/plain→200 x-www-form-urlencoded→200 no content-type (string body → text/plain default)→200 json charset utf-16→200 title now \"utf16\""
+  },
+  {
+    "id": "V-method",
+    "name": "other verbs on /api/drops/:id (PUT, POST, OPTIONS, HEAD) -> 405 / no side effects",
+    "result": "PASS",
+    "evidence": "PUT→405 POST→405 OPTIONS→204 HEAD→200"
+  },
+  {
+    "id": "M2-10l",
+    "name": "PATCH on a FLAGGED drop -> 403 flagged, row unchanged (flagged drops frozen); PATCH after unpublish works; unpublished edit does not republish",
+    "result": "PASS",
+    "evidence": "flagged → 403/flagged; unpublished edit → 200; status unpublished; public 404"
+  },
+  {
+    "id": "M2-11",
+    "name": "unpublish / re-publish regression with edits: edited price/title carried through republish; attestation required again as before",
+    "result": "PASS",
+    "evidence": "republish 200; public shows Re-pub 2222; publish w/o attestation → 400"
+  },
+  {
+    "id": "M2-10m",
+    "name": "edit of nonexistent-after-delete drop -> 404; edit race with unpublish does not 500",
+    "result": "PASS",
+    "evidence": "statuses 200,200,200,200,200,200,200,200,200,200"
+  },
+  {
+    "id": "V-concurrent",
+    "name": "concurrent PATCH (30 parallel with distinct titles+prices): all 200, no 5xx/deadlock, final row equals one complete request (title and price from the SAME request), audit rows = 30",
+    "result": "PASS",
+    "evidence": "final T-27 / 1027 (consistent); audit 30"
+  },
+  {
+    "id": "V-concurrent2",
+    "name": "PATCH storm on separate fields (title-only vs price-only vs description-only, 60 parallel): no lost-update across different columns",
+    "result": "PASS",
+    "evidence": "a57 1058 d53"
+  },
+  {
+    "id": "M2-10n",
+    "name": "price edit on PUBLISHED drop with an existing SUCCEEDED sale: transaction row, ledger postings, earnings are unchanged; new buyer pays the new price",
+    "result": "PASS",
+    "evidence": "old tx 2000 unchanged (net 1560); ledger 3 rows unchanged; new checkout {\"amount_cents\":9000,\"platform_fee_cents\":900,\"seller_net_cents\":7020}"
+  },
+  {
+    "id": "M2-10o",
+    "name": "price edit with a PENDING checkout: same buyer (token cookie) re-checkout supersedes the stale-priced session; a different browser's pending session keeps the OLD price until it expires (documented behaviour)",
+    "result": "PASS",
+    "evidence": "same-buyer: old tx failed/superseded, new tx 5000; other-browser pending before pay {\"status\":\"pending\",\"amount_cents\":2000}; its late webhook at OLD price → 200 {\"received\":true,\"outcome\":\"processed\"} → {\"status\":\"succeeded\",\"amount_cents\":2000,\"seller_net_cents\":1560}; ledger net 1560 (sale honoured at the price the buyer was shown; drop price now 5000)"
+  },
+  {
+    "id": "M2-10p",
+    "name": "buyer-visible price: public API price, /u page and checkout amount all follow a PATCH immediately (no cache)",
+    "result": "PASS",
+    "evidence": "followed 1200,1300,50000,100"
+  },
+  {
+    "id": "M2-10q",
+    "name": "PATCH changes no files: drop_files rows / storage objects / previews unchanged",
+    "result": "PASS",
+    "evidence": "6 objects unchanged"
+  },
+  {
+    "id": "V-rate",
+    "name": "no unbounded response: PATCH response never contains seller_id/storage paths/attestation internals beyond the drop object fields",
+    "result": "PASS",
+    "evidence": "keys: id,seller_id,public_link_id,title,description,price_cents,cover_url,status,created_at"
+  }
+]

@@ -1,0 +1,13 @@
+[M1-06] MP4 upload => 415 {"error":"Not a valid image","code":"invalid_image"}
+[M1-09] OPTIONS=204 HEAD=405 PATCH(tus)=405; /api/uploads: 404
+[M1-08(race)] limit=5, 25 parallel uploads => {"201":5,"400":20}; rows in DB=5; files on disk=5
+[M6-01(bomb)] 9900x9900 png (298 KiB file) => 201  in 195ms
+[M6-01(bomb)] 10100x10000 png (307 KiB file) => 415 invalid_image in 24ms
+[M6-01(bomb)] 30000x30000: could not generate (Input image exceeds pixel limit)
+[M1-08(big-chunked)] 60MiB chunked body (no Content-Length, limit 15MiB) => 413 {"error":"File exceeds limit of 15728640 bytes","code":"file_too_large"} after 294ms (server reads whole body into memory before rejecting; only post-read check applies)
+[M1-08(big-CL)] 60MiB with Content-Length => 413 file_too_large
+[M2-11] unpublish a never-published draft => 200 status=unpublished (draft silently becomes 'unpublished')
+[PROBE] {"/dashboard":"307→/login","/dashboard/drops/00000000-0000-0000-0000-000000000000":"307→/login","/terms":"404","/privacy":"404","/2257":"404","/dmca":"404","/legal/terms":"404","/admin":"307→/admin/login","/api/admin":"404","/api/admin/settings":"404","/api/admin/refunds":"404","/status":"404","/login":"200","/signup":"200","/manifest.webmanifest":"200","/api/health":"404","/healthz":"404"}
+[M5-15] seller PUT to admin/settings routes => {"/api/admin/settings":404,"/api/admin/sellers":404,"/api/settings":405} (routes do not exist; no admin auth model — admins table only, no login)
+[M6-01(partial)] Origin:null => 403 {"error":"Cross-origin request blocked","code":"bad_origin"}; Origin:garbage => 403 {"error":"Cross-origin request blocked","code":"bad_origin"}; same-origin login=401
+[M6-02(partial)] secret values in .next/static client bundle: 0 hits; tracked .env files: ''; .env ever added in history: ''; .env.example uses placeholder secrets: yes

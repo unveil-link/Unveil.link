@@ -1,0 +1,38 @@
+[
+  {
+    "id": "V-geom-huge110mp.mp4",
+    "name": "11000x10000 (110 MP, > 100 MP limit)",
+    "result": "PASS",
+    "evidence": "415 invalid_video in 264 ms Not a valid MP4 video"
+  },
+  {
+    "id": "V-geom-big8k.mp4",
+    "name": "8192x8192 (67 MP)",
+    "result": "PASS",
+    "evidence": "201  in 867 ms preview 320x320 dur=2 "
+  },
+  {
+    "id": "V-geom-tiny16.mp4",
+    "name": "16x16",
+    "result": "PASS",
+    "evidence": "201  in 186 ms preview 16x16 dur=3 "
+  },
+  {
+    "id": "V-geom-long10h.mp4",
+    "name": "36000 s (10 h) duration",
+    "result": "PASS",
+    "evidence": "201  in 191 ms preview 64x64 dur=36000 "
+  },
+  {
+    "id": "V-geom-bigmeta.mp4",
+    "name": "60 KB title metadata",
+    "result": "PASS",
+    "evidence": "201  in 209 ms preview 320x180 dur=3 "
+  },
+  {
+    "id": "V-orient",
+    "name": "rotated (rot90) video preview orientation = displayed orientation (portrait), blurred",
+    "result": "PASS",
+    "evidence": "preview 180x320; source stream|width=640|height=360|side_datum/display_matrix:rotation=90 "
+  }
+]
