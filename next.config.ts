@@ -63,6 +63,8 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       // Link pages and anything that renders a drop publicly: never index.
       { source: "/u/:path*", headers: noindex },
+      // Placeholder legal/contact pages (until real copy exists): header + <meta robots>.
+      { source: "/:page(terms|privacy|dmca|contact)", headers: noindex },
       { source: "/d/:path*", headers: noindex },
       { source: "/api/public/:path*", headers: noindex },
       { source: "/api/files/:path*", headers: noindex },

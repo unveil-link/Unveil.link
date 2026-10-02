@@ -1,13 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Container } from "@/components/ui";
-
-const links = [
-  { href: "/terms", label: "Terms" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/dmca", label: "DMCA" },
-  { href: "/contact", label: "Contact" },
-];
+import { LEGAL_LINKS as links } from "@/components/LegalLinks";
 
 export function SiteFooter() {
   return (

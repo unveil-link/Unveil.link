@@ -1,15 +1,14 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import ResetPasswordForm from "../components/ResetPasswordForm";
-import AppShell from "../components/AppShell";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Choose a new password", robots: { index: false, follow: false } };
 
 export default function Page() {
   return (
-    <AppShell>
-      <Suspense>
-        <ResetPasswordForm />
-      </Suspense>
-    </AppShell>
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

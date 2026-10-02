@@ -610,6 +610,43 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     assert(h2.includes("3 files: 3 images"), "3 files wording");
     return "page: title, 'by E2E Seller', '1 file: 1 image', $15.00; 3-file drop shows '3 files: 3 images'";
   });
+  await check("[FE-03/04/06 + placeholders] buyer title '<drop> · Unveil'; Verified badge follows sellers.verification_status; /design 404 in prod; /terms etc. are noindex 'Coming soon'", async () => {
+    const title = (h: string) => (/<title>([^<]*)<\/title>/.exec(h)?.[1] ?? "").replace(/&amp;/g, "&");
+    const h = await (await anon.req("GET", `/u/${p2Link}`)).text();
+    eq(title(h), "Trio · Unveil", "buyer title");
+    assert(h.includes("Verified creator"), "badge for a verified seller");
+    const mail = `multi+${stamp}@example.test`;
+    await db.query("UPDATE sellers SET verification_status='pending' WHERE email=$1", [mail]);
+    const h2 = await (await anon.req("GET", `/u/${p2Link}`)).text();
+    assert(!h2.includes("Verified creator"), "badge hidden once the seller is no longer verified");
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [mail]);
+    const nf = await anon.req("GET", "/u/doesnotexist1");
+    eq(nf.status, 404, "unknown link");
+    eq(title(await nf.text()), "Link unavailable · Unveil", "not-found title");
+    eq((await anon.req("GET", "/design")).status, 404, "/design hidden in production");
+    for (const path of ["/terms", "/privacy", "/dmca", "/contact"]) {
+      const r = await anon.req("GET", path);
+      eq(r.status, 200, `${path} status`);
+      const t = await r.text();
+      assert(t.includes("Coming soon") && /<meta name="robots" content="noindex/.test(t), `${path} placeholder + noindex`);
+    }
+    // FE-09: header as well as meta on the placeholders
+    for (const path of ["/terms", "/privacy", "/dmca", "/contact"]) eq((await anon.req("GET", path)).headers.get("x-robots-tag"), "noindex, nofollow", `${path} X-Robots-Tag`);
+    // FE-10: legal links on auth pages, the unavailable page and the buyer page (all four, not just Terms)
+    // (the unavailable page is streamed as a 404 error-fallback, so its links appear in the escaped RSC payload rather than as plain href attributes)
+    const legal = (h: string) => ["/terms", "/privacy", "/dmca", "/contact"].filter((l) => !h.includes(`href="${l}"`) && !h.includes(`\\"href\\":\\"${l}\\"`));
+    for (const path of ["/login", "/signup", "/forgot-password", "/reset-password", "/u/doesnotexist1", `/u/${p2Link}`]) {
+      const miss = legal(await (await anon.req("GET", path)).text());
+      assert(miss.length === 0, `${path} is missing legal links: ${miss.join(", ")}`);
+    }
+    // og/twitter: page-specific, neutral, only title + seller name already on the page, generic image, nothing else
+    const meta = (h: string, k: string) => new RegExp(`<meta (?:property|name)="${k}" content="([^"]*)"`).exec(h)?.[1] ?? "";
+    eq(meta(h, "og:title"), "Trio · Unveil", "og:title");
+    eq(meta(h, "twitter:title"), "Trio · Unveil", "twitter:title");
+    assert(/\/icons\/icon-512\.png$/.test(meta(h, "og:image")), `og:image is the generic icon (${meta(h, "og:image")})`);
+    assert(!/\/api\/files\//.test(h.match(/<meta[^>]+>/g)?.join("") ?? ""), "no file/preview URL in any <meta>");
+    return "titles ok; badge toggles with verification_status; /design 404; placeholders noindex (meta+header); legal links on auth/unavailable/buyer pages; neutral og/twitter";
+  });
   await check("[#5 M2-09] noindex: meta robots + X-Robots-Tag on link page / public API / previews; robots.txt disallows /u/", async () => {
     const r = await anon.req("GET", `/u/${publicLinkId}`);
     eq(r.headers.get("x-robots-tag"), "noindex, nofollow", "X-Robots-Tag on page");
@@ -1761,6 +1798,19 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     return `seller ${ss.filter((s) => s === 200).length}x200/${ss.filter((s) => s === 429).length}x429; admin ${as.filter((s) => s === 200).length}x200`;
   });
 
+  await check("[FE-07/08] dashboard earnings == GET /api/earnings (ledger): fees separate, pending vs available, in-payout; no divergent math", async () => {
+    const api = await (await sellerC.req("GET", "/api/earnings")).json();
+    const html = stripComments(await (await sellerC.req("GET", "/dashboard")).text());
+    const usdf = (c: number) => (c < 0 ? "-" : "") + "$" + (Math.abs(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const l = api.lifetime;
+    const net = api.balance.totalCents + l.paidOutCents + l.requestedPayoutCents;
+    for (const [label, cents] of [["gross", l.grossCents], ["platform fee", l.platformFeeCents], ["processing fees", l.processingFeeCents], ["available", api.balance.availableCents], ["pending", api.balance.pendingCents], ["net", net]] as const) {
+      assert(html.includes(usdf(cents)), `${label} ${usdf(cents)} shown on the dashboard`);
+    }
+    assert(html.includes("Platform fee") && html.includes("Processing fees") && html.includes("Your earnings (net)"), "separate labelled figures");
+    assert(!/Your 90%/.test(html), "no hard-coded 90%");
+    return `net ${usdf(net)} = ledger total ${usdf(api.balance.totalCents)} + paid ${usdf(l.paidOutCents)} + in payout ${usdf(l.requestedPayoutCents)}`;
+  });
   await check("[pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404", async () => {
     let port = Number(new URL(BASE).port) + 17;
     while (await fetch(`http://127.0.0.1:${port}/`).then(() => true, () => false)) port++;

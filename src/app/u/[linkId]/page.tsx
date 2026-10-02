@@ -2,47 +2,112 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDropByPublicLink, listFiles, summarizeFiles } from "@/server/services/drops";
 import { queryOne } from "@/server/db";
-import AppShell from "../../components/AppShell";
-import BuyForm from "./BuyForm";
+import { Badge, Container, ImageIcon, ShieldCheckIcon } from "@/components/ui";
+import { BuyerShell } from "@/components/buyer/BuyerShell";
+import { BuyPanel } from "@/components/buyer/BuyPanel";
+import { TrustPoints } from "@/components/buyer/TrustPoints";
+import { LockIcon } from "@/components/landing/Icons";
+import { usd } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 // Link pages must never be indexed (also enforced by the X-Robots-Tag header in next.config.ts and /robots.txt).
-export const metadata: Metadata = {
-  title: "Unveil",
-  robots: { index: false, follow: false, nocache: true },
-};
+const robots = { index: false, follow: false, nocache: true } as const;
 
-// Public drop page: only blurred previews are ever rendered here. The buy form posts to /api/checkout (price comes from the DB).
+// Title is the drop's own title; the root layout's template adds " · Unveil" ("<drop title> · Unveil").
+export async function generateMetadata({ params }: { params: Promise<{ linkId: string }> }): Promise<Metadata> {
+  const { linkId } = await params;
+  const drop = await getDropByPublicLink(linkId);
+  if (!drop || drop.status !== "published") return { title: "Link unavailable", robots };
+  const seller = await queryOne<{ display_name: string }>("SELECT display_name FROM sellers WHERE id = $1", [drop.seller_id]);
+  // Social preview: ONLY what the page already shows publicly (drop title + seller name) and a generic brand image.
+  // Never the drop description, price, file names or any preview/original image.
+  const description = seller?.display_name ? `A payment link by ${seller.display_name} on Unveil.` : "A payment link on Unveil.";
+  const image = [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Unveil" }];
+  return {
+    title: drop.title,
+    robots,
+    openGraph: { type: "website", siteName: "Unveil", title: `${drop.title} · Unveil`, description, url: `/u/${drop.public_link_id}`, images: image },
+    twitter: { card: "summary", title: `${drop.title} · Unveil`, description, images: image.map((i) => i.url) },
+    alternates: { canonical: `/u/${drop.public_link_id}` },
+  };
+}
+
+// Public drop page: only blurred previews are ever rendered here.
 export default async function PublicDrop({ params }: { params: Promise<{ linkId: string }> }) {
-  const drop = await getDropByPublicLink((await params).linkId);
+  const { linkId } = await params;
+  const drop = await getDropByPublicLink(linkId);
   if (!drop || drop.status !== "published") notFound();
   const [files, seller] = await Promise.all([
     listFiles(drop.id),
-    queryOne<{ display_name: string }>("SELECT display_name FROM sellers WHERE id = $1", [drop.seller_id]),
+    queryOne<{ display_name: string; verification_status: string }>("SELECT display_name, verification_status FROM sellers WHERE id = $1", [drop.seller_id]),
   ]);
   const summary = summarizeFiles(files);
+  // Only shown while the seller is *currently* verified (unknown seller / pending / failed / manual review => no badge).
+  const verified = seller?.verification_status === "verified";
+  const name = seller?.display_name ?? "Unknown seller";
+  const [hero, ...rest] = files;
+  const shown = rest.slice(0, 5);
+  const more = rest.length - shown.length;
+
   return (
-    <AppShell>
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight" data-testid="drop-title">{drop.title}</h1>
-          <p className="mt-1 text-sm text-muted">
-            by <span className="font-medium text-text" data-testid="seller-name">{seller?.display_name ?? "Unknown seller"}</span>
-            {" · "}
-            <span data-testid="file-summary">{summary.label}</span>
-          </p>
+    <BuyerShell>
+      <Container size="narrow" className="grid gap-6 lg:max-w-5xl lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-10">
+        {/* Preview card */}
+        <section aria-label="Preview" className="overflow-hidden rounded-xl border border-border bg-surface shadow-pop">
+          <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#7c6cf5] via-[#c38bf0] to-[#f7a8b8]">
+            {hero && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`/api/files/${hero.id}/preview`} alt="Blurred preview of the first file" className="absolute inset-0 size-full scale-110 object-cover" />
+            )}
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-md" />
+            <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-text shadow-sm">
+              <ImageIcon className="size-3.5" /> <span data-testid="file-summary">{summary.label}</span>
+            </div>
+            <div className="absolute inset-0 grid place-items-center">
+              <div className="grid size-16 place-items-center rounded-full bg-white/90 text-primary shadow-card"><LockIcon className="size-7" /></div>
+            </div>
+          </div>
+          {shown.length > 0 && (
+            <div className="grid grid-cols-3 gap-1.5 p-1.5 sm:grid-cols-6">
+              {shown.map((f) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={f.id} src={`/api/files/${f.id}/preview`} alt="Blurred preview" className="aspect-square w-full rounded-md object-cover" />
+              ))}
+              {more > 0 && <div className="grid aspect-square place-items-center rounded-md bg-surface-muted text-sm font-semibold text-muted">+{more}</div>}
+            </div>
+          )}
+          <p className="border-t border-border px-4 py-2.5 text-xs text-muted">Previews are blurred. The full files unlock after purchase.</p>
+        </section>
+
+        {/* Details + buy */}
+        <div className="flex flex-col gap-5">
+          <div>
+            {verified && <Badge tone="accent" className="mb-3" data-testid="verified-badge"><ShieldCheckIcon className="size-3.5" /> Verified creator</Badge>}
+            <h1 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl" data-testid="drop-title">{drop.title}</h1>
+            <p className="mt-3 flex items-center gap-2.5 text-sm text-muted">
+              <span className="grid size-7 place-items-center rounded-full bg-primary text-xs font-bold text-white" aria-hidden="true">{name.trim()[0]?.toUpperCase() ?? "?"}</span>
+              <span>by <span className="font-semibold text-text" data-testid="seller-name">{name}</span></span>
+            </p>
+            {drop.description && <p className="mt-4 whitespace-pre-line text-base text-ink/85">{drop.description}</p>}
+          </div>
+
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-card">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-sm text-muted">Price</p>
+                <p className="text-4xl font-extrabold tracking-tight" data-testid="drop-price">{usd(drop.price_cents)}</p>
+              </div>
+              <p className="pb-1 text-right text-sm text-muted">{summary.label}</p>
+            </div>
+            <BuyPanel linkId={drop.public_link_id} priceCents={drop.price_cents} />
+          </div>
         </div>
-        {drop.description && <p>{drop.description}</p>}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {files.map((f) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={f.id} src={`/api/files/${f.id}/preview`} alt="Blurred preview" className="aspect-square w-full rounded-lg object-cover" />
-          ))}
-        </div>
-        <p className="text-2xl font-semibold" data-testid="drop-price">{`$${(drop.price_cents / 100).toFixed(2)}`}</p>
-        <BuyForm linkId={drop.public_link_id} priceLabel={`$${(drop.price_cents / 100).toFixed(2)}`} />
-      </div>
-    </AppShell>
+      </Container>
+
+      <Container size="narrow" className="mt-8 lg:max-w-5xl">
+        <TrustPoints />
+      </Container>
+    </BuyerShell>
   );
 }
