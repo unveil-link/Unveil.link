@@ -1,11 +1,11 @@
 import { Container, Section, SectionHeading } from "@/components/ui";
 
 const faqs = [
-  { q: "Do buyers need an account?", a: "No. Buyers pay with a card at checkout and download straight away. We only ask for an email address so we can send a receipt and a backup download link." },
-  { q: "How do I get paid?", a: "Connect your bank account through our payments partner. Earnings from each sale are paid out to you on a regular schedule." },
-  { q: "What does it cost?", a: "There are no subscriptions or monthly fees. You keep most of every sale, and a small fee is taken only when you get paid." },
+  { q: "Do buyers need an account?", a: "No. Buyers pay with a card at checkout, with no sign-up or password. We ask for an email address at checkout, and access to the files is shared once the payment is confirmed. Delivery options are coming soon." },
+  { q: "How do I get paid?", a: "Earnings from each sale show up in your dashboard after a short hold period. Payouts are handled through our payments partner once your balance reaches the minimum payout." },
+  { q: "What does it cost?", a: "There are no subscriptions or monthly fees. Each sale carries a platform fee and card-processing fees, and you keep most of every sale. Your dashboard shows the exact breakdown." },
   { q: "What kinds of files can I sell?", a: "Photos and videos that you created and own the rights to. Sellers are verified and must follow our Terms." },
-  { q: "Are my files private?", a: "Yes. Files are stored privately and are only delivered through signed links created after a successful purchase." },
+  { q: "Are my files private?", a: "Yes. Files are stored privately, and previews are blurred until a purchase. Payment links are private to the creator who shares them." },
 ];
 
 export function Faq() {

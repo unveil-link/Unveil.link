@@ -114,7 +114,7 @@ export function DropList({
                 <THead>
                   <tr>
                     <Th>Drop</Th><Th>Status</Th><Th className="text-right">Price</Th><Th className="text-right">Files</Th>
-                    <Th className="text-right">Sold</Th><Th className="text-right">Revenue</Th><Th><span className="sr-only">Actions</span></Th>
+                    <Th className="text-right" title="Sales kept after refunds and chargebacks">Sold (net)</Th><Th className="text-right" title="Gross kept after refunds and chargebacks">Revenue (kept)</Th><Th><span className="sr-only">Actions</span></Th>
                   </tr>
                 </THead>
                 <TBody>
@@ -155,13 +155,16 @@ export function DropList({
                   </Link>
                   <dl className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-surface-muted/70 p-2.5 text-center text-xs">
                     <div><dt className="text-muted">Files</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums">{d.fileCount}</dd></div>
-                    <div><dt className="text-muted">Sold</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums">{d.units}</dd></div>
-                    <div><dt className="text-muted">Revenue</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums" data-testid="drop-revenue">{usd(d.revenueCents)}</dd></div>
+                    <div><dt className="text-muted">Sold (net)</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums">{d.units}</dd></div>
+                    <div><dt className="text-muted">Revenue (kept)</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums" data-testid="drop-revenue">{usd(d.revenueCents)}</dd></div>
                   </dl>
                   <div className="mt-3">{actions(d)}</div>
                 </li>
               ))}
             </ul>
+            <p className="mt-3 text-xs text-muted" data-testid="drop-stats-note">
+              Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+            </p>
           </>
         )}
       </div>

@@ -7,7 +7,7 @@ import { CardIcon, DownloadIcon, ShieldCheckIcon } from "@/components/landing/Ic
 const points = [
   { icon: CardIcon, title: "Get paid by card", body: "Buyers check out in seconds — no accounts, no friction." },
   { icon: ShieldCheckIcon, title: "Private by design", body: "Originals stay locked until a purchase is complete." },
-  { icon: DownloadIcon, title: "Instant delivery", body: "Share one link anywhere. Files are delivered automatically." },
+  { icon: DownloadIcon, title: "One link, anywhere", body: "Share your payment link in a message, bio or email. Buyers check out with a card." },
 ];
 
 /** Two-column on desktop (brand panel + form), single column on mobile. */

@@ -110,13 +110,41 @@ Rebase note: 12 frontend commits replayed onto `origin/main` @ `10c4e65`; confli
 |---|---|---|
 | FE-14 | Buyer page / checkout no longer promise a receipt email or instant download (no receipt / order / download routes exist yet). Email label is just "Email"; button "Pay $X"; sub-line "Pay by card · No account needed"; trust point "Access after payment — once your payment is confirmed, we'll share how to access your files. Delivery options are coming soon."; `SALES_FINAL_TEXT` (`lib/purchase-copy.ts`, shared with the hosted mock page) drops "delivered immediately" but keeps "All sales are final". `DownloadPanel` untouched. **Not changed (marketing, out of the brief):** landing Hero / BuyerTrust / FAQ / PaymentLinkMock, auth shell ("Instant delivery"), site meta description. | `/u/<id>`: no "receipt" / "Instant download"; `tests/frontend-lib.test.ts` ("copy guards"); e2e `[FE-…] price shown`. |
 | FE-12 | "Balance owed" hint → "Below zero. It will be deducted from future earnings."; alert body no longer says "after a payout / already been paid out". | `/dashboard` as `ned` (negative balance); copy-guard unit test. |
-| FE-13 | Negative-balance alert is `tone="danger"` with `role="alert"` (red, matches the red card; it is an urgent, always-visible account state). Contrast: body text `#14121f` on `danger-soft` ≈ 16:1, icon / border `#c62828` on `#fdeaea` ≈ 4.9:1 (≥ 3:1 for non-text). | `dashboard-overview-negative-balance` screenshot; `[role=alert][data-testid=negative-balance]`. |
+| FE-13 | Negative-balance alert is `tone="danger"` with `role="alert"` _(superseded in the copy sweep: now `role="status"`)_ (red, matches the red card; it is an urgent, always-visible account state). Contrast: body text `#14121f` on `danger-soft` ≈ 16:1, icon / border `#c62828` on `#fdeaea` ≈ 4.9:1 (≥ 3:1 for non-text). | `dashboard-overview-negative-balance` screenshot; `[role=alert][data-testid=negative-balance]`. |
 | FE-15 | `getDropStats` is refund- and chargeback-aware (see "Earnings data source"). Maya: Spring 21 / $252 + Studio 6 / $140 + Travel 4 / $32 = **$424.00** = ledger gross kept ($467 − $35 − $8). | DB test `dashboard per-drop stats reconcile with the earnings summary` (`tests/db/payments.test.ts`); e2e "per-drop revenue == gross kept"; `/dashboard/drops` as `maya`. |
 | Lint | `eslint.config.mjs` ignores `qa/**`, `proof/**`, `screenshots/**` (QA / evidence output, not app code) — plain `npm run lint` is clean. | `npm run lint`. |
 | INFO no-store | `Cache-Control: no-store` for `GET /api/earnings` added as a header rule in `next.config.ts` (no backend file touched). `/dashboard*` pages were already `no-store` (dynamic). | `curl -si localhost:3400/api/earnings \| grep -i cache-control`. |
 | Test infra | New `vitest.config.mts` only mirrors the tsconfig `@/` alias so tests can import dashboard modules. | `npm test`. |
 
 Still open / not frontend: receipt, order and download routes (Backend / Payments); views & conversion (M4-10), M4-11, M4-17, M6-06; M5-16 (Legal).
+
+### Copy sweep (`frontend/copy-sweep`, QA report `qa/results-frontend-polish-1.md`: FE-14R, FE-16, INFO)
+Rule: until receipt emails, order pages and buyer downloads exist, **no page may promise them** (instant delivery, emailed receipts, backup download links, signed-link downloads, "unlock"). Allowed claims: secure card checkout, no account needed, private links / privately stored files with blurred previews, verified creators, creators keep most of each sale, "access to the files is shared once payment is confirmed" (+ "Delivery options are coming soon").
+
+| Where | Before | After |
+|---|---|---|
+| `Hero.tsx:22` | "…and download instantly." | "…and access to the files is shared once payment is confirmed." |
+| `PaymentLinkMock.tsx` badge / button / aria | "Instant download" / "Pay & download" / "…a Pay and download button" | "Verified creator" / "Pay $12" / "…a Pay button" |
+| `HowItWorks.tsx:7` | "Buyers pay by card and download right away." | "Buyers pay by card, with no account needed. Access to the files is shared once payment is confirmed." |
+| `BuyerTrust.tsx:7` | "Instant download — ready the moment your payment goes through" | "Access after payment — once your payment is confirmed, the creator's files are shared with you. Delivery options are coming soon." |
+| `BuyerTrust.tsx:8` | "Private signed links — every download link is unique to your purchase and expires automatically" | "Private links — each payment link is private to the creator who shares it; files are stored privately with blurred previews until purchase" |
+| `Faq.tsx` "Do buyers need an account?" | "…download straight away… send a receipt and a backup download link" | "No sign-up or password… access to the files is shared once the payment is confirmed. Delivery options are coming soon." |
+| `Faq.tsx` "Are my files private?" | "…only delivered through signed links created after a successful purchase" | "Files are stored privately, and previews are blurred until a purchase. Payment links are private to the creator." |
+| `Faq.tsx` "How do I get paid?" / "What does it cost?" | "Connect your bank account… regular schedule" / "a small fee is taken only when you get paid" (not accurate: fees are taken per sale; no seller payout-request UI) | earnings appear after a short hold; payouts via the payments partner once the minimum is reached / platform + card-processing fee on each sale, dashboard shows the breakdown |
+| `AuthShell.tsx:10` (login / signup / forgot / reset) | "Instant delivery — files are delivered automatically" | "One link, anywhere — share your payment link in a message, bio or email; buyers check out with a card" |
+| `layout.tsx:18` meta description | "…and download instantly." | "…and access to the files is shared once payment is confirmed." (og / twitter descriptions never had the promise) |
+| `src/app/u/[linkId]/page.tsx:80` | "The full files unlock after purchase." | "Access to the full files is shared once your payment is confirmed." |
+| `components/buyer/TrustPoints.tsx` | "Access after payment — once your payment is confirmed, we'll share how to access your files…" | "Access to the files is shared once your payment is confirmed. Delivery options are coming soon." |
+| `src/app/u/[linkId]/BuyForm.tsx` | dead code, "Unlock for {price}" | deleted (imported nowhere) |
+
+Left as is on purpose: `DownloadPanel` + its `/design` showcase (not routed; `/design` 404s unless `ENABLE_DESIGN_PAGE=1`), seller-side "Publishing unlocks once you're verified", "added to this drop right away" (uploads), "Becomes available right away" (payout hold), reset-password mail. **Backend-owned, not touched:** `PAYMENTS-NOTES.md` still mentions `BuyForm`/"Unlock for $X"; server strings (`src/server`, hosted mock page) contain no delivery/receipt promise.
+
+**Regression guard:** `tests/copy-guard.test.ts` scans `components/`, `lib/`, `src/app/` (not `src/app/api`) for instant / right away / immediately / receipt / download / deliver / unlock / signed link (comment lines ignored) with a short, reasoned allowlist; e2e check `[copy-sweep]` renders `/`, auth pages and a buyer page (visible text, meta/og, aria-labels). `node qa/scripts/qa-fe4-copyaudit.mjs` now only reports the allowlisted items.
+
+| ID | Change | How to verify |
+|---|---|---|
+| FE-16 | Gross card hint "N sales charged, before refunds"; when reversals exist the line under the cards adds "Per-drop Sold and Revenue are net of these reversals ($X kept)". Drops table / cards / drop detail: "Sold (net)" and "Revenue (kept)" (tooltips) plus a note under the list: fully reversed sales are not counted, partial refunds reduce revenue, revenue is before fees. Numbers unchanged (Maya: 31 net sold of 33 charged; $424.00 kept of $467.00 gross). | Maya `/dashboard` and `/dashboard/drops`; e2e `[FE-07/08]`. |
+| INFO | Negative-balance alert is `role="status"` (polite) instead of `role="alert"`, red styling kept — no loud re-announcement on every load. | Ned `/dashboard`: `[data-testid=negative-balance][role=status]`. |
 
 ## Screenshots
 `screenshots/dashboard/<name>-mobile-390x844.png` (2× DPR) and `<name>-desktop-1280x800.png`, full-page, produced by `scripts/screenshots-dashboard.mjs` (list in `screenshots/dashboard/INDEX.md`; horizontal-overflow audit at 360/390/1280 in `overflow-report.json` — all 0px).
@@ -127,3 +155,5 @@ Retaken for the QA follow-up: `dashboard-overview`, `drop-unpublish-confirm`, `d
 Round-2 screenshot changes: `dashboard-overview` (ledger-backed: available / pending / in payout / paid out, partial refund + chargeback + chargeback fee), new `dashboard-overview-negative-balance`, `buyer-ready-to-buy` / `buyer-hosted-checkout` (real checkout flow), and every auth / buyer / dashboard page now shows the Terms · Privacy · DMCA · Contact footer. The remaining pages (landing, `/design`) are unchanged.
 
 Round-3 screenshot changes: all `buyer-*` (copy), `dashboard-overview`, `dashboard-overview-negative-balance` (red alert, new wording), `drop-list*` and `drop-detail-published` (refund-aware revenue).
+
+Copy-sweep screenshots: landing (+ new `landing-faq-expanded`), `design`, all auth pages, `buyer-*`, `dashboard-overview*`, `drop-list*`, `drop-detail-*` (new copy / labels).
