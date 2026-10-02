@@ -66,6 +66,24 @@
   {
    "page": "landing",
    "url": "/",
+   "kind": "visible",
+   "text": "Buyers pay with a card at checkout and download straight away."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "We only ask for an email address so we can send a receipt and a backup download link."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Files are stored privately and are only delivered through signed links created after a successful purchase."
+  },
+  {
+   "page": "landing",
+   "url": "/",
    "kind": "meta:description",
    "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
   },
@@ -281,7 +299,7 @@
   },
   {
    "page": "hosted mock checkout after successful payment (return/success state)",
-   "url": "/pay/mock/mocksess_466a7034be545b183ef5d2c6e204bce0",
+   "url": "/pay/mock/mocksess_e79e0e46f407529e5003aef467f1416b",
    "kind": "meta:description",
    "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
   },

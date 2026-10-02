@@ -1,0 +1,45 @@
+-- ned: card="Balance owed -$46.80 A refund, chargeback or fee came in after a payout."
+   OK   negative-balance alert present once
+   alert: {"role":"status","live":null,"cls":"flex items-start gap-3 rounded-lg border p-3.5 text-sm sm:p-4 border-warning/30 bg-warning-soft text-ink mt-4","text":"You owe $46.80 Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.","bg":"rgb(253, 240, 220)","border":"oklab(0.523011 0.0952549 0.103542 / 0.3)","color":"rgb(20, 18, 31)","iconColor":"rgb(168, 74, 7)","tag":"DIV"}
+   FAIL alert has role="alert" (got status)
+   FAIL alert is danger-toned, not warning: border-warning/30,bg-warning-soft
+   FAIL alert is exposed in the accessibility tree as role=alert (getByRole('alert'))
+   OK   card is red (border-danger) — same family as the alert
+   colours bg=rgb(253, 240, 220) text=rgb(20, 18, 31) border=oklab(0.523011 0.0952549 0.103542 / 0.3) icon=rgb(168, 74, 7)
+   OK   text contrast 16.4:1 >= 4.5
+   OK   icon contrast 5.1:1 >= 3
+   FAIL FE-12: no 'after a payout' claim in card or alert
+   FAIL FE-12: card hint reads 'Below zero. It will be deducted from future earnings.'
+   FAIL alert text: You owe $46.80 Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.
+   FAIL FE-12: no such wording anywhere on /dashboard
+-- ned-mobile: card="Balance owed -$46.80 A refund, chargeback or fee came in after a payout."
+   OK   negative-balance alert present once
+   alert: {"role":"status","live":null,"cls":"flex items-start gap-3 rounded-lg border p-3.5 text-sm sm:p-4 border-warning/30 bg-warning-soft text-ink mt-4","text":"You owe $46.80 Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.","bg":"rgb(253, 240, 220)","border":"oklab(0.523011 0.0952549 0.103542 / 0.3)","color":"rgb(20, 18, 31)","iconColor":"rgb(168, 74, 7)","tag":"DIV"}
+   FAIL alert has role="alert" (got status)
+   FAIL alert is danger-toned, not warning: border-warning/30,bg-warning-soft
+   FAIL alert is exposed in the accessibility tree as role=alert (getByRole('alert'))
+   OK   card is red (border-danger) — same family as the alert
+   colours bg=rgb(253, 240, 220) text=rgb(20, 18, 31) border=oklab(0.523011 0.0952549 0.103542 / 0.3) icon=rgb(168, 74, 7)
+   OK   text contrast 16.4:1 >= 4.5
+   OK   icon contrast 5.1:1 >= 3
+   FAIL FE-12: no 'after a payout' claim in card or alert
+   FAIL FE-12: card hint reads 'Below zero. It will be deducted from future earnings.'
+   FAIL alert text: You owe $46.80 Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.
+   FAIL FE-12: no such wording anywhere on /dashboard
+-- cb-never-paid-out: card="Balance owed -$5.00 A refund, chargeback or fee came in after a payout."
+   OK   negative-balance alert present once
+   alert: {"role":"status","live":null,"cls":"flex items-start gap-3 rounded-lg border p-3.5 text-sm sm:p-4 border-warning/30 bg-warning-soft text-ink mt-4","text":"You owe $5.00 Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.","bg":"rgb(253, 240, 220)","border":"oklab(0.523011 0.0952549 0.103542 / 0.3)","color":"rgb(20, 18, 31)","iconColor":"rgb(168, 74, 7)","tag":"DIV"}
+   FAIL alert has role="alert" (got status)
+   FAIL alert is danger-toned, not warning: border-warning/30,bg-warning-soft
+   FAIL alert is exposed in the accessibility tree as role=alert (getByRole('alert'))
+   OK   card is red (border-danger) — same family as the alert
+   colours bg=rgb(253, 240, 220) text=rgb(20, 18, 31) border=oklab(0.523011 0.0952549 0.103542 / 0.3) icon=rgb(168, 74, 7)
+   OK   text contrast 16.4:1 >= 4.5
+   OK   icon contrast 5.1:1 >= 3
+   FAIL FE-12: no 'after a payout' claim in card or alert
+   FAIL FE-12: card hint reads 'Below zero. It will be deducted from future earnings.'
+   FAIL alert text: You owe $5.00 Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.
+   FAIL FE-12: no such wording anywhere on /dashboard
+-- maya (positive control): card="Available $87.64 Ready for a payout"
+   OK   positive seller: no alert, 'Available' card
+RESULT fails=21

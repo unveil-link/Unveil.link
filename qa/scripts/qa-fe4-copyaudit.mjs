@@ -6,7 +6,7 @@ const RE = /(instant(ly)?|right away|straight away|immediate(ly)?|receipt|downlo
 const b = await L.browser(); const hits = []; const pagesSeen = [];
 function sentences(t) { return t.replace(/\s+/g, " ").split(/(?<=[.!?])\s+|\s·\s|\s\|\s/).map((x) => x.trim()).filter(Boolean); }
 async function audit(name, url, page) {
-  const html = await page.content(); const text = await page.evaluate(() => document.body.innerText);
+  const html = await page.content(); const text = await page.evaluate(() => document.body.innerText + " " + [...document.querySelectorAll("details")].map((d) => d.textContent).join(" "));  // include collapsed <details> (FAQ)
   const meta = await page.evaluate(() => [...document.querySelectorAll("meta[name=description],meta[property^='og:'],meta[name^='twitter:']")].map((m) => [m.getAttribute("name") ?? m.getAttribute("property"), m.content]).concat([["title", document.title]]));
   const alts = await page.evaluate(() => [...document.querySelectorAll("[aria-label],[alt],[title],input[placeholder]")].map((e) => ["attr", e.getAttribute("aria-label") ?? e.getAttribute("alt") ?? e.getAttribute("title") ?? e.getAttribute("placeholder")]));
   pagesSeen.push(name);

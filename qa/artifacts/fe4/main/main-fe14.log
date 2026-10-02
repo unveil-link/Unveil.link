@@ -1,0 +1,30 @@
+   FAIL [desktop] email label is exactly "Email" (got "Email (for your receipt)")
+   FAIL [desktop] button reads "Unlock for $12.00" (was "Unlock for $12.00")
+   FAIL [desktop] sub-line: "...Pay by card · No account needed · Instant download"
+   FAIL [desktop] sales-final text has no "delivered immediately"
+   FAIL [desktop] trust point "Access after payment ... Delivery options are coming soon."
+   FAIL [desktop] "Just pay — nothing to sign up for."
+   FAIL [desktop] no receipt/instant-download/unlock promise on buyer page (hits: ["Price $12.00 6 files: 6 images Email (for your receipt) I confirm that I am 18 years of age or older, and I agree to the Terms.","Unlock for $12.00 Pay by card · No account needed · Instant download All sales are final.","Because this is a digital product delivered immediately, purchases can't be refunded or exchanged once completed.","Instant download Files unlock the moment you’ve paid.","No account needed Just pay and download — nothing to sign up for."])
+   (residual) [desktop] buyer page preview note: "The full files unlock after purchase."
+   OK   [desktop] no horizontal overflow (0px)
+   FAIL [desktop] validation state: no promise text
+   FAIL [desktop] hosted mock page: SALES_FINAL_TEXT updated, no promise
+   FAIL [desktop] after payment: "nds. Payment succeeded (mock). Pay (mock) Back to the drop" — no receipt/download promise; links: ["Unveil","Back to the drop"]
+   FAIL [mobile] email label is exactly "Email" (got "Email (for your receipt)")
+   FAIL [mobile] button reads "Unlock for $12.00" (was "Unlock for $12.00")
+   FAIL [mobile] sub-line: "...Pay by card · No account needed · Instant download"
+   FAIL [mobile] sales-final text has no "delivered immediately"
+   FAIL [mobile] trust point "Access after payment ... Delivery options are coming soon."
+   FAIL [mobile] "Just pay — nothing to sign up for."
+   FAIL [mobile] no receipt/instant-download/unlock promise on buyer page (hits: ["Price $12.00 6 files: 6 images Email (for your receipt) I confirm that I am 18 years of age or older, and I agree to the Terms.","Unlock for $12.00 Pay by card · No account needed · Instant download All sales are final.","Because this is a digital product delivered immediately, purchases can't be refunded or exchanged once completed.","Instant download Files unlock the moment you’ve paid.","No account needed Just pay and download — nothing to sign up for."])
+   (residual) [mobile] buyer page preview note: "The full files unlock after purchase."
+   OK   [mobile] no horizontal overflow (0px)
+   FAIL [mobile] validation state: no promise text
+   FAIL [mobile] hosted mock page: SALES_FINAL_TEXT updated, no promise
+   FAIL [mobile] after payment: "nds. Payment succeeded (mock). Pay (mock) Back to the drop" — no receipt/download promise; links: ["Unveil","Back to the drop"]
+   FAIL dashboard "How it works": "undefined"
+   FAIL [dashboard /dashboard] no promise (and download)
+   OK   [dashboard /dashboard/drops] no promise (-)
+   OK   [dashboard /dashboard/new] no promise (-)
+   FAIL rate-limit state label "Try again in 19s"
+RESULT fails=23

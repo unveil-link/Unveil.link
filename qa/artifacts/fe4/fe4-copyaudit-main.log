@@ -5,6 +5,9 @@ pages audited (31): landing | login | signup | forgot-password | reset-password 
    - [visible] Buyers pay by card and download right away.
    - [visible] Instant download Your files are ready the moment your payment goes through.
    - [visible] Private signed links Every download link is unique to your purchase and expires automatically.
+   - [visible] Buyers pay with a card at checkout and download straight away.
+   - [visible] We only ask for an email address so we can send a receipt and a backup download link.
+   - [visible] Files are stored privately and are only delivered through signed links created after a successful purchase.
    - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
    - [attr] Illustration of a payment link card with a blurred preview, a price of $12, and a Pay and download button
 ## login
