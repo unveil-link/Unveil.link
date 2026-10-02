@@ -1,0 +1,24 @@
+ components/auth/AuthShell.tsx          |   2 +-
+ components/buyer/BuyerShell.tsx        |   2 +-
+ components/buyer/TrustPoints.tsx       |   2 +-
+ components/dashboard/NewDropFlow.tsx   |   6 +-
+ components/dashboard/PublishDialog.tsx |   2 +-
+ components/dashboard/types.ts          |   2 +-
+ components/landing/BuyerTrust.tsx      |   6 +-
+ components/landing/Faq.tsx             |   7 +-
+ components/landing/Hero.tsx            |   5 +-
+ components/landing/HowItWorks.tsx      |   3 +-
+ components/landing/PaymentLinkMock.tsx |   3 +-
+ components/landing/SellerCta.tsx       |   2 +-
+ docs/frontend-dashboard-notes.md       |  28 +++++++-
+ lib/features.ts                        |  16 +++++
+ lib/upload-limits.ts                   |   6 +-
+ scripts/e2e.ts                         |  39 +++++++---
+ src/app/components/DropEditor.tsx      |   2 +-
+ src/app/dashboard/page.tsx             |   4 +-
+ src/app/layout.tsx                     |   3 +-
+ tests/copy-guard-mutation.test.ts      |  83 ++++++++++++++++++++++
+ tests/copy-guard.allowlist.ts          |  49 +++++++++++++
+ tests/copy-guard.test.ts               | 126 +++++++++++++++++++--------------
+ tests/helpers/copy-scan.ts             | 115 ++++++++++++++++++++++++++++++
+ 23 files changed, 423 insertions(+), 90 deletions(-)

@@ -1,0 +1,17 @@
+pages audited (31): landing | login | signup | forgot-password | reset-password | terms | privacy | dmca | contact | buyer /u/<published> | buyer /u/<unpublished> (unavailable) | buyer /u/<draft> | buyer /u/<unknown> (404) | 404 page | design page | admin login | admin login2 | buyer /u/<published> after empty submit (validation) | hosted mock checkout /pay/mock/<session> | hosted mock checkout after declined card | hosted mock checkout after successful payment (return/success state) | dashboard overview | dashboard drops | dashboard new drop | dashboard drop detail | dashboard draft drop detail | dashboard overview (pending seller 'jo') | dashboard overview (empty seller 'sam') | /manifest.webmanifest (200) | /robots.txt (200) | /sitemap.xml (404); mail files: 0
+## landing
+   - [visible] Delivery options are coming soon.
+## forgot-password
+   - [visible] unveil.link Reset your password Enter the email you signed up with and we’ll send you a reset link.
+## buyer /u/<published>
+   - [visible] Delivery options are coming soon.
+## buyer /u/<published> after empty submit (validation)
+   - [visible] Delivery options are coming soon.
+## dashboard drop detail
+   - [visible] They’re added to this drop right away.
+## dashboard draft drop detail
+   - [visible] They’re added to this drop right away.
+## dashboard overview (pending seller 'jo')
+   - [visible] Publishing unlocks once your identity is verified.
+## dashboard overview (empty seller 'sam')
+   - [visible] Publishing unlocks once your identity is verified.

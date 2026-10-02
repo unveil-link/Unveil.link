@@ -1,0 +1,9 @@
+[pending] alert text: Verification: Pending Pending You can create drafts and upload files now. Publishing unlocks once your identity is verified.
+[failed] alert text: Verification: Failed Failed Verification didn’t go through. Contact support to continue.
+[manual_review] alert text: Verification: In review In review A person is reviewing your verification. We’ll update this page.
+[verified] alert text: Verified
+   OK   /contact is a 'Coming soon.' placeholder: there is no support channel to 'Contact support to continue' (failed state)
+code in src/ that writes sellers.verification_status: none
+   OK   no admin screen, API route or service in src/ sets verification_status (only scripts/set-verification.ts / SQL) -> 'A person is reviewing your verification' and 'Contact support' have nothing behind them
+   OK   signup subtitle still says 'Start sharing paid links today.' although new sellers are 'pending' and cannot publish
+RESULT fails=0

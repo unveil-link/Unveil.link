@@ -47,25 +47,25 @@
   },
   {
    "page": "buyer /u/<published>",
-   "url": "/u/8rDyovtK3Nra",
+   "url": "/u/nhA64SLA7PVG",
    "kind": "visible",
    "text": "Delivery options are coming soon."
   },
   {
    "page": "buyer /u/<published> after empty submit (validation)",
-   "url": "/u/8rDyovtK3Nra",
+   "url": "/u/nhA64SLA7PVG",
    "kind": "visible",
    "text": "Delivery options are coming soon."
   },
   {
    "page": "dashboard drop detail",
-   "url": "/dashboard/drops/fa612789-b0ba-4553-a652-bd5e80059c2e",
+   "url": "/dashboard/drops/9b0994ca-5739-49e8-82c2-1e6d01644ea9",
    "kind": "visible",
    "text": "They’re added to this drop right away."
   },
   {
    "page": "dashboard draft drop detail",
-   "url": "/dashboard/drops/27fae4b7-1b6b-467c-a0e3-672ddf4da8c0",
+   "url": "/dashboard/drops/741439f5-5557-4cb4-8006-68b91455bce3",
    "kind": "visible",
    "text": "They’re added to this drop right away."
   }

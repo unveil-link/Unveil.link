@@ -1,0 +1,50 @@
+baseline (unmodified copy): guard PASS
+BYPASS  N1 JSX text split mid-word across elements: In<b>stant</b>ly <-- promise gets through
+BYPASS  N2 two sibling spans: <span>Insta</span><span>ntly</span> <-- promise gets through
+BYPASS  N3 phrase split across nodes: straight <b>away</b> <-- promise gets through
+BYPASS  N4 phrase split across nodes: the <i>moment</i> you pay <-- promise gets through
+BYPASS  N5 variable + literal: {(() => { const a = "In"; return a + "stantly"; })()} <-- promise gets through
+BYPASS  N6 template with literal holes {`${"In"}${"stantly"}`} <-- promise gets through
+BYPASS  N7 "In".concat("stantly") <-- promise gets through
+BYPASS  N8 String.fromCharCode(...) spelling 'instantly' <-- promise gets through
+BYPASS  N9 atob(base64) spelling 'instantly' <-- promise gets through
+BYPASS  N10 reversed string split/reverse/join <-- promise gets through
+BYPASS  N11 Cyrillic homoglyphs: 'Іnstantly', 'dоwnload' (U+0406, U+043E) <-- promise gets through
+BYPASS  N12 accented letters: 'instánt dównload' <-- promise gets through
+BYPASS  N13 leet speak '1nstant d0wnload' <-- promise gets through
+BYPASS  N14 [array].map(...).join('') (not a literal-array join) <-- promise gets through
+BYPASS  N15 'straightaway' (one word) <-- promise gets through
+BYPASS  N16 'Your files land in seconds' <-- promise gets through
+BYPASS  N17 'We’ll send you the link' <-- promise gets through
+BYPASS  N18 'Check your email for access' <-- promise gets through
+BYPASS  N19 'You’ll receive your files' <-- promise gets through
+BYPASS  N20 'confirmation email' <-- promise gets through
+BYPASS  N21 'Your files are ready' (the phrase DownloadPanel itself uses) <-- promise gets through
+BYPASS  N22 'no waiting' / 'at once' / 'on the spot' <-- promise gets through
+BYPASS  N23 Spanish: 'descarga inmediata' <-- promise gets through
+BYPASS  N24 French: 'téléchargement instantané' <-- promise gets through
+BYPASS  N25 'Upload MP4 clips' (video claim without the word video) <-- promise gets through
+BYPASS  N26 'Payouts every Friday' (schedule claim) <-- promise gets through
+BYPASS  N27 'All creators are fully verified' <-- promise gets through
+BYPASS  N28 'Your card details are encrypted end to end' (unverifiable security claim) <-- promise gets through
+CAUGHT  N29 'Payouts are sent automatically every week' (should be caught by bank-promise rule) 
+BYPASS  N30 CSS pseudo-element content: "Instant download" in globals.css <-- promise gets through
+BYPASS  N31 new public/promo.svg with <text>Instant download</text> <-- promise gets through
+BYPASS  N32 new public/promo.json <-- promise gets through
+BYPASS  N33 new .mjs under src/app (not .ts/.tsx) <-- promise gets through
+BYPASS  N34 SKIP_FILES entry: promise inside src/server/auth/common-passwords-data.ts (file-level skip) <-- promise gets through
+CAUGHT  N35 new backend file src/server/mail/promo.ts with a promise (ratchet should fail) 
+CAUGHT  N36 new backend string split by concat in src/app/api (same extractor) 
+BYPASS  N37 allowlist reuse: second exact 'Download' button in DownloadPanel.tsx (loophole probe)
+BYPASS  N38 flag flip: VIDEO_UPLOAD = true while the backend still answers 415 (loophole probe)
+BYPASS  N39 hard-coded hold: PAYOUT_HOLD_DAYS = 30 (copy no longer matches platform_settings 7) (loophole probe)
+BYPASS  N40 FileDropzone hint keeps advertising MP4 (the real FE-20 string, re-added to Hero) <-- promise gets through
+BYPASS  N41 // line comment 'Instant download' [should-pass] (correct: not user-facing)
+BYPASS  N42 JSX comment {/* Instant download */} [should-pass] (correct: not user-facing)
+CAUGHT  N43 unused const with the promise (conservative: should be caught) 
+BYPASS  N44 type-level literal only: type Copy = "Instant download" [should-pass] (correct: not user-facing)
+CAUGHT  N45 dangerouslySetInnerHTML with numeric entity 'Downl&#x6f;ad' 
+CAUGHT  N46 JSON-LD in layout via JSON.stringify({description: ...}) 
+CAUGHT  N47 metadata.openGraph.description promise 
+BYPASS  N48 unrouted-component copy 'Thanks — your files are ready' in a NEW landing section <-- promise gets through
+SUMMARY (excluding should-pass): 7 caught, 38 bypass, 0 skipped (anchor missing), of 48 mutations

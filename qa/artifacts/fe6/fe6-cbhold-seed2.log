@@ -1,0 +1,5 @@
+◇ injected env (0) from .env
+chargeback webhook -> 200
+chargeback ledger lines: [{"entry_type":"chargeback_reversal","component":"gross","amount_cents":-2000,"pending":true},{"entry_type":"chargeback_reversal","component":"platform_fee","amount_cents":200,"pending":true},{"entry_type":"chargeback_reversal","component":"processing_fee","amount_cents":240,"pending":true},{"entry_type":"chargeback_fee","component":"chargeback_fee","amount_cents":-500,"pending":false}]
+API balance: {"pendingCents":1560,"availableCents":-500,"totalCents":1060} lifetime: {"salesCount":2,"grossCents":4000,"platformFeeCents":200,"processingFeeCents":240,"refundedCents":0,"chargebackCents":2000,"paidOutCents":0,"requestedPayoutCents":0}
+EMAIL=qa-cb-d47799@example.com

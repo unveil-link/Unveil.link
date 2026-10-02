@@ -1,0 +1,8 @@
+   OK   upload noise.jpg -> 201
+   high-frequency energy: original 422, public preview 0 (0.0%), preview 320x240 1 KB vs original 478 KB
+   OK   anonymous preview is heavily blurred (<5% of the original's high-frequency detail)
+   OK   anonymous GET /original -> 403
+   OK   public drop JSON exposes no storage key / filename / original URL
+   OK   storage dir is outside public/: /workspace/qa-fe6/.qa-storage
+   OK   no static file route exposes the original (GET /<id>.jpg -> 404)
+RESULT fails=0
