@@ -1,3 +1,5 @@
+import { VIDEO_UPLOAD } from "./features";
+
 /**
  * Client-side upload rules. Source of truth is the backend: `GET /api/settings` supplies the live numbers
  * (maxImageSizeBytes, maxFilesPerDrop, maxTotalBytesPerDrop, allowedImageMimes, price min/max). These defaults are
@@ -11,7 +13,7 @@ export type UploadLimits = {
   maxFilesPerDrop: number;
   maxTotalBytesPerDrop: number;
   allowedImageMimes: string[];
-  /** The backend has no video upload endpoint yet (images only). Flip when it ships. */
+  /** The backend has no video upload endpoint yet (images only). Driven by lib/features.ts (VIDEO_UPLOAD). */
   videoUploadEnabled: boolean;
 };
 
@@ -23,7 +25,7 @@ export const DEFAULT_LIMITS: UploadLimits = {
   maxFilesPerDrop: 10,
   maxTotalBytesPerDrop: 2 * 1024 ** 3,
   allowedImageMimes: ["image/jpeg", "image/png", "image/webp"],
-  videoUploadEnabled: false,
+  videoUploadEnabled: VIDEO_UPLOAD,
 };
 
 const EXT_MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", mp4: "video/mp4" };

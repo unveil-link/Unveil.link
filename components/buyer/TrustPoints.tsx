@@ -1,7 +1,7 @@
 import { CardIcon, DownloadIcon, UserOffIcon } from "@/components/ui";
 
 const points = [
-  { icon: CardIcon, title: "Secure checkout", body: "Card payments handled by a trusted provider." },
+  { icon: CardIcon, title: "Secure checkout", body: "You pay by card on a separate checkout page." },
   { icon: DownloadIcon, title: "Access after payment", body: "Access to the files is shared once your payment is confirmed. Delivery options are coming soon." },
   { icon: UserOffIcon, title: "No account needed", body: "Just pay — nothing to sign up for." },
 ];

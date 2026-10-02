@@ -1,11 +1,12 @@
+import { SELLABLE_CAP, SELLABLE_NOTE, PAYOUT_HOLD_DAYS, MIN_PAYOUT_USD } from "@/lib/features";
 import { Container, Section, SectionHeading } from "@/components/ui";
 
 const faqs = [
   { q: "Do buyers need an account?", a: "No. Buyers pay with a card at checkout, with no sign-up or password. We ask for an email address at checkout, and access to the files is shared once the payment is confirmed. Delivery options are coming soon." },
-  { q: "How do I get paid?", a: "Earnings from each sale show up in your dashboard after a short hold period. Payouts are handled through our payments partner once your balance reaches the minimum payout." },
+  { q: "How do I get paid?", a: `Each sale is listed in your dashboard as Pending. After a ${PAYOUT_HOLD_DAYS}-day hold it becomes Available, and payouts start at $${MIN_PAYOUT_USD}. Payout requests and processing are coming soon.` },
   { q: "What does it cost?", a: "There are no subscriptions or monthly fees. Each sale carries a platform fee and card-processing fees, and you keep most of every sale. Your dashboard shows the exact breakdown." },
-  { q: "What kinds of files can I sell?", a: "Photos and videos that you created and own the rights to. Sellers are verified and must follow our Terms." },
-  { q: "Are my files private?", a: "Yes. Files are stored privately, and previews are blurred until a purchase. Payment links are private to the creator who shares them." },
+  { q: "What kinds of files can I sell?", a: `${SELLABLE_CAP} that you created and own the rights to${SELLABLE_NOTE}. Publishing requires a verified account status, and sellers must follow our Terms.` },
+  { q: "Are my files private?", a: "Yes. Files are stored privately, and previews are blurred until a purchase. Payment links are long and unguessable and aren’t listed or searchable, so only people you share a link with have it." },
 ];
 
 export function Faq() {

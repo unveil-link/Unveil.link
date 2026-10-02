@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SELLABLE } from "@/lib/features";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s · Unveil",
   },
   description:
-    "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.",
+    `Unveil lets creators sell ${SELLABLE} with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.`,
   applicationName: "Unveil",
   manifest: "/manifest.webmanifest",
   icons: {

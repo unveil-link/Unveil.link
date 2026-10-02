@@ -1798,18 +1798,35 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     return `seller ${ss.filter((s) => s === 200).length}x200/${ss.filter((s) => s === 429).length}x429; admin ${as.filter((s) => s === 200).length}x200`;
   });
 
-  await check("[copy-sweep] landing (incl. collapsed FAQ), auth pages, buyer page and site/og meta promise no instant delivery / receipt / download / signed links", async () => {
-    const bad = /instant(ly)?|right away|straight away|immediate(ly)?|receipt|download|ready the moment|backup (download )?link|signed link|unlock/i;
-    const visible = (h: string) => stripComments(h).replace(/<script[\s\S]*?<\/script>/g, " ").replace(/<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#x27;|&#39;/g, "'");
-    const metas = (h: string) => [...h.matchAll(/<meta[^>]+(?:name|property)="(?:description|og:[a-z:]+|twitter:[a-z:]+)"[^>]*>/g)].map((m) => m[0]).join(" ");
-    const pages = ["/", "/login", "/signup", "/forgot-password", "/reset-password?token=x", `/u/${p2Link}`];
-    for (const pg of pages) {
-      const h = await (await anon.req("GET", pg)).text();
-      const hit = bad.exec(visible(h)) ?? bad.exec(metas(h)) ?? bad.exec([...h.matchAll(/aria-label="([^"]*)"/g)].map((m) => m[1]).join(" | "));
-      assert(!hit, `${pg}: promise wording "${hit?.[0]}"`);
-    }
+  await check("[copy-sweep] every page (landing incl. FAQ, auth, legal, buyer, hosted /pay/mock, seller dashboard), meta/aria and API-returned messages promise nothing that is not live", async () => {
+    // Mirrors the unit guard (tests/copy-guard.test.ts) at RUNTIME, on rendered HTML and JSON. Exact legitimate phrases are removed first.
+    const bad = /instant(ly)?|right away|straight away|immediate(ly)?|receipts?|download|ready the moment|moment (you|your) pay|backup (download )?link|signed[- ]?(url|link)|unlock|inbox|emailed|trusted (payment )?(provider|processor)|payments? partner|straight to your bank|bank account|age-verified|identity-verified|identity- and age|private to the creator|payouts? (are )?handled/i;
+    const legit = [/Nothing in your inbox\? Check your spam folder/g, /Becomes available right away/g, /added to this drop right away/g, /Delivery options are coming soon\./g];
+    const clean = (t: string) => legit.reduce((x, re) => x.replace(re, " "), t);
+    const visible = (h: string) => clean(stripComments(h).replace(/<script[\s\S]*?<\/script>/g, " ").replace(/<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#x27;|&#39;/g, "'").replace(/\s+/g, " "));
+    const metas = (h: string) => [...h.matchAll(/<meta[^>]+(?:name|property)="(?:description|og:[a-z:]+|twitter:[a-z:]+)"[^>]*>/g)].map((m) => m[0]).join(" ") + " " + (/<title>([^<]*)<\/title>/.exec(h)?.[1] ?? "");
+    const attrs = (h: string) => [...h.matchAll(/(?:aria-label|title|alt|placeholder)="([^"]*)"/g)].map((m) => m[1]).join(" | ");
+    const strings = (v: unknown, out: string[] = []): string[] => { if (typeof v === "string") out.push(v); else if (v && typeof v === "object") for (const x of Object.values(v)) strings(x, out); return out; };
+    const checkHtml = (name: string, h: string) => { const hit = bad.exec(visible(h)) ?? bad.exec(clean(metas(h))) ?? bad.exec(clean(attrs(h))); assert(!hit, `${name}: promise wording "${hit?.[0]}"`); };
+    const checkJson = (name: string, body: unknown) => { const hit = bad.exec(clean(strings(body).filter((x) => !/^(https?:\/|\/|[a-z0-9_-]{20,}$)/i.test(x)).join(" | "))); assert(!hit, `${name}: API string promises "${hit?.[0]}"`); };
+    // anonymous pages
+    for (const pg of ["/", "/login", "/signup", "/forgot-password", "/reset-password?token=x", "/terms", "/privacy", "/dmca", "/contact", `/u/${p2Link}`, `/u/${payLink}`, "/u/doesnotexist1", "/nope"]) checkHtml(pg, await (await anon.req("GET", pg)).text());
+    // hosted (mock) checkout page + the dev payment results a buyer can see
+    checkHtml("/pay/mock/<session>", await (await anon.req("GET", `/pay/mock/${session1}`)).text());
+    // seller dashboard pages
+    const dropRow = (await db.query("SELECT d.id FROM drops d JOIN sellers s ON s.id=d.seller_id WHERE s.email=$1 LIMIT 1", [sellerEmail])).rows[0];
+    for (const pg of ["/dashboard", "/dashboard/drops", "/dashboard/drops/new", `/dashboard/drops/${dropRow.id}`]) checkHtml(pg, await (await sellerC.req("GET", pg)).text());
+    // API-returned user-facing strings (frontend-visible): errors + public JSON
+    checkJson("POST /api/checkout (bad email)", await (await startCheckout({ email: "nope" })).json());
+    checkJson("POST /api/checkout (unknown link)", await (await startCheckout({ linkId: "doesnotexist1" })).json());
+    checkJson("POST /api/auth/login (wrong credentials)", await (await new Client_().req("POST", "/api/auth/login", { json: { email: "nobody@example.test", password: "x".repeat(12) } })).json());
+    checkJson("GET /api/public/drops/<link>", await (await anon.req("GET", `/api/public/drops/${payLink}`)).json());
+    checkJson("GET /api/settings", await (await sellerC.req("GET", "/api/settings")).json());
+    checkJson("GET /api/earnings", await (await sellerC.req("GET", "/api/earnings")).json());
     const home = visible(await (await anon.req("GET", "/")).text());
-    assert(/Access after payment/.test(home) && /payment is confirmed|payment is confirmed/.test(home), "landing states access is shared after payment is confirmed");
+    assert(/Access after payment/.test(home) && /payment is confirmed/.test(home), "landing states access is shared once payment is confirmed");
+    assert(/Payout requests and processing are coming soon/.test(home) && /Pending/.test(home), "FAQ 'How do I get paid?' says what is true today");
+    assert(!/photos and videos/i.test(home) && !/identity- and age-verified/i.test(home) && !/payouts straight/i.test(home), "no video / identity-verified / bank-payout claims on the landing page");
   });
   await check("[FE-07/08] dashboard earnings == GET /api/earnings (ledger): fees separate, pending vs available, in-payout; no divergent math", async () => {
     const api = await (await sellerC.req("GET", "/api/earnings")).json();

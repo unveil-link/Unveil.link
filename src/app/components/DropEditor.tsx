@@ -108,7 +108,7 @@ export default function DropEditor({ drop, files, verificationStatus, limits, un
           <div><dt className="text-muted">Revenue (kept)</dt><dd className="mt-0.5 text-base font-semibold tabular-nums">{usd(revenueCents)}</dd></div>
         </dl>
         {verificationStatus !== "verified" && drop.status !== "published" && (
-          <Alert tone="warning" title="Publishing locked">Your identity verification is <b>{verificationStatus.replace("_", " ")}</b>. This stays a draft until you’re verified.</Alert>
+          <Alert tone="warning" title="Publishing locked">Your verification status is <b>{verificationStatus.replace("_", " ")}</b>. This stays a draft until you’re verified.</Alert>
         )}
         {drop.status === "flagged" && <Alert tone="danger" title="Under review">This drop is paused while our team reviews it. You can’t edit or publish it right now.</Alert>}
       </Card>

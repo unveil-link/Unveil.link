@@ -23,7 +23,7 @@ export const STATUS_META: Record<DropStatus, { label: string; tone: "neutral" | 
 };
 
 export const VERIFICATION_META: Record<VerificationStatus, { label: string; tone: "warning" | "success" | "danger" | "primary"; hint: string }> = {
-  pending: { label: "Pending", tone: "warning", hint: "You can create drafts and upload files now. Publishing unlocks once your identity is verified." },
+  pending: { label: "Pending", tone: "warning", hint: "You can create drafts and upload files now. Publishing requires a verified account status." },
   verified: { label: "Verified", tone: "success", hint: "You can publish drops." },
   failed: { label: "Failed", tone: "danger", hint: "Verification didn’t go through. Contact support to continue." },
   manual_review: { label: "In review", tone: "primary", hint: "A person is reviewing your verification. We’ll update this page." },
