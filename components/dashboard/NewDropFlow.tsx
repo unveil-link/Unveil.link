@@ -172,7 +172,7 @@ export default function NewDropFlow({ limits, verification }: { limits: UploadLi
             <Alert tone="info" className="mt-4 text-left">
               {verified
                 ? "This drop is a draft. Open it to confirm the publishing statements and switch the link on."
-                : "This drop is saved as a draft. Publishing unlocks once your identity is verified."}
+                : "This drop is saved as a draft. Publishing requires a verified account status."}
             </Alert>
           )}
 
@@ -245,8 +245,8 @@ export default function NewDropFlow({ limits, verification }: { limits: UploadLi
           <CardDescription>Save as a draft, or switch the link on as soon as the upload finishes.</CardDescription>
         </div>
         {!verified && (
-          <Alert tone="warning" title="Identity verification pending">
-            You can create drafts and upload files now. Publishing unlocks once you’re verified (status: <b>{verification.replace("_", " ")}</b>).
+          <Alert tone="warning" title="Verification pending">
+            You can create drafts and upload files now. Publishing requires a verified account status (yours: <b>{verification.replace("_", " ")}</b>).
           </Alert>
         )}
         <label className="flex items-start gap-3 py-1 text-sm">

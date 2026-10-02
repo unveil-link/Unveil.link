@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui";
+import { VIDEO_UPLOAD } from "@/lib/features";
 import { LockIcon, ImageIcon, ShieldCheckIcon } from "./Icons";
 
 /** Pure-CSS visual mock of a buyer-facing payment link card with a blurred preview. */
@@ -14,7 +15,7 @@ export function PaymentLinkMock() {
           <div className="absolute bottom-0 left-1/3 h-28 w-44 rounded-full bg-[#4f3be8]/70 blur-2xl" />
           <div className="absolute inset-0 backdrop-blur-xl bg-white/10" />
           <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/85 px-2.5 py-1 text-xs font-semibold text-text">
-            <ImageIcon className="size-3.5" /> 12 photos · 2 videos
+            <ImageIcon className="size-3.5" /> {VIDEO_UPLOAD ? "12 photos · 2 videos" : "12 photos"}
           </div>
           <div className="absolute inset-0 grid place-items-center">
             <div className="grid size-14 place-items-center rounded-full bg-white/90 text-primary shadow-card">

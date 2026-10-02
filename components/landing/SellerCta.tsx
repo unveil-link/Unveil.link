@@ -1,7 +1,7 @@
 import { ButtonLink, Container, Section, SectionHeading } from "@/components/ui";
 import { CheckIcon } from "./Icons";
 
-const perks = ["Keep most of every sale", "No subscriptions or monthly fees", "Payouts straight to your bank", "Sales dashboard with simple analytics"];
+const perks = ["Keep most of every sale", "No subscriptions or monthly fees", "Sales, fees and balance in your dashboard", "Payout requests coming soon"];
 
 export function SellerCta() {
   return (

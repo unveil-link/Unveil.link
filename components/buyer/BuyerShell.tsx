@@ -22,7 +22,7 @@ export function BuyerShell({ children }: { children: ReactNode }) {
         <Container size="narrow" className="flex flex-col items-center gap-1 py-6 text-center text-xs text-muted sm:flex-row sm:justify-between sm:text-left">
           <p>© {new Date().getFullYear()} Unveil · unveil.link</p>
           <LegalLinks />
-          <p>Payments by a trusted provider. We never store card numbers.</p>
+          <p>Card checkout on a separate page. We never store card numbers.</p>
         </Container>
       </footer>
     </div>

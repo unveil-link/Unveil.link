@@ -89,7 +89,7 @@ export default async function DashboardOverview() {
                 : e.availableCents === 0
                   ? "Nothing to pay out yet"
                   : e.payoutEligible
-                    ? "Ready for a payout"
+                    ? `You’ve reached the ${usd(e.minPayoutCents)} minimum. Payout requests are coming soon`
                     : `Payouts start at ${usd(e.minPayoutCents)}`
             }
           />
@@ -98,7 +98,7 @@ export default async function DashboardOverview() {
           <StatCard label="In payout" value={usd(e.inPayoutCents)} icon={<WalletIcon />}
             hint={e.inPayoutCents ? "Requested or approved, not yet paid" : "None in progress"} />
           <StatCard label="Paid out" value={usd(e.paidOutCents)} icon={<WalletIcon />}
-            hint={e.paidOutCents ? "Sent to you so far" : "No payouts yet"} />
+            hint={e.paidOutCents ? "Payouts marked as paid" : "No payouts yet"} />
         </div>
         {e.availableCents < 0 && (
           <Alert tone="danger" role="status" title={`You owe ${usd(-e.availableCents)}`} className="mt-4" data-testid="negative-balance">

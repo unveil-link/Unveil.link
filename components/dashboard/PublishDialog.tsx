@@ -7,7 +7,7 @@ import type { VerificationStatus } from "./types";
 
 export function publishErrorMessage(code: string | undefined, fallback: string): string {
   switch (code) {
-    case "verification_required": return "Identity verification is required before you can publish. Your drop is saved as a draft.";
+    case "verification_required": return "A verified account status is required before you can publish. Your drop is saved as a draft.";
     case "no_files": return "Add at least one file before publishing.";
     case "attestation_required": return "Please confirm all three statements to publish.";
     case "flagged": return "This drop is under review and can’t be changed right now.";

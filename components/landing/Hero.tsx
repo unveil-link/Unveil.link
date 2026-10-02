@@ -1,6 +1,7 @@
 import { Badge, ButtonLink, Container } from "@/components/ui";
 import { CheckIcon } from "./Icons";
 import { PaymentLinkMock } from "./PaymentLinkMock";
+import { SELLABLE } from "@/lib/features";
 
 export function Hero() {
   return (
@@ -12,13 +13,13 @@ export function Hero() {
       <Container className="relative grid items-center gap-12 py-12 sm:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:py-24">
         <div>
           <Badge tone="primary" className="mb-5">
-            <ShieldDot /> Age-verified sellers
+            <ShieldDot /> Verification required to publish
           </Badge>
           <h1 id="hero-title" className="text-5xl font-extrabold tracking-tight text-balance sm:text-6xl">
             Sell your files with <span className="text-primary">one simple link</span>.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted sm:text-xl">
-            Upload your photos and videos, set a price, and share a payment link anywhere. Buyers pay by card — no
+            Upload your {SELLABLE}, set a price, and share a payment link anywhere. Buyers pay by card — no
             account needed — and access to the files is shared once payment is confirmed.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

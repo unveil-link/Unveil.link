@@ -2,11 +2,11 @@ import { Container, Section, SectionHeading } from "@/components/ui";
 import { CardIcon, DownloadIcon, LinkIcon, ShieldCheckIcon, UserOffIcon } from "./Icons";
 
 const points = [
-  { icon: CardIcon, title: "Secure card checkout", body: "Payments are processed by a trusted payment provider. We never see or store your card number." },
+  { icon: CardIcon, title: "Secure card checkout", body: "You pay by card on a separate checkout page, and Unveil does not store card numbers." },
   { icon: UserOffIcon, title: "No account needed", body: "Pay with a card and go. No sign-up, no passwords, no app to install." },
   { icon: DownloadIcon, title: "Access after payment", body: "Once your payment is confirmed, the creator’s files are shared with you. Delivery options are coming soon." },
-  { icon: LinkIcon, title: "Private links", body: "Each payment link is private to the creator who shares it, and files are stored privately with blurred previews until purchase." },
-  { icon: ShieldCheckIcon, title: "Verified creators", body: "Sellers are identity- and age-verified before they can publish a link." },
+  { icon: LinkIcon, title: "Private links", body: "Each payment link is long and unguessable, and it isn’t listed or searchable. Only people the creator shares it with have it. Files are stored privately, with blurred previews until purchase." },
+  { icon: ShieldCheckIcon, title: "Verified creators", body: "A seller must have a verified status before they can publish a link, and the badge only shows while that is the case." },
 ];
 
 export function BuyerTrust() {
