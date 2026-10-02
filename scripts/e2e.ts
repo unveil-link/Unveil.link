@@ -1271,7 +1271,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
 
   await check("[pay#1] concurrent identical POST /api/checkout (x8, same drop+email) -> ONE pending transaction/session; Idempotency-Key honoured (same key = same txn, other drop = 409)", async () => {
     const em = freshEmail("conc");
-    // a real double click = same browser: same Idempotency-Key header (BuyForm sends one per page load)
+    // a real double click = same browser: same Idempotency-Key header (the buy form sends one per page load)
     const dk = crypto.randomUUID();
     const rs = await Promise.all(Array.from({ length: 8 }, () => coFor(em, { "idempotency-key": dk })));
     assert(rs.every((r) => r.status === 200 || r.status === 201), `statuses ${rs.map((r) => r.status)}`);
@@ -1798,6 +1798,19 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     return `seller ${ss.filter((s) => s === 200).length}x200/${ss.filter((s) => s === 429).length}x429; admin ${as.filter((s) => s === 200).length}x200`;
   });
 
+  await check("[copy-sweep] landing (incl. collapsed FAQ), auth pages, buyer page and site/og meta promise no instant delivery / receipt / download / signed links", async () => {
+    const bad = /instant(ly)?|right away|straight away|immediate(ly)?|receipt|download|ready the moment|backup (download )?link|signed link|unlock/i;
+    const visible = (h: string) => stripComments(h).replace(/<script[\s\S]*?<\/script>/g, " ").replace(/<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#x27;|&#39;/g, "'");
+    const metas = (h: string) => [...h.matchAll(/<meta[^>]+(?:name|property)="(?:description|og:[a-z:]+|twitter:[a-z:]+)"[^>]*>/g)].map((m) => m[0]).join(" ");
+    const pages = ["/", "/login", "/signup", "/forgot-password", "/reset-password?token=x", `/u/${p2Link}`];
+    for (const pg of pages) {
+      const h = await (await anon.req("GET", pg)).text();
+      const hit = bad.exec(visible(h)) ?? bad.exec(metas(h)) ?? bad.exec([...h.matchAll(/aria-label="([^"]*)"/g)].map((m) => m[1]).join(" | "));
+      assert(!hit, `${pg}: promise wording "${hit?.[0]}"`);
+    }
+    const home = visible(await (await anon.req("GET", "/")).text());
+    assert(/Access after payment/.test(home) && /payment is confirmed|payment is confirmed/.test(home), "landing states access is shared after payment is confirmed");
+  });
   await check("[FE-07/08] dashboard earnings == GET /api/earnings (ledger): fees separate, pending vs available, in-payout; no divergent math", async () => {
     const api = await (await sellerC.req("GET", "/api/earnings")).json();
     const html = stripComments(await (await sellerC.req("GET", "/dashboard")).text());
@@ -1815,6 +1828,9 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const rowRev = [...dropsHtml.matchAll(/data-testid="drop-revenue"[^>]*>([^<]*)</g)].map((m) => Math.round(Number(m[1].replace(/[^0-9.-]/g, "")) * 100));
     assert(rowRev.length > 0, "drop rows expose revenue");
     eq(rowRev.reduce((a, b) => a + b, 0) / 2, kept, `per-drop revenue (desktop+mobile rows counted twice) == gross kept ${usdf(kept)}`);
+    // FE-16: labelled, reconcilable per-drop figures
+    assert(dropsHtml.includes("Sold (net)") && dropsHtml.includes("Revenue (kept)") && dropsHtml.includes('data-testid="drop-stats-note"'), "per-drop columns say net / kept and a note explains reversals");
+    assert(/sales? charged, before refunds/.test(stripComments(html)), "Gross card hint says sales are counted before refunds");
     // FE-12/13: the negative-balance copy never claims a payout happened; alert is danger + role=alert (checked on the seeded pages elsewhere)
     return `net ${usdf(net)} = ledger total ${usdf(api.balance.totalCents)} + paid ${usdf(l.paidOutCents)} + in payout ${usdf(l.requestedPayoutCents)}`;
   });

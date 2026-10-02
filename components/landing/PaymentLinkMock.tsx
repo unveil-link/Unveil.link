@@ -4,7 +4,7 @@ import { LockIcon, ImageIcon, ShieldCheckIcon } from "./Icons";
 /** Pure-CSS visual mock of a buyer-facing payment link card with a blurred preview. */
 export function PaymentLinkMock() {
   return (
-    <div className="relative" role="img" aria-label="Illustration of a payment link card with a blurred preview, a price of $12, and a Pay and download button">
+    <div className="relative" role="img" aria-label="Illustration of a payment link card with a blurred preview, a price of $12, and a Pay button">
       <div aria-hidden="true" className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/20 via-transparent to-accent/25 blur-2xl" />
       <div aria-hidden="true" className="overflow-hidden rounded-xl border border-border bg-surface shadow-pop">
         {/* Blurred preview */}
@@ -36,11 +36,11 @@ export function PaymentLinkMock() {
             <p className="text-2xl font-bold text-text">$12</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge tone="success">Instant download</Badge>
+            <Badge tone="success">Verified creator</Badge>
             <Badge tone="neutral">Secure checkout</Badge>
           </div>
           <div className="flex h-12 items-center justify-center rounded-md bg-primary text-base font-semibold text-on-primary shadow-sm">
-            Pay &amp; download
+            Pay $12
           </div>
           <p className="text-center text-xs text-muted">Pay by card · No account needed</p>
         </div>

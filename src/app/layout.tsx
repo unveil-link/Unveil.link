@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: "%s · Unveil",
   },
   description:
-    "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.",
+    "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.",
   applicationName: "Unveil",
   manifest: "/manifest.webmanifest",
   icons: {

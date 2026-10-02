@@ -61,7 +61,7 @@ export default async function DashboardOverview() {
         <h2 id="earn-h" className="sr-only">Earnings</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4" data-testid="earnings-breakdown">
           <StatCard label="Gross sales" value={usd(e.grossCents)} icon={<ChartIcon />} tone="primary"
-            hint={`${e.salesCount} sale${e.salesCount === 1 ? "" : "s"}`} />
+            hint={`${e.salesCount} sale${e.salesCount === 1 ? "" : "s"} charged, before refunds`} />
           <StatCard label="Platform fee" value={usd(e.platformFeeCents)} icon={<CoinIcon />}
             hint={e.platformFeePct === null ? "Charged on each sale" : `${e.platformFeePct}% of completed sales`} />
           <StatCard label="Processing fees" value={usd(e.processingFeeCents)} icon={<CardIcon />}
@@ -74,7 +74,7 @@ export default async function DashboardOverview() {
         </p>
         {reversals && (
           <p className="mt-1 text-sm text-muted" data-testid="reversals">
-            Reversed sales: {reversals}. Fees on reversed sales are returned, so they are not counted above.
+            Reversed sales: {reversals}. Fees on reversed sales are returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ({usd(e.grossCents - e.refundedCents - e.chargebackCents)} kept).
           </p>
         )}
         <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4" data-testid="balance-cards">
@@ -101,7 +101,7 @@ export default async function DashboardOverview() {
             hint={e.paidOutCents ? "Sent to you so far" : "No payouts yet"} />
         </div>
         {e.availableCents < 0 && (
-          <Alert tone="danger" role="alert" title={`You owe ${usd(-e.availableCents)}`} className="mt-4" data-testid="negative-balance">
+          <Alert tone="danger" role="status" title={`You owe ${usd(-e.availableCents)}`} className="mt-4" data-testid="negative-balance">
             Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.
           </Alert>
         )}

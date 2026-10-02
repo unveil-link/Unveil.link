@@ -69,6 +69,7 @@ const phases = {
   async landing(vp) {
     const ctx = await ctxFor(vp); const page = await ctx.newPage();
     await go(page, "/"); await snap(page, "landing", vp);
+    await page.evaluate(() => document.querySelectorAll("#faq details").forEach((d) => d.setAttribute("open", ""))); await snap(page, "landing-faq-expanded", vp);
     await go(page, "/design"); await snap(page, "design", vp);
     await ctx.close();
   },

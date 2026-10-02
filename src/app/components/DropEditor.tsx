@@ -104,8 +104,8 @@ export default function DropEditor({ drop, files, verificationStatus, limits, un
         <p className="text-sm text-muted">{STATUS_META[drop.status].hint}</p>
         <dl className="grid grid-cols-3 gap-2 rounded-md bg-surface-muted/70 p-3 text-center text-xs">
           <div><dt className="text-muted">Files</dt><dd className="mt-0.5 text-base font-semibold tabular-nums">{files.length}</dd></div>
-          <div><dt className="text-muted">Sold</dt><dd className="mt-0.5 text-base font-semibold tabular-nums">{units}</dd></div>
-          <div><dt className="text-muted">Revenue</dt><dd className="mt-0.5 text-base font-semibold tabular-nums">{usd(revenueCents)}</dd></div>
+          <div><dt className="text-muted">Sold (net)</dt><dd className="mt-0.5 text-base font-semibold tabular-nums">{units}</dd></div>
+          <div><dt className="text-muted">Revenue (kept)</dt><dd className="mt-0.5 text-base font-semibold tabular-nums">{usd(revenueCents)}</dd></div>
         </dl>
         {verificationStatus !== "verified" && drop.status !== "published" && (
           <Alert tone="warning" title="Publishing locked">Your identity verification is <b>{verificationStatus.replace("_", " ")}</b>. This stays a draft until you’re verified.</Alert>

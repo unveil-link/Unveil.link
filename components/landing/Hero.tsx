@@ -19,7 +19,7 @@ export function Hero() {
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted sm:text-xl">
             Upload your photos and videos, set a price, and share a payment link anywhere. Buyers pay by card — no
-            account needed — and download instantly.
+            account needed — and access to the files is shared once payment is confirmed.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/signup" size="lg">

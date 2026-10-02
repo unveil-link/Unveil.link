@@ -4,8 +4,8 @@ import { CardIcon, DownloadIcon, LinkIcon, ShieldCheckIcon, UserOffIcon } from "
 const points = [
   { icon: CardIcon, title: "Secure card checkout", body: "Payments are processed by a trusted payment provider. We never see or store your card number." },
   { icon: UserOffIcon, title: "No account needed", body: "Pay with a card and go. No sign-up, no passwords, no app to install." },
-  { icon: DownloadIcon, title: "Instant download", body: "Your files are ready the moment your payment goes through." },
-  { icon: LinkIcon, title: "Private signed links", body: "Every download link is unique to your purchase and expires automatically." },
+  { icon: DownloadIcon, title: "Access after payment", body: "Once your payment is confirmed, the creator’s files are shared with you. Delivery options are coming soon." },
+  { icon: LinkIcon, title: "Private links", body: "Each payment link is private to the creator who shares it, and files are stored privately with blurred previews until purchase." },
   { icon: ShieldCheckIcon, title: "Verified creators", body: "Sellers are identity- and age-verified before they can publish a link." },
 ];
 

@@ -77,7 +77,7 @@ export default async function PublicDrop({ params }: { params: Promise<{ linkId:
               {more > 0 && <div className="grid aspect-square place-items-center rounded-md bg-surface-muted text-sm font-semibold text-muted">+{more}</div>}
             </div>
           )}
-          <p className="border-t border-border px-4 py-2.5 text-xs text-muted">Previews are blurred. The full files unlock after purchase.</p>
+          <p className="border-t border-border px-4 py-2.5 text-xs text-muted">Previews are blurred. Access to the full files is shared once your payment is confirmed.</p>
         </section>
 
         {/* Details + buy */}
