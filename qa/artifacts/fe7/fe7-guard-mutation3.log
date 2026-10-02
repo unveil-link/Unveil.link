@@ -1,0 +1,77 @@
+baseline (unmodified copy): guard PASS
+BYPASS   P1   'Buyers get the files as the payment clears' <-- gets through
+BYPASS   P2   'Your files open when checkout finishes' <-- gets through
+BYPASS   P3   'Zero wait for buyers' <-- gets through
+BYPASS   P4   'Buyers get access within minutes' <-- gets through
+CAUGHT   P5   'Access is granted automatically after payment'   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+BYPASS   P6   'You’ll be sent the originals' <-- gets through
+BYPASS   P7   'Lifetime access to everything you buy' <-- gets through
+BYPASS   P8   'Your files stay available for 30 days' <-- gets through
+BYPASS   P9   'Re-access your purchase any time from your account' <-- gets through
+BYPASS   P10  'Your order summary is on its way' <-- gets through
+BYPASS   P11  'Funds arrive in 2 business days' (payout speed) <-- gets through
+BYPASS   P12  'Keep 90% of every sale' (contradicts real 10% + 12% fees) <-- gets through
+BYPASS   P13  'Zero fees' / 'No fees, ever' <-- gets through
+BYPASS   P14  'We pay creators 48 hours after each sale' <-- gets through
+BYPASS   P15  FAQ hold hard-coded '14-day hold' instead of the pinned constant <-- gets through
+BYPASS   P16  FAQ minimum hard-coded '$10' instead of the pinned constant <-- gets through
+BYPASS   P17  'Questions? Email help@unveil.link' (no such mailbox; /contact is a placeholder) <-- gets through
+BYPASS   P18  '24/7 support for sellers' <-- gets through
+BYPASS   P19  'Every drop is manually reviewed before it goes live' <-- gets through
+BYPASS   P20  'Our moderation team checks every link' <-- gets through
+BYPASS   P21  'Secured with 256-bit SSL' <-- gets through
+BYPASS   P22  'Every creator is ID-checked' <-- gets through
+BYPASS   P23  'Get verified in minutes' <-- gets through
+BYPASS   L1   Spanish: 'Recibes tus archivos al momento' <-- gets through
+BYPASS   L2   French: 'accès dès le paiement' (instant access, no listed keyword) <-- gets through
+BYPASS   L3   Chinese: '付款后立即下载' (instant download) <-- gets through
+BYPASS   L4   Portuguese: 'receba tudo na hora' <-- gets through
+BYPASS   S1   helper call across boundary: const a = () => "In"; {a() + "stantly"} <-- gets through
+BYPASS   S2   ternary parts: {(cond ? "Inst" : "Inst") + "antly"} <-- gets through
+BYPASS   S3   object property lookup: T.a + T.b <-- gets through
+BYPASS   S4   array destructuring: const [a, b] = ["In","stantly"] <-- gets through
+BYPASS   S5   let + += : let s = "In"; s += "stantly" <-- gets through
+BYPASS   S6   prop composition: <Frag a="In" /> renders {a}stantly <-- gets through
+BYPASS   S7   regex replace: "Ixnxstxantxly".replace(/x/g, "") <-- gets through
+BYPASS   S8   spread reverse: [..."yltnatsni"].reverse().join("") <-- gets through
+BYPASS   S9   Array.from reverse: Array.from("yltnatsni").reverse().join("") <-- gets through
+BYPASS   S10  bidi-override CSS: <span style={{unicodeBidi:'bidi-override',direction:'rtl'}}>yltnatsni</span> <-- gets through
+BYPASS   S11  unmapped homoglyph: 'ɪnstant' (U+026A) <-- gets through
+BYPASS   S12  symbol-leet: '!nstant' (! for i) <-- gets through
+BYPASS   S13  JSON parts joined at runtime: {parts.join("")} from a JSON module <-- gets through
+CAUGHT   S14  aria-label + alt + placeholder carry the promise   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+CAUGHT   S15  String.raw tagged template + \u escapes: 'Inst\u0061nt'   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+CAUGHT   S16  NBSP/braille-blank/tag-char inside word: 'In\u2800stant'   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+CAUGHT   S17  dynamic import of a NEW module under src/ (scanned)   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+BYPASS   F1   new top-level folder messages/en.json imported by Hero (outside SCAN_DIRS) <-- gets through
+BYPASS   F2   new top-level content/copy.ts (outside SCAN_DIRS) <-- gets through
+BYPASS   F3   public/promo.xml (extension not scanned) <-- gets through
+BYPASS   F4   mail template as .mjml/.hbs under src/server (extension not scanned) <-- gets through
+CAUGHT   F5   public/promo.txt (scanned as text)   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+BYPASS   F6   CSS content with adjacent strings: content: "In" "stantly" <-- gets through
+BYPASS   F7   SVG text split across <tspan>: In<tspan>stant</tspan>ly <-- gets through
+CAUGHT   F8   package.json-style / webmanifest description promise   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+CAUGHT   F9   new API route error string split across concat (ratchet)   [AssertionError: NEW forbidden string in backend-owned code (report to Backend):]
+CAUGHT   F10  next.config.ts headers() with a promise-bearing header value   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+CAUGHT   A1   rename an allowlisted file (DownloadPanel -> PostPurchase.tsx)   [stale allowlist / baseline entries (each exemption still matches a real hit, at least `cou]
+CAUGHT   A2   copy an allowlisted file to a new name and keep the old one   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+CAUGHT   A3   append a promise sentence INSIDE an allowlisted unit (TrustPoints)   [stale allowlist / baseline entries (each exemption still matches a real hit, at least `cou]
+CAUGHT   A4   allowlisted sentence reused verbatim in a second place of the SAME file (count)   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+PASS     A6   edit the allowlist itself: add an exact-string entry for a promise literal (no CODEOWNERS / review gate in the repo) (guard cannot stop an allowlist edit; needs review)
+BYPASS   A7   flag via env: VIDEO_UPLOAD = process.env.NEXT_PUBLIC_VIDEO === "1" (guard reads `= true` only) <-- gets through
+CAUGHT   A8   flag flip true + dummy backend string 'video/mp4' (satisfies the backend-support test)   [stale allowlist / baseline entries (each exemption still matches a real hit, at least `cou]
+CAUGHT   A9   PAYOUT constants pinned but spelled differently: `export const PAYOUT_HOLD_DAYS: number = 30`   [AssertionError: expected [ Array(1) ] to deeply equal []]
+CAUGHT   A10  contact page becomes real but guard flag still 'placeholder' => rule would still ban; reverse: copy says 'contact support' while /contact is a placeholder   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+FALSEPOS FP1  legit: 'Your link is ready to share.' (seller-facing, after creating a drop) <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+FALSEPOS FP2  legit: 'Your reset link expires in 60 seconds.' <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+FALSEPOS FP3  legit honest negative: 'Receipts are not available yet.' <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+FALSEPOS FP4  legit: 'Download your sales as CSV' (seller export) <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+FALSEPOS FP5  legit legal copy on /terms: 'You may withdraw your consent at any time.' <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+FALSEPOS FP6  legit privacy copy: 'We encrypt passwords with bcrypt.' <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+PASS     FP7  legit: 'Publish in one click.' / 'Supports JPG, PNG and WebP.' (legit copy allowed)
+FALSEPOS FP8  legit honest: 'Photos only for now: no video.' <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+PASS     C1   // comment with a promise (correct: not user-facing)
+PASS     C2   /* block comment */ with a promise inside JSX attribute list (correct: not user-facing)
+PASS     C3   identifier names: const InstantDownloadReceipt = 1 (correct: not user-facing)
+FALSEPOS FP9  developer-only string (console.log("Instant download") in lib): scanned, flagged (conservative) <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+SUMMARY promises: 16 caught, 46 bypass | false-positive probes: 1 allowed, 8 blocked | 0 skipped, of 75

@@ -1,0 +1,27 @@
+== build under test: VIDEO_UPLOAD=true (http://localhost:4705)
+[new/desktop] dropzone hint: JPG, PNG, WebP or MP4 · up to 10 files · 2 GB per drop
+[new/desktop] accept: image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,video/mp4,.mp4
+[new/desktop] note: Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB each.
+   OK   [new/desktop] dropzone hint offers MP4
+   OK   [new/desktop] accept attribute includes video/mp4 + .mp4
+   OK   [new/desktop] exactly one video note: "MP4 video up to … each." (video/mp4 mentions in page text: 3, 'coming soon' notes: 0)
+[new/desktop] after picking t.mp4: JPG, PNG, WebP or MP4 · up to 10 files · 2 GB per drop | t.mp4 | Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB each.
+   OK   [new/desktop] picked MP4 is accepted by the client when the flag is true (no 'coming soon' message)
+[new/390] dropzone hint: JPG, PNG, WebP or MP4 · up to 10 files · 2 GB per drop
+[new/390] accept: image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,video/mp4,.mp4
+[new/390] note: Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB each.
+   OK   [new/390] dropzone hint offers MP4
+   OK   [new/390] accept attribute includes video/mp4 + .mp4
+   OK   [new/390] exactly one video note: "MP4 video up to … each." (video/mp4 mentions in page text: 3, 'coming soon' notes: 0)
+[new/390] after picking t.mp4: JPG, PNG, WebP or MP4 · up to 10 files · 2 GB per drop | t.mp4 | Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB each.
+   OK   [new/390] picked MP4 is accepted by the client when the flag is true (no 'coming soon' message)
+[detail] file-input accept: ["image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,video/mp4,.mp4"]
+[detail] uploader text: JPG, PNG or WebP. They’re added to this drop right away. | JPG, PNG, WebP or MP4 · up to 10 files · 2 GB per drop
+   OK   [detail] drop-detail file input accept (flag true; not asserted)
+   OK   [detail] drop-detail page text has no MP4/video claim while the flag is false
+[detail] after picking t.mp4: t.mp4
+[api] POST files video/mp4 -> 415 {"error":"Not a valid image","code":"invalid_image"}
+[api] POST files image/jpeg -> 201
+   OK   [api] upload of video/mp4 is rejected with 415 on this build (backend has no video support; m2-media not merged) — with the flag true: UI would offer an upload that always fails (FE-20 inverse; guard must keep the flag false)
+   OK   [api] upload of image/jpeg -> 201
+RESULT fails=0

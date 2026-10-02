@@ -1,0 +1,50 @@
+baseline (unmodified copy): guard PASS
+CAUGHT  N1 JSX text split mid-word across elements: In<b>stant</b>ly 
+CAUGHT  N2 two sibling spans: <span>Insta</span><span>ntly</span> 
+CAUGHT  N3 phrase split across nodes: straight <b>away</b> 
+CAUGHT  N4 phrase split across nodes: the <i>moment</i> you pay 
+CAUGHT  N5 variable + literal: {(() => { const a = "In"; return a + "stantly"; })()} 
+CAUGHT  N6 template with literal holes {`${"In"}${"stantly"}`} 
+CAUGHT  N7 "In".concat("stantly") 
+CAUGHT  N8 String.fromCharCode(...) spelling 'instantly' 
+CAUGHT  N9 atob(base64) spelling 'instantly' 
+CAUGHT  N10 reversed string split/reverse/join 
+CAUGHT  N11 Cyrillic homoglyphs: 'Іnstantly', 'dоwnload' (U+0406, U+043E) 
+CAUGHT  N12 accented letters: 'instánt dównload' 
+CAUGHT  N13 leet speak '1nstant d0wnload' 
+CAUGHT  N14 [array].map(...).join('') (not a literal-array join) 
+CAUGHT  N15 'straightaway' (one word) 
+CAUGHT  N16 'Your files land in seconds' 
+CAUGHT  N17 'We’ll send you the link' 
+CAUGHT  N18 'Check your email for access' 
+CAUGHT  N19 'You’ll receive your files' 
+CAUGHT  N20 'confirmation email' 
+CAUGHT  N21 'Your files are ready' (the phrase DownloadPanel itself uses) 
+CAUGHT  N22 'no waiting' / 'at once' / 'on the spot' 
+CAUGHT  N23 Spanish: 'descarga inmediata' 
+CAUGHT  N24 French: 'téléchargement instantané' 
+CAUGHT  N25 'Upload MP4 clips' (video claim without the word video) 
+CAUGHT  N26 'Payouts every Friday' (schedule claim) 
+CAUGHT  N27 'All creators are fully verified' 
+CAUGHT  N28 'Your card details are encrypted end to end' (unverifiable security claim) 
+CAUGHT  N29 'Payouts are sent automatically every week' (should be caught by bank-promise rule) 
+CAUGHT  N30 CSS pseudo-element content: "Instant download" in globals.css 
+CAUGHT  N31 new public/promo.svg with <text>Instant download</text> 
+CAUGHT  N32 new public/promo.json 
+CAUGHT  N33 new .mjs under src/app (not .ts/.tsx) 
+CAUGHT  N34 SKIP_FILES entry: promise inside src/server/auth/common-passwords-data.ts (file-level skip) 
+CAUGHT  N35 new backend file src/server/mail/promo.ts with a promise (ratchet should fail) 
+CAUGHT  N36 new backend string split by concat in src/app/api (same extractor) 
+CAUGHT  N37 allowlist reuse: second exact 'Download' button in DownloadPanel.tsx (loophole probe)
+CAUGHT  N38 flag flip: VIDEO_UPLOAD = true while the backend still answers 415 (loophole probe)
+CAUGHT  N39 hard-coded hold: PAYOUT_HOLD_DAYS = 30 (copy no longer matches platform_settings 7) (loophole probe)
+CAUGHT  N40 FileDropzone hint keeps advertising MP4 (the real FE-20 string, re-added to Hero) 
+BYPASS  N41 // line comment 'Instant download' [should-pass] (correct: not user-facing)
+BYPASS  N42 JSX comment {/* Instant download */} [should-pass] (correct: not user-facing)
+CAUGHT  N43 unused const with the promise (conservative: should be caught) 
+BYPASS  N44 type-level literal only: type Copy = "Instant download" [should-pass] (correct: not user-facing)
+CAUGHT  N45 dangerouslySetInnerHTML with numeric entity 'Downl&#x6f;ad' 
+CAUGHT  N46 JSON-LD in layout via JSON.stringify({description: ...}) 
+CAUGHT  N47 metadata.openGraph.description promise 
+CAUGHT  N48 unrouted-component copy 'Thanks — your files are ready' in a NEW landing section 
+SUMMARY (excluding should-pass): 45 caught, 0 bypass, 0 skipped (anchor missing), of 48 mutations

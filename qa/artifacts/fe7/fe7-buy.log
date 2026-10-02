@@ -1,0 +1,96 @@
+== 1. server-side validation
+   OK   missing confirmOver18 -> 400 invalid_input confirmOver18: You must confirm you are 18 or older
+   OK   confirmOver18=false -> 400 invalid_input confirmOver18: You must confirm you are 18 or older
+   OK   confirmOver18='true' -> 400 invalid_input confirmOver18: You must confirm you are 18 or older
+   OK   confirmOver18=1 -> 400 invalid_input confirmOver18: You must confirm you are 18 or older
+   OK   confirmOver18=null -> 400 invalid_input confirmOver18: You must confirm you are 18 or older
+   OK   email missing -> 400 invalid_input email: Invalid input: expected string, received undefined
+   OK   email 'nope' -> 400 invalid_input email: Invalid email address
+   OK   email 'a@b' -> 400 invalid_input email: Invalid email address
+   OK   email with space -> 400 invalid_input email: Invalid email address
+   OK   email 255 chars -> 400 invalid_input email: Too big: expected string to have <=254 characters
+   OK   email NUL -> 400 invalid_input Input contains invalid characters
+   OK   email array -> 400 invalid_input email: Invalid input: expected string, received array
+   OK   email object -> 400 invalid_input email: Invalid input: expected string, received object
+   OK   email number -> 400 invalid_input email: Invalid input: expected string, received number
+   OK   both dropId+linkId -> 400 invalid_input body: Provide exactly one of dropId or linkId
+   OK   bad linkId -> 400 invalid_input linkId: Invalid string: must match pattern /^[A-Za-z0-9_-]{1
+   OK   unknown linkId -> 404 drop_not_found Drop not found
+   OK   extra amountCents ignored -> 201  
+   OK   price from DB: amountCents 2500 despite client amount fields
+   OK   email padded trims -> 201  
+   OK   bad JSON -> 400
+   OK   empty body -> 400
+   OK   array body -> 400
+   OK   null body -> 400
+   OK   string body -> 400
+   text/plain content-type -> 201
+   OK   text/plain body not 5xx
+   foreign Origin -> 403
+   OK   checkout for draft drop -> 404
+   OK   checkout for unpublished drop -> 404
+   OK   checkout for pending-verification seller's drop (draft) -> 404 drop_not_found
+== 2. idempotency
+   OK   same key replay: 201/200/200, same transaction 3aca9cae-22a9-4588-9350-c7ac4034448b, reused=true
+   OK   10 parallel same key -> 1 transaction(s): statuses 201,200,200,200,200,200,200,200,200,200
+   OK   DB rows for the 2 keys = 2
+   OK   different key + same cookie-less client -> new session (201)
+   same key, different email -> 201 tx different
+   300-char key -> 400
+   OK   oversize idempotency key not 5xx
+   key with spaces -> 400
+   OK   odd idempotency key not 5xx
+   key reuse by 'another' client (same cookie-less) -> 200
+   OK   paid via mock
+   OK   replay after payment returns the same succeeded transaction (200 succeeded)
+   OK   exactly one sale_credit
+== 3. UI: validation, double click, redirect, pay, unlock
+   OK   [desktop] empty submit -> no request, errors: Enter a valid email address. | Please confirm to continue. |  + email error
+   OK   [desktop] bad email blocked client-side
+   OK   [desktop] unchecked 18+ blocked client-side
+   OK   [desktop] redirected to hosted page /pay/mock/mocksess_758ea30b4025ef5c953e880002da70fd
+   OK   [desktop] 1 POST(s) sent for the double-click, all with ONE Idempotency-Key c9287360-26aa-4e7d-b56f-a8effb421517
+   OK   [desktop] request body has no price field: {"linkId":"XlW7p8BhxznM","email":"ui-buyer@example.test","confirmOver18":true}
+   OK   [desktop] 1 pending tx $25.00 with 18+ timestamp
+   [desktop] pending rows for ui-buyer: 1 (cumulative across runs)
+   OK   [desktop] hosted page shows title, $25.00, final-sale text
+   OK   [desktop] public page before payment has no download/original hrefs (marketing copy 'Instant download' exists: false)
+   OK   [desktop] status endpoint pending: {"transactionId":"4029c02c-baa6-4716-9b5f-5b0d320fd9ff","status":"pending","amountCents":2500,"retryable":false,"message":null}
+   OK   [desktop] declined card shows friendly text only: 'Your card was declined. Please try a different card.'
+   OK   [desktop] webhook-driven: tx succeeded, split 2500-250-300=1950
+   [desktop] ledger: [{"entry_type":"sale_credit","component":"gross","amount_cents":2500,"pend":true},{"entry_type":"platform_fee","component":"platform_fee","amount_cents":-250,"pend":true},{"entry_type":"processing_fee","component":"processing_fee","amount_cents":-300,"pend":true}]
+   OK   [desktop] 3 ledger lines, all pending (7-day hold), sum = seller net
+   OK   [desktop] status endpoint succeeded: {"transactionId":"4029c02c-baa6-4716-9b5f-5b0d320fd9ff","status":"succeeded","amountCents":2500,"retryable":false,"message":null}
+   [desktop] after payment page text: Unveil | Mock checkout (test mode, no real payment) | Studio colour study · $25.00 | All sales are final. Because this is a digital product, purchases can't be refunded or exchanged once completed. | Test card number | 4242 4242 4242 4242 approves; …0002 declines; …9995 insufficient funds. | Payment
+   [desktop] after purchase, drop page: download links=0; text mentions receipt/download: false
+   OK   [mobile-390] empty submit -> no request, errors: Enter a valid email address. | Please confirm to continue. |  + email error
+   OK   [mobile-390] bad email blocked client-side
+   OK   [mobile-390] unchecked 18+ blocked client-side
+   OK   [mobile-390] redirected to hosted page /pay/mock/mocksess_cc977b87394a719ba628f259c74f47d4
+   OK   [mobile-390] 1 POST(s) sent for the double-click, all with ONE Idempotency-Key 20287caa-824b-436b-ac91-d59f49509286
+   OK   [mobile-390] request body has no price field: {"linkId":"XlW7p8BhxznM","email":"ui-buyer@example.test","confirmOver18":true}
+   OK   [mobile-390] 1 pending tx $25.00 with 18+ timestamp
+   [mobile-390] pending rows for ui-buyer: 1 (cumulative across runs)
+   OK   [mobile-390] hosted page shows title, $25.00, final-sale text
+   OK   [mobile-390] public page before payment has no download/original hrefs (marketing copy 'Instant download' exists: false)
+   OK   [mobile-390] status endpoint pending: {"transactionId":"48bfd285-fb8a-4507-a619-90d5e7798cf5","status":"pending","amountCents":2500,"retryable":false,"message":null}
+   OK   [mobile-390] declined card shows friendly text only: 'Your card was declined. Please try a different card.'
+   OK   [mobile-390] webhook-driven: tx succeeded, split 2500-250-300=1950
+   [mobile-390] ledger: [{"entry_type":"sale_credit","component":"gross","amount_cents":2500,"pend":true},{"entry_type":"platform_fee","component":"platform_fee","amount_cents":-250,"pend":true},{"entry_type":"processing_fee","component":"processing_fee","amount_cents":-300,"pend":true}]
+   OK   [mobile-390] 3 ledger lines, all pending (7-day hold), sum = seller net
+   OK   [mobile-390] status endpoint succeeded: {"transactionId":"48bfd285-fb8a-4507-a619-90d5e7798cf5","status":"succeeded","amountCents":2500,"retryable":false,"message":null}
+   [mobile-390] after payment page text: Unveil | Mock checkout (test mode, no real payment) | Studio colour study · $25.00 | All sales are final. Because this is a digital product, purchases can't be refunded or exchanged once completed. | Test card number | 4242 4242 4242 4242 approves; …0002 declines; …9995 insufficient funds. | Payment
+   [mobile-390] after purchase, drop page: download links=0; text mentions receipt/download: false
+== 4. unlock / receipt / download availability (M2-14..16, M3-12/13)
+   GET /api/checkout/status?id=<tx> -> 200
+   GET /receipt/<tx> -> 404
+   GET /orders/<tx> -> 404
+   GET /download/<tx> -> 404
+   GET /api/receipts/<tx> -> 404
+   GET /api/orders/<tx> -> 404
+   GET /api/downloads/<tx> -> 404
+   GET /u/XlW7p8BhxznM/download -> 404
+   GET /api/checkout/<tx> -> 404
+   OK   buyer (paid, no signed URL) direct original -> 403 (no purchase-bound download exists)
+   mail files in dev mail dir after purchases: 2 (receipt email = none expected)
+RESULT fails=0

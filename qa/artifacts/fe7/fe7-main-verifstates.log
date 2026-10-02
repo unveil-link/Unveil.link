@@ -1,0 +1,141 @@
+
+== state: pending
+[pending/desktop] dashboard alert: Verification: Pending Pending You can create drafts and upload files now. Publishing requires a verified account status.
+   FAIL [pending/desktop] dashboard alert = "Verification: Pending" + exact hint
+   OK   [pending/desktop] dashboard alert mentions no support / person / team / ETA ("-")
+   FAIL [pending/desktop] /dashboard/drops/new: Publishing-card alert has title + exact hint
+   OK   [pending/desktop] new-drop hint free of support/person/team words
+   OK   [pending/desktop] drops list loaded
+[pending/desktop] drops list mentions of verification/support: (none)
+   FAIL [pending/desktop] draft detail: "Publishing is off" + exact hint + "This drop stays a draft."
+   FAIL [pending/desktop] publish dialog: title + exact hint + "This drop stays a draft."
+   OK   [pending/desktop] publish dialog free of support/person/team words
+[pending/390] dashboard alert: Verification: Pending Pending You can create drafts and upload files now. Publishing requires a verified account status.
+   FAIL [pending/390] dashboard alert = "Verification: Pending" + exact hint
+   OK   [pending/390] dashboard alert mentions no support / person / team / ETA ("-")
+   FAIL [pending/390] /dashboard/drops/new: Publishing-card alert has title + exact hint
+   OK   [pending/390] new-drop hint free of support/person/team words
+   OK   [pending/390] drops list loaded
+[pending/390] drops list mentions of verification/support: (none)
+   FAIL [pending/390] draft detail: "Publishing is off" + exact hint + "This drop stays a draft."
+   FAIL [pending/390] publish dialog: title + exact hint + "This drop stays a draft."
+   OK   [pending/390] publish dialog free of support/person/team words
+   OK   [pending] can create a draft via API -> 201 ("You can create drafts / keep drafting")
+   OK   [pending] can upload an image to the draft -> 201 ("upload files now")
+   OK   [pending] publish -> 403 verification_required (publishing is off)
+[pending] publish API text: Identity verification required to publish (status: pending)
+
+== state: failed
+[failed/desktop] dashboard alert: Verification: Failed Failed Verification didn’t go through. Contact support to continue.
+   FAIL [failed/desktop] dashboard alert = "Verification: Not completed" + exact hint
+   FAIL [failed/desktop] dashboard alert mentions no support / person / team / ETA ("Contact support")
+   FAIL [failed/desktop] /dashboard/drops/new: Publishing-card alert has title + exact hint
+   OK   [failed/desktop] new-drop hint free of support/person/team words
+   OK   [failed/desktop] drops list loaded
+[failed/desktop] drops list mentions of verification/support: (none)
+   FAIL [failed/desktop] draft detail: "Publishing is off" + exact hint + "This drop stays a draft."
+   FAIL [failed/desktop] publish dialog: title + exact hint + "This drop stays a draft."
+   OK   [failed/desktop] publish dialog free of support/person/team words
+[failed/390] dashboard alert: Verification: Failed Failed Verification didn’t go through. Contact support to continue.
+   FAIL [failed/390] dashboard alert = "Verification: Not completed" + exact hint
+   FAIL [failed/390] dashboard alert mentions no support / person / team / ETA ("Contact support")
+   FAIL [failed/390] /dashboard/drops/new: Publishing-card alert has title + exact hint
+   OK   [failed/390] new-drop hint free of support/person/team words
+   OK   [failed/390] drops list loaded
+[failed/390] drops list mentions of verification/support: (none)
+   FAIL [failed/390] draft detail: "Publishing is off" + exact hint + "This drop stays a draft."
+   FAIL [failed/390] publish dialog: title + exact hint + "This drop stays a draft."
+   OK   [failed/390] publish dialog free of support/person/team words
+   OK   [failed] can create a draft via API -> 201 ("You can create drafts / keep drafting")
+   OK   [failed] can upload an image to the draft -> 201 ("upload files now")
+   OK   [failed] publish -> 403 verification_required (publishing is off)
+[failed] publish API text: Identity verification required to publish (status: failed)
+
+== state: manual_review
+[manual_review/desktop] dashboard alert: Verification: In review In review A person is reviewing your verification. We’ll update this page.
+   FAIL [manual_review/desktop] dashboard alert = "Verification: Marked for review" + exact hint
+   FAIL [manual_review/desktop] dashboard alert mentions no support / person / team / ETA ("A person")
+   FAIL [manual_review/desktop] /dashboard/drops/new: Publishing-card alert has title + exact hint
+   OK   [manual_review/desktop] new-drop hint free of support/person/team words
+   OK   [manual_review/desktop] drops list loaded
+[manual_review/desktop] drops list mentions of verification/support: (none)
+   FAIL [manual_review/desktop] draft detail: "Publishing is off" + exact hint + "This drop stays a draft."
+   FAIL [manual_review/desktop] publish dialog: title + exact hint + "This drop stays a draft."
+   OK   [manual_review/desktop] publish dialog free of support/person/team words
+[manual_review/390] dashboard alert: Verification: In review In review A person is reviewing your verification. We’ll update this page.
+   FAIL [manual_review/390] dashboard alert = "Verification: Marked for review" + exact hint
+   FAIL [manual_review/390] dashboard alert mentions no support / person / team / ETA ("A person")
+   FAIL [manual_review/390] /dashboard/drops/new: Publishing-card alert has title + exact hint
+   OK   [manual_review/390] new-drop hint free of support/person/team words
+   OK   [manual_review/390] drops list loaded
+[manual_review/390] drops list mentions of verification/support: (none)
+   FAIL [manual_review/390] draft detail: "Publishing is off" + exact hint + "This drop stays a draft."
+   FAIL [manual_review/390] publish dialog: title + exact hint + "This drop stays a draft."
+   OK   [manual_review/390] publish dialog free of support/person/team words
+   OK   [manual_review] can create a draft via API -> 201 ("You can create drafts / keep drafting")
+   OK   [manual_review] can upload an image to the draft -> 201 ("upload files now")
+   OK   [manual_review] publish -> 403 verification_required (publishing is off)
+[manual_review] publish API text: Identity verification required to publish (status: manual_review)
+
+== state: verified
+[verified/desktop] dashboard alert: Verified
+   OK   [verified/desktop] verified: no banner, sr-only status "Verified"
+   OK   [verified/desktop] /dashboard/drops/new: no verification alert when verified
+   OK   [verified/desktop] drops list loaded
+[verified/desktop] drops list mentions of verification/support: (none)
+   OK   [verified/desktop] draft detail: no 'Publishing is off' alert when verified
+   OK   [verified/desktop] publish dialog: no verification alert when verified
+[verified/390] dashboard alert: Verified
+   OK   [verified/390] verified: no banner, sr-only status "Verified"
+   OK   [verified/390] /dashboard/drops/new: no verification alert when verified
+   OK   [verified/390] drops list loaded
+[verified/390] drops list mentions of verification/support: (none)
+   OK   [verified/390] draft detail: no 'Publishing is off' alert when verified
+   OK   [verified/390] publish dialog: no verification alert when verified
+   OK   [verified] can create a draft via API -> 201 ("You can create drafts / keep drafting")
+   OK   [verified] can upload an image to the draft -> 201 ("upload files now")
+   OK   [verified] publish -> 200  (verified can publish)
+[verified] publish API text: (ok)
+
+== what exists behind 'verification isn't self-serve yet' / 'We'll share next steps here'
+code in src/ that writes sellers.verification_status: none
+   OK   no admin screen / API route / service sets verification_status (only scripts/set-verification.ts / SQL) -> no self-serve flow, consistent with 'isn't self-serve yet'
+   GET /verify -> 404
+   OK   /verify does not exist (404)
+   GET /verification -> 404
+   OK   /verification does not exist (404)
+   GET /dashboard/verification -> 404
+   OK   /dashboard/verification does not exist (404)
+   GET /dashboard/verify -> 404
+   OK   /dashboard/verify does not exist (404)
+   GET /api/verification -> 404
+   OK   /api/verification does not exist (404)
+   GET /api/seller/verification -> 404
+   OK   /api/seller/verification does not exist (404)
+   GET /api/sellers/verify -> 404
+   OK   /api/sellers/verify does not exist (404)
+   OK   /contact is still a 'Coming soon' placeholder -> correct that no state tells the seller to contact support
+   OK   /dashboard: no "contact support" / "a person is reviewing" / "team reviews" text
+   OK   /signup: no "contact support" / "a person is reviewing" / "team reviews" text
+   OK   /login: no "contact support" / "a person is reviewing" / "team reviews" text
+   OK   /faq: no "contact support" / "a person is reviewing" / "team reviews" text
+   OK   /: no "contact support" / "a person is reviewing" / "team reviews" text
+
+== flagged-drop hint vs behaviour
+flagged drop: status=flagged link=ZZMR_9ZpHFKM
+detail page 'under review' text: test Sign out ← All drops Pop-up reel Under review $9. | link/u/ZZMR_9ZpHFKM This drop is paused while our team reviews it. | 00 Under review This drop is paused while our team reviews it.
+   FAIL flagged detail alert = 'This drop is paused and under review. You can’t edit or publish it for now.'
+   FAIL flagged detail: no claim that a team/we review it
+drops list flagged row text: New drop All 6 Published 3 Drafts 1 Unpublished 1 Under review 1 Your drops DROP STATUS PRICE FILES SOLD (NET) REVENUE (KEPT) ACTIONS Pop-up reel Created Oct 2, 2026 Under review $9.
+flagged drop API: GET 200, PATCH 405 null, DELETE 405 null, publish 403 flagged, unpublish 403 flagged, upload 201
+   OK   publish on flagged -> 403 flagged
+   OK   unpublish on flagged -> 403 flagged
+   hint says 'can’t edit … for now': PATCH 405, DELETE 405, file upload 201 — NOT ALL blocked: hint over-/under-states
+   after probes: status=flagged title=Pop-up reel
+buyer page for flagged drop: 404; text mentions: unavailable
+   OK   buyer page never says 'under review' (neutral unavailable)
+checkout on flagged link -> 404
+   OK   checkout on flagged drop -> 404
+columns recording a review (flagged_at/flag_reason/reviewed_by/reviewed_at) on drops: 0
+code in src/ that sets a drop to 'flagged': none -> flagged is set only by SQL/ops; no review queue exists, so the hint says 'under review' (a state), with no claim about who reviews / how long
+RESULT fails=30

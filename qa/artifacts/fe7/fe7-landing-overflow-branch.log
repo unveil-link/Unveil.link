@@ -1,0 +1,11 @@
+[branch 320px] scrollWidth 378 vs viewport 320 -> overflow 58px; offenders: [{"tag":"div","cls":"flex items-center gap-1.5 sm:gap-2","text":"Sign in Create your account","right":378,"w":246},{"tag":"a","cls":"inline-flex items-center justify-center gap-2 rounded-md fon","text":"Create your account","right":378,"w":166}]
+   FAIL [branch 320px] landing: no horizontal scroll (58px)
+[branch 360px] scrollWidth 378 vs viewport 360 -> overflow 18px; offenders: [{"tag":"div","cls":"flex items-center gap-1.5 sm:gap-2","text":"Sign in Create your account","right":378,"w":246},{"tag":"a","cls":"inline-flex items-center justify-center gap-2 rounded-md fon","text":"Create your account","right":378,"w":166}]
+   FAIL [branch 360px] landing: no horizontal scroll (18px)
+[branch 375px] scrollWidth 378 vs viewport 375 -> overflow 3px; offenders: [{"tag":"div","cls":"flex items-center gap-1.5 sm:gap-2","text":"Sign in Create your account","right":378,"w":246},{"tag":"a","cls":"inline-flex items-center justify-center gap-2 rounded-md fon","text":"Create your account","right":378,"w":166}]
+   FAIL [branch 375px] landing: no horizontal scroll (3px)
+[branch 390px] scrollWidth 390 vs viewport 390 -> overflow 0px; offenders: []
+   OK   [branch 390px] landing: no horizontal scroll (0px)
+[branch 412px] scrollWidth 412 vs viewport 412 -> overflow 0px; offenders: []
+   OK   [branch 412px] landing: no horizontal scroll (0px)
+RESULT fails=3

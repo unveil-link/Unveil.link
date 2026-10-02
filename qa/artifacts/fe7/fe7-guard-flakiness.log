@@ -1,0 +1,15 @@
+run 1 rc=0  Tests 127 passed (127)
+run 2 rc=0  Tests 127 passed (127)
+run 3 rc=0  Tests 127 passed (127)
+run 4 rc=0  Tests 127 passed (127)
+run 5 rc=0  Tests 127 passed (127)
+run 6 rc=0  Tests 127 passed (127)
+shuffle 1 rc=0  Tests 127 passed (127)
+shuffle 2 rc=0  Tests 127 passed (127)
+shuffle 3 rc=0  Tests 127 passed (127)
+run from /tmp rc=0  Tests 9 passed (9)
+parallel 4 rc=0
+parallel 2 rc=0
+parallel 1 rc=0
+parallel 3 rc=0
+vitest --reporter default: copy-guard.test.ts + copy-guard-mutation.test.ts (127 tests) Duration 1.8-1.9 s per run (import 52%, tests 38%); full npm test (16 files, 378 tests) 54 s.

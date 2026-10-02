@@ -1,0 +1,8 @@
+{
+  "from": "Unveil <no-reply@unveil.link>",
+  "to": "sam+muquwcs7@example.test",
+  "subject": "Reset your Unveil password",
+  "text": "We received a request to reset your Unveil password.\n\nOpen this link within 60 minutes to choose a new one:\nhttp://localhost:4701/reset-password?token=a2HwudJFWJPzwzt1U89wVkITtsCal56MEVWfjcnQL58\n\nIf you didn't ask for this, you can ignore this email — your password won't change.",
+  "html": "<p>We received a request to reset your Unveil password.</p><p><a href=\"http://localhost:4701/reset-password?token=a2HwudJFWJPzwzt1U89wVkITtsCal56MEVWfjcnQL58\">Choose a new password</a> (valid for 60 minutes).</p><p>If you didn't ask for this, you can ignore this email — your password 
+  "sentAt": "2026-10-02T11:14:54.540Z"
+}
