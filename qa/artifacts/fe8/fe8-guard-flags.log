@@ -1,0 +1,22 @@
+AS-EXPECTED videoUpload=false (expected false) :: literal false;
+AS-EXPECTED videoUpload=false (expected false) :: typed boolean = false;
+AS-EXPECTED videoUpload=false (expected false) :: false as const;
+AS-EXPECTED videoUpload=false (expected false) :: false; // comment
+DIFFERS     videoUpload=true (expected false) :: false /* c */;
+DIFFERS     videoUpload=true (expected false) :: (false)
+DIFFERS     videoUpload=true (expected false) :: !true
+DIFFERS     videoUpload=true (expected false) :: false satisfies boolean
+DIFFERS     videoUpload=true (expected false) :: no semicolon, EOF
+AS-EXPECTED videoUpload=true (expected true) :: = true
+AS-EXPECTED videoUpload=true (expected true) :: = false as boolean
+AS-EXPECTED videoUpload=true (expected true) :: env driven
+AS-EXPECTED videoUpload=false (expected false) :: let VIDEO_UPLOAD = false (mutable)
+AS-EXPECTED videoUpload=false (expected false) :: re-export alias
+AS-EXPECTED videoUpload=true (expected true) :: function getter
+AS-EXPECTED videoUpload=false (expected false) :: second declaration true after false
+AS-EXPECTED videoUpload=false (expected false) :: const false then reassigned via object
+AS-EXPECTED contactPlaceholder=true (page really is a placeholder) :: ComingSoon component
+DIFFERS     contactPlaceholder=false (page really is a placeholder) :: alias import (no 'ComingSoon' text)
+AS-EXPECTED contactPlaceholder=true (page really is a placeholder) :: text 'Coming soon' in JSX
+AS-EXPECTED contactPlaceholder=false (page really is real) :: real contact form
+DIFFERS     contactPlaceholder=false (page really is a placeholder) :: placeholder reworded 'Not available yet'

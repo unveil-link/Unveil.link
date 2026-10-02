@@ -1,0 +1,9 @@
+   Back from hosted page (run 1): url /u/Zj3q3vYV_kk- button {"disabled":false,"busy":null,"text":"Pay $12.00","nav":"back_forward"}
+   OK   Buy button usable after Back (disabled=false, aria-busy=null, navigation type back_forward)
+   second Buy after paying: POSTs 1, keys ["092aeff6-6379-4ffb-8dc2-bd83af47ffd7","2095aa19-9d3e-4568-88a6-5234073085d3"], url /pay/mock/mocksess_26c6418875a657dfc7c200f2e4e12c6a
+   hosted page text now: Unveil | Mock checkout (test mode, no real payment) | Spring collection pack · $12.00 | All sales are final. Because this is a digital product, purchases can't be refunded or exchanged once completed. | Test card number 
+   Back from hosted page (run 2): url /u/Zj3q3vYV_kk- button {"disabled":false,"busy":null,"text":"Pay $12.00","nav":"back_forward"}
+   OK   Buy button usable after Back (disabled=false, aria-busy=null, navigation type back_forward)
+   second Buy after paying: POSTs 1, keys ["48fbdeb7-9e8e-4436-bf6f-86079ff6daa0","255a0b1b-d790-45aa-8610-cd34750198d1"], url /pay/mock/mocksess_8d744f0019e25e91089483f32ee881d5
+   hosted page text now: Unveil | Mock checkout (test mode, no real payment) | Spring collection pack · $12.00 | All sales are final. Because this is a digital product, purchases can't be refunded or exchanged once completed. | Test card number 
+RESULT fails=0

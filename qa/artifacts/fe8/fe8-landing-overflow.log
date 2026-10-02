@@ -1,0 +1,11 @@
+[branch 320px] scrollWidth 320 vs viewport 320 -> overflow 0px; offenders: []
+   OK   [branch 320px] landing: no horizontal scroll (0px)
+[branch 360px] scrollWidth 360 vs viewport 360 -> overflow 0px; offenders: []
+   OK   [branch 360px] landing: no horizontal scroll (0px)
+[branch 375px] scrollWidth 375 vs viewport 375 -> overflow 0px; offenders: []
+   OK   [branch 375px] landing: no horizontal scroll (0px)
+[branch 390px] scrollWidth 390 vs viewport 390 -> overflow 0px; offenders: []
+   OK   [branch 390px] landing: no horizontal scroll (0px)
+[branch 412px] scrollWidth 412 vs viewport 412 -> overflow 0px; offenders: []
+   OK   [branch 412px] landing: no horizontal scroll (0px)
+RESULT fails=0

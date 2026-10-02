@@ -1,0 +1,73 @@
+{
+ "pagesSeen": [
+  "landing",
+  "login",
+  "signup",
+  "forgot-password",
+  "reset-password",
+  "terms",
+  "privacy",
+  "dmca",
+  "contact",
+  "buyer /u/<published>",
+  "buyer /u/<unpublished> (unavailable)",
+  "buyer /u/<draft>",
+  "buyer /u/<unknown> (404)",
+  "404 page",
+  "design page",
+  "admin login",
+  "admin login2",
+  "buyer /u/<published> after empty submit (validation)",
+  "hosted mock checkout /pay/mock/<session>",
+  "hosted mock checkout after declined card",
+  "hosted mock checkout after successful payment (return/success state)",
+  "dashboard overview",
+  "dashboard drops",
+  "dashboard new drop",
+  "dashboard drop detail",
+  "dashboard draft drop detail",
+  "dashboard overview (pending seller 'jo')",
+  "dashboard overview (empty seller 'sam')",
+  "/manifest.webmanifest (200)",
+  "/robots.txt (200)",
+  "/sitemap.xml (404)"
+ ],
+ "hits": [
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Delivery options are coming soon."
+  },
+  {
+   "page": "forgot-password",
+   "url": "/forgot-password",
+   "kind": "visible",
+   "text": "unveil.link Reset your password Enter the email you signed up with and we’ll send you a reset link."
+  },
+  {
+   "page": "buyer /u/<published>",
+   "url": "/u/Zj3q3vYV_kk-",
+   "kind": "visible",
+   "text": "Delivery options are coming soon."
+  },
+  {
+   "page": "buyer /u/<published> after empty submit (validation)",
+   "url": "/u/Zj3q3vYV_kk-",
+   "kind": "visible",
+   "text": "Delivery options are coming soon."
+  },
+  {
+   "page": "dashboard drop detail",
+   "url": "/dashboard/drops/3ae9f0d9-da9c-4487-b568-52197934f0c5",
+   "kind": "visible",
+   "text": "They’re added to this drop right away."
+  },
+  {
+   "page": "dashboard draft drop detail",
+   "url": "/dashboard/drops/34c69066-4b13-40f3-a8bc-9b59dcaf515b",
+   "kind": "visible",
+   "text": "They’re added to this drop right away."
+  }
+ ]
+}

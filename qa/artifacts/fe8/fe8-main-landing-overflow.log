@@ -1,0 +1,11 @@
+[main 320px] scrollWidth 321 vs viewport 320 -> overflow 1px; offenders: [{"tag":"div","cls":"flex items-center gap-1.5 sm:gap-2","text":"Sign in Start selling","right":321,"w":189},{"tag":"a","cls":"inline-flex items-center justify-center gap-2 rounded-md fon","text":"Start selling","right":321,"w":109}]
+   OK   [main 320px] landing: no horizontal scroll (1px)
+[main 360px] scrollWidth 360 vs viewport 360 -> overflow 0px; offenders: []
+   OK   [main 360px] landing: no horizontal scroll (0px)
+[main 375px] scrollWidth 375 vs viewport 375 -> overflow 0px; offenders: []
+   OK   [main 375px] landing: no horizontal scroll (0px)
+[main 390px] scrollWidth 390 vs viewport 390 -> overflow 0px; offenders: []
+   OK   [main 390px] landing: no horizontal scroll (0px)
+[main 412px] scrollWidth 412 vs viewport 412 -> overflow 0px; offenders: []
+   OK   [main 412px] landing: no horizontal scroll (0px)
+RESULT fails=0

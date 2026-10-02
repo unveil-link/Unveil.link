@@ -1,0 +1,97 @@
+CAUGHT  fee      [fee-claim] Keep 90% of every sale.
+BYPASS  fee      Keep ninety percent of each sale.
+BYPASS  fee      Our cut is just five percent.
+BYPASS  fee      Unveil takes only 5%.
+BYPASS  fee      Zero commission on your first year.
+CAUGHT  fee      [fee-claim] No fees, ever.
+BYPASS  fee      Free to list, free to sell: we only win when you do.
+BYPASS  fee      You keep the lot.
+BYPASS  fee      0% platform fee
+CAUGHT  fee      [fee-claim] Commission-free
+CAUGHT  timing   [access-promise] Get paid within 48 hours.
+BYPASS  timing   Paid weekly.
+CAUGHT  timing   [payout-timing] Payouts land in two working days.
+CAUGHT  timing   [payout-timing] Payouts arrive in 2 business days.
+BYPASS  timing   Your money shows up in your account within 2 days.
+BYPASS  timing   Cash lands next Tuesday.
+CAUGHT  timing   [bank-promise] Funds are available the same day.
+BYPASS  timing   Money in your account by Friday.
+CAUGHT  timing   [paid-out,payout-schedule] Payouts are sent every Friday.
+CAUGHT  timing   [payout-schedule,bank-promise] Next-day payouts.
+CAUGHT  timing   [paid-out] Paid out in 3-5 days.
+CAUGHT  timing   [payout-timing] We pay creators within 48 hours.
+CAUGHT  literal  [hard-coded-payout-number] A 7-day hold applies to new sales.
+BYPASS  literal  A 7 day hold applies to new sales.
+CAUGHT  literal  [hard-coded-payout-number] Funds are held for 7 days.
+BYPASS  literal  Funds are held for a week.
+BYPASS  literal  A one-week hold applies.
+BYPASS  literal  Pending for seven days.
+CAUGHT  literal  [hard-coded-payout-number] The minimum payout is $25.
+BYPASS  literal  The minimum payout is twenty-five dollars.
+BYPASS  literal  Minimum is $25.
+CAUGHT  literal  [hard-coded-payout-number] Payouts start at $25.
+BYPASS  literal  Payouts begin from 25 dollars.
+CAUGHT  literal  [bank-promise] You need $25 to cash out.
+CAUGHT  ssl      [ssl-claim] Secured with 256-bit SSL.
+CAUGHT  ssl      [ssl-claim] Protected by TLS.
+BYPASS  ssl      Browsing is protected by HTTPS.
+BYPASS  ssl      HTTPS everywhere.
+CAUGHT  ssl      [ssl-claim] Every creator is ID-checked.
+CAUGHT  ssl      [verified-claims] Creators are identity verified.
+BYPASS  ssl      Your data is safe with us.
+CAUGHT  ssl      [trusted-provider] Bank-grade security.
+BYPASS  ssl      AES-256 storage.
+BYPASS  ssl      We take security seriously.
+CAUGHT  support  [help-claim] 24/7 support for sellers.
+BYPASS  support  Support is available around the clock.
+BYPASS  support  We’re always here to help.
+BYPASS  support  Chat with us anytime.
+BYPASS  support  Our team will reply to every message.
+CAUGHT  support  [help-claim] Questions? Email help@unveil.link.
+BYPASS  support  Questions? Email help at unveil dot link.
+BYPASS  support  Reach us on Twitter.
+CAUGHT  support  [support-claim] Contact support if anything goes wrong.
+CAUGHT  access   [access-promise] Lifetime access to everything you buy.
+BYPASS  access   Your files never expire.
+BYPASS  access   Permanent access to every purchase.
+BYPASS  access   Yours forever.
+BYPASS  access   Access never expires.
+BYPASS  access   Buyer protection on every order.
+CAUGHT  access   [download] Re-download anytime.
+BYPASS  access   Keep your purchase for 30 days.
+CAUGHT  lang     [access-promise] Recibes tus archivos al momento.
+CAUGHT  lang     [access-promise] Accesso subito dopo il pagamento.
+BYPASS  lang     Мгновенная загрузка файлов.
+BYPASS  lang     결제 즉시 다운로드.
+BYPASS  lang     Direct toegang tot je bestanden.
+BYPASS  lang     Ödemeden hemen sonra indirin.
+BYPASS  lang     تحميل فوري.
+BYPASS  lang     Natychmiastowy dostęp do plików.
+BYPASS  lang     Dateien erhältst du in Sekunden.
+CAUGHT  lang     [immediate] Sofortiger Zugriff nach der Zahlung.
+BYPASS  lang     Acesso imediato após o pagamento.
+CAUGHT  lang     [immediate,access-promise] Zugang sofort nach Zahlung.
+CAUGHT  lang     [immediate,download] Download immediato.
+CAUGHT  lang     [immediate,download] Téléchargement immédiat.
+CAUGHT  lang     [instant] 即时下载
+BYPASS  lang     すぐにダウンロード
+BYPASS  lang     Hemen indir
+BYPASS  lang     Direkt nedladdning
+BYPASS  lang     तुरंत डाउनलोड
+BYPASS  carve    Receipts are not available yet (we email you one).
+BYPASS  carve    Files land in seconds (link valid for 1 hour).
+BYPASS  carve    Buyers can download the files as a CSV.
+BYPASS  carve    Files arrive in seconds - retry if not.
+CAUGHT  carve    [instant,unlock] Downloads are not available yet - they unlock instantly later.
+BYPASS  carve    Downloads are not available yet (they will be emailed to you).
+CAUGHT  carve    [email-promise] Receipts are not available yet. They will be emailed.
+CAUGHT  carve    [download] Receipts are not sent. Buyers get a download link.
+SUMMARY isolated phrases: 36 caught, 52 bypass, of 88
+  fee: 3 caught / 7 bypass
+  timing: 8 caught / 4 bypass
+  literal: 5 caught / 7 bypass
+  ssl: 5 caught / 5 bypass
+  support: 3 caught / 6 bypass
+  access: 2 caught / 6 bypass
+  lang: 7 caught / 12 bypass
+  carve: 3 caught / 5 bypass

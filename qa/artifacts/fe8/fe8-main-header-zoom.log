@@ -1,0 +1,20 @@
+   INFO [main] root font 16px @ 320px: page overflow 1px, header button right edge 321 offenders ["div.flex items-center gap-1.5@321","a.inline-flex items-center @321"]
+   INFO [main] root font 16px @ 360px: page overflow 0px, header button right edge 340
+   INFO [main] root font 16px @ 375px: page overflow 0px, header button right edge 355
+   INFO [main] root font 16px @ 390px: page overflow 0px, header button right edge 370
+   INFO [main] root font 16px @ 412px: page overflow 0px, header button right edge 392
+   INFO [main] root font 18px @ 320px: page overflow 41px, header button right edge 361 offenders ["div.flex items-center gap-1.5@361","a.inline-flex items-center @361"]
+   INFO [main] root font 18px @ 360px: page overflow 1px, header button right edge 361 offenders ["div.flex items-center gap-1.5@361","a.inline-flex items-center @361"]
+   INFO [main] root font 18px @ 375px: page overflow 0px, header button right edge 361
+   INFO [main] root font 18px @ 390px: page overflow 0px, header button right edge 368
+   INFO [main] root font 18px @ 412px: page overflow 0px, header button right edge 390
+   INFO [main] root font 20px @ 320px: page overflow 81px, header button right edge 401 offenders ["div.flex items-center gap-1.5@401","a.inline-flex items-center @401","div.absolute bottom-0 left-1/@335"]
+   INFO [main] root font 20px @ 360px: page overflow 41px, header button right edge 401 offenders ["div.flex items-center gap-1.5@401","a.inline-flex items-center @401"]
+   INFO [main] root font 20px @ 375px: page overflow 26px, header button right edge 401 offenders ["div.flex items-center gap-1.5@401","a.inline-flex items-center @401"]
+   INFO [main] root font 20px @ 390px: page overflow 11px, header button right edge 401 offenders ["div.flex items-center gap-1.5@401","a.inline-flex items-center @401"]
+   INFO [main] root font 20px @ 412px: page overflow 0px, header button right edge 401
+   INFO [main] root font 24px @ 320px: page overflow 161px, header button right edge 481 offenders ["div.flex items-center gap-1.5@481","a.inline-flex items-center @481","div.absolute -inset-4 -z-10 r@337"]
+   INFO [main] root font 24px @ 360px: page overflow 121px, header button right edge 481 offenders ["div.flex items-center gap-1.5@481","a.inline-flex items-center @481","div.absolute bottom-0 left-1/@394"]
+   INFO [main] root font 24px @ 375px: page overflow 106px, header button right edge 481 offenders ["div.flex items-center gap-1.5@481","a.inline-flex items-center @481","div.absolute bottom-0 left-1/@399"]
+   INFO [main] root font 24px @ 390px: page overflow 91px, header button right edge 481 offenders ["div.flex items-center gap-1.5@481","a.inline-flex items-center @481","div.absolute bottom-0 left-1/@404"]
+   INFO [main] root font 24px @ 412px: page overflow 69px, header button right edge 481 offenders ["div.flex items-center gap-1.5@481","a.inline-flex items-center @481"]

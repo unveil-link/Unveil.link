@@ -1,0 +1,104 @@
+baseline (unmodified copy): guard PASS
+BYPASS   Q1   'Keep ninety percent of each sale' (number spelled out) <-- gets through
+BYPASS   Q2   'Our cut is just five percent.' <-- gets through
+BYPASS   Q3   'Zero commission on your first year.' <-- gets through
+BYPASS   Q4   'Paid weekly.' (payout cadence, no 'payout' noun) <-- gets through
+CAUGHT   Q5   'Get paid within 48 hours.'   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:21 [access-promise] "Upload your , set a price, and share a payment link anywhere. Buyers pay by card — noaccount needed — and access to the files is shared once"
+  components/landing/Hero.tsx:22 [access-promise] ", set a price, and share a payment link anywhere. Buyers pay by card — no account needed — and access to the files is shared once payment is": expected [ { …(6) }, { …(6) } ] to deeply equal []
+BYPASS   Q6   'Your money shows up in your account within 2 days.' <-- gets through
+CAUGHT   Q7   'Payouts land in two working days.' (control: should be caught)   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:21 [payout-timing] "Upload your , set a price, and share a payment link anywhere. Buyers pay by card — noaccount needed — and access to the files is shared once"
+  components/landing/Hero.tsx:22 [payout-timing] ", set a price, and share a payment link anywhere. Buyers pay by card — no account needed — and access to the files is shared once payment is": expected [ { …(6) }, { …(6) } ] to deeply equal []
+BYPASS   Q8   'A 7 day hold applies to new sales.' (literal hold days, no hyphen) <-- gets through
+BYPASS   Q9   'Funds are held for a week.' (hold length without a digit) <-- gets through
+BYPASS   Q10  'The minimum payout is twenty-five dollars.' <-- gets through
+BYPASS   Q11  'Minimum is $25.' (literal minimum, word order) <-- gets through
+BYPASS   Q12  'Browsing is protected by HTTPS.' <-- gets through
+BYPASS   Q13  'Your data is safe with us.' <-- gets through
+BYPASS   Q14  'We’re always here to help.' (support availability, no 24/7) <-- gets through
+BYPASS   Q15  'Our team will reply to every message.' (support promise; /contact is a placeholder) <-- gets through
+BYPASS   Q16  'Your files never expire.' (access duration, not 'lifetime') <-- gets through
+BYPASS   Q17  'Permanent access to every purchase.' <-- gets through
+BYPASS   Q18  'Buyer protection on every order.' <-- gets through
+BYPASS   L5   Russian: 'Мгновенная загрузка файлов' (instant download) <-- gets through
+BYPASS   L6   Korean: '결제 즉시 다운로드' (instant download) <-- gets through
+BYPASS   L7   Dutch: 'Direct toegang tot je bestanden' (immediate access) <-- gets through
+BYPASS   L8   Turkish: 'Ödemeden hemen sonra indirin' (right after payment) <-- gets through
+CAUGHT   L9   Italian: 'Accesso subito dopo il pagamento'   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:21 [access-promise] "Upload your , set a price, and share a payment link anywhere. Buyers pay by card — noaccount needed — and Accesso subito dopo il pagamento."
+  components/landing/Hero.tsx:22 [access-promise] ", set a price, and share a payment link anywhere. Buyers pay by card — no account needed — and Accesso subito dopo il pagamento.": expected [ { …(6) }, { …(6) } ] to deeply equal []
+BYPASS   L10  Arabic: 'تحميل فوري' (instant download) <-- gets through
+BYPASS   L11  Polish: 'Natychmiastowy dostęp do plików' <-- gets through
+BYPASS   L12  German: 'Dateien erhältst du in Sekunden' (in seconds) <-- gets through
+BYPASS   Q19  name poisoning: same identifier declared twice in the file (dup => folding disabled), e.g. w1/w2 <-- gets through
+BYPASS   Q20  Object.values({a:'In',b:'stantly'}).join('') <-- gets through
+BYPASS   Q21  reduce: ['In','stantly'].reduce((a, b) => a + b) <-- gets through
+CAUGHT   Q22  JSON.parse('["In","stantly"]').join('')   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:23 [instant (spacing trick)] "["In","stantly"]": expected [ { …(6) } ] to deeply equal []
+CAUGHT   Q23  non-identity map: ['IN','STANTLY'].map((s) => s.toLowerCase()).join('')   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:23 [dynamic-string] "["IN", "STANTLY"].map((s) => s.toLowerCase()).join("")": expected [ { …(5) } ] to deeply equal []
++     "rule": "dynamic-string",
+BYPASS   Q24  ternary with different branches: {big ? 'In' : 'Con'}stantly <-- gets through
+BYPASS   Q25  helper with parameters: const j = (a, b) => a + b; j('In','stantly') <-- gets through
+BYPASS   Q26  spread into fromCharCode: String.fromCharCode(...[105,110,115,116,97,110,116,108,121]) <-- gets through
+BYPASS   Q27  Buffer base64 (server component): Buffer.from('aW5zdGFudGx5','base64').toString() <-- gets through
+BYPASS   Q28  enum members: enum E { A = 'In', B = 'stantly' }; E.A + E.B <-- gets through
+BYPASS   Q29  object method: const o = { p() { return 'In'; } }; o.p() + 'stantly' <-- gets through
+CAUGHT   Q30  filter(Boolean) after reverse: Array.from('yltnatsni').reverse().filter(Boolean).join('')   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:23 [dynamic-string] "Array.from("yltnatsni").reverse().filter(Boolean).join("")": expected [ { …(5) } ] to deeply equal []
++     "rule": "dynamic-string",
+BYPASS   Q31  class static: class C { static a = 'In' }; C.a + 'stantly' <-- gets through
+BYPASS   Q32  padEnd / at: 'Instantx'.slice(0, -1) via negative slice <-- gets through
+CAUGHT   Q33  reassigned let (not statement-level +=): let s = 'In'; if (c) { s = s + 'stantly'; } (dup => opaque)   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:22 [instant] "Upload your {}, set a price, and share a payment link anywhere. Buyers pay by card — no account needed — and Instantly."
+  components/landing/Hero.tsx:22 [instant] "Upload your , set a price, and share a payment link anywhere. Buyers pay by card — noaccount needed — and Instantly.": expected [ { …(6) }, { …(6) } ] to deeply equal []
+BYPASS   Q34  name poisoning for a destructured pair <-- gets through
+CAUGHT   Q35  template literal in a computed property used as text: `${'In'}${'stantly'}` via array join of template parts   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:23 [instant] "Instantly": expected [ { …(6) } ] to deeply equal []
+CAUGHT   Q36  S6 variant: children composition <Wrap>In</Wrap>stantly (custom component = word break?)   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:22 [instant (spacing trick)] "Upload your {}, set a price, and share a payment link anywhere. Buyers pay by card — no account needed — and In stantly."
+  components/landing/Hero.tsx:22 [instant] "Upload your , set a price, and share a payment link anywhere. Buyers pay by card — noaccount needed — and Instantly.": expected [ { …(6) }, { …(6) } ] to deeply equal []
+BYPASS   Q37  S10 variant: bidi reversal through Tailwind arbitrary classes, text reversed in an attribute-free span: <span className="[direction:rtl] [unicode-bidi:bidi-override]">yltnatsni</span> <-- gets through
+BYPASS   Q38  S13 variant: JSON module with a nested object joined: copy.a + copy.b <-- gets through
+BYPASS   Q39  i18n-style: keys built at run time from a dictionary of fragments: D['x'+n] <-- gets through
+BYPASS   Q40  tmp/promo.ts imported by Hero (tmp/ is in EXCLUDED_TOP) <-- gets through
+BYPASS   Q41  build/promo.ts imported by Hero (build/ excluded) <-- gets through
+BYPASS   Q42  out/promo.ts imported by Hero (out/ excluded) <-- gets through
+BYPASS   Q43  docs/promo.ts imported by Hero (docs/ excluded) <-- gets through
+BYPASS   Q44  scripts/promo.ts imported by Hero (scripts/ excluded) <-- gets through
+BYPASS   Q45  tests/helpers/promo.ts imported by Hero (tests/ excluded) <-- gets through
+BYPASS   Q46  .content/promo.ts (dot-folder at top level is skipped) <-- gets through
+BYPASS   Q47  db/promo.ts imported by Hero (db/ excluded) <-- gets through
+BYPASS   Q48  root-level promo.json imported (root files: code only) <-- gets through
+BYPASS   Q49  messages/en.yaml read at request time (yaml not a scanned extension) <-- gets through
+BYPASS   Q50  public/promo.jsonc (jsonc not scanned) <-- gets through
+BYPASS   Q51  copy in .po / .csv / .toml (messages/en.po) <-- gets through
+BYPASS   Q52  .env.production NEXT_PUBLIC_TAGLINE read via process.env in Hero <-- gets through
+BYPASS   Q53  src/app/promo.vue-style .astro/.svelte file (extension not scanned) <-- gets through
+BYPASS   Q54  components/promo.json5 / .yml next to components (not scanned) <-- gets through
+CAUGHT   Q55  email template emails/receipt.mjml (newly scanned ext, new top-level folder) — control: should be caught   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  emails/receipt.mjml:1 [receipt] "Your receipt is attached": expected [ { …(5) } ] to deeply equal []
+CAUGHT   Q56  src/server/mail/receipt.ejs (newly scanned ext, backend ratchet) — control: should be caught   [AssertionError: NEW forbidden string in backend-owned code (report to Backend):]
+  src/server/mail/receipt.ejs:1 [download] "Your download link is below": expected [ { …(5) } ] to deeply equal []
+BYPASS   Q57  carve-out smuggling: 'Receipts are not available yet (we email you one).' <-- gets through
+BYPASS   Q58  carve-out smuggling: 'Files land in seconds (link valid for 1 hour).' <-- gets through
+BYPASS   Q59  carve-out smuggling: 'Buyers can download the files as a CSV.' <-- gets through
+BYPASS   Q60  carve-out smuggling: 'Files arrive in seconds - retry if not.' <-- gets through
+CAUGHT   Q61  carve-out smuggling: 'Downloads are not available yet - they unlock instantly later.' (instant stays caught?)   [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+  components/landing/Hero.tsx:21 [instant] "Upload your , set a price, and share a payment link anywhere. Buyers pay by card — noaccount needed — and access to the files is shared once"
+  components/landing/Hero.tsx:21 [unlock] "Upload your , set a price, and share a payment link anywhere. Buyers pay by card — noaccount needed — and access to the files is shared once"
+  components/landing/Hero.tsx:22 [instant] ", set a price, and share a payment link anywhere. Buyers pay by card — no account needed — and access to the files is shared once payment is"
+  components/landing/Hero.tsx:22 [unlock] ", set a price, and share a payment link anywhere. Buyers pay by card — no account needed — and access to the files is shared once payment is": expected [ { …(6) }, { …(6) }, { …(6) }, …(1) ] to deeply equal []
+CAUGHT   A11  A8+: flag made 'possibly true' (`= false as boolean`, still false in the app) + video copy + any backend 'video/mp4' string => guard accepts 'Upload your MP4 videos'   [stale allowlist / baseline entries (each exemption still matches a real hit, at least `cou]
+
+BYPASS   A12  contact flag: /contact is still the placeholder but its page no longer contains the text 'ComingSoon' (re-export alias Pending) + 'Contact support if anything goes wrong' <-- gets through
+CAUGHT   A13  backend ratchet: add a promise string to a NEW file under src/app/api (baseline is per-file/count?)   [AssertionError: NEW forbidden string in backend-owned code (report to Backend):]
+  src/app/api/ping2/route.ts:1 [instant] "Your files will arrive instantly": expected [ { …(6) } ] to deeply equal []
+CAUGHT   A14  backend ratchet: promise appended to an already-baselined backend string (same file, same count)   [AssertionError: NEW forbidden string in backend-owned code (report to Backend):]
+  src/server/mail/index.ts:6 [instant] "Receipt emailed instantly"
+  src/server/mail/index.ts:6 [receipt] "Receipt emailed instantly"
+  src/server/mail/index.ts:6 [email-promise] "Receipt emailed instantly": expected [ { …(6) }, { …(6) }, { …(6) } ] to deeply equal []
+BYPASS   A16  A8 in full: flag `= false as boolean` (app still false) + dummy backend 'video/mp4' string + the 21 now-stale video allowlist entries removed (an allowlist edit, A6 class) + 'Upload your MP4 videos.' copy => guard accepts a video claim while the real flag is false <-- gets through
+PASS     A15  A6: allowlist edit that approves a new promise string (re-test: still passes, no CODEOWNERS / branch rule) (guard cannot stop an allowlist edit; needs review)
+SUMMARY promises: 15 caught, 59 bypass | false-positive probes: 0 allowed, 0 blocked | 0 skipped, of 75

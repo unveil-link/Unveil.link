@@ -1,0 +1,20 @@
+   INFO [branch] root font 16px @ 320px: page overflow 0px, header button right edge 300
+   INFO [branch] root font 16px @ 360px: page overflow 0px, header button right edge 340
+   INFO [branch] root font 16px @ 375px: page overflow 0px, header button right edge 355
+   INFO [branch] root font 16px @ 390px: page overflow 0px, header button right edge 370
+   INFO [branch] root font 16px @ 412px: page overflow 0px, header button right edge 392
+   INFO [branch] root font 18px @ 320px: page overflow 7px, header button right edge 327 offenders ["div.flex items-center gap-1.5@327","a.inline-flex items-center @327"]
+   INFO [branch] root font 18px @ 360px: page overflow 0px, header button right edge 338
+   INFO [branch] root font 18px @ 375px: page overflow 0px, header button right edge 353
+   INFO [branch] root font 18px @ 390px: page overflow 0px, header button right edge 368
+   INFO [branch] root font 18px @ 412px: page overflow 0px, header button right edge 390
+   INFO [branch] root font 20px @ 320px: page overflow 44px, header button right edge 364 offenders ["div.flex items-center gap-1.5@364","a.inline-flex items-center @364","span.sm:hidden@346"]
+   INFO [branch] root font 20px @ 360px: page overflow 4px, header button right edge 364 offenders ["div.flex items-center gap-1.5@364","a.inline-flex items-center @364"]
+   INFO [branch] root font 20px @ 375px: page overflow 0px, header button right edge 364
+   INFO [branch] root font 20px @ 390px: page overflow 0px, header button right edge 365
+   INFO [branch] root font 20px @ 412px: page overflow 0px, header button right edge 387
+   INFO [branch] root font 24px @ 320px: page overflow 116px, header button right edge 436 offenders ["div.flex items-center gap-1.5@436","a.inline-flex items-center @436","span.sm:hidden@415"]
+   INFO [branch] root font 24px @ 360px: page overflow 76px, header button right edge 436 offenders ["div.flex items-center gap-1.5@436","a.inline-flex items-center @436","span.sm:hidden@415"]
+   INFO [branch] root font 24px @ 375px: page overflow 61px, header button right edge 436 offenders ["div.flex items-center gap-1.5@436","a.inline-flex items-center @436","span.sm:hidden@415"]
+   INFO [branch] root font 24px @ 390px: page overflow 46px, header button right edge 436 offenders ["div.flex items-center gap-1.5@436","a.inline-flex items-center @436","span.sm:hidden@415"]
+   INFO [branch] root font 24px @ 412px: page overflow 24px, header button right edge 436 offenders ["div.flex items-center gap-1.5@436","a.inline-flex items-center @436","span.sm:hidden@415"]

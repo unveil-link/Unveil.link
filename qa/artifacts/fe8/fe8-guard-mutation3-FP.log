@@ -1,0 +1,11 @@
+baseline (unmodified copy): guard PASS
+PASS     FP1  legit: 'Your link is ready to share.' (seller-facing, after creating a drop) (legit copy allowed)
+PASS     FP2  legit: 'Your reset link expires in 60 seconds.' (legit copy allowed)
+PASS     FP3  legit honest negative: 'Receipts are not available yet.' (legit copy allowed)
+PASS     FP4  legit: 'Download your sales as CSV' (seller export) (legit copy allowed)
+FALSEPOS FP5  legit legal copy on /terms: 'You may withdraw your consent at any time.' <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+FALSEPOS FP6  legit privacy copy: 'We encrypt passwords with bcrypt.' <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+PASS     FP7  legit: 'Publish in one click.' / 'Supports JPG, PNG and WebP.' (legit copy allowed)
+FALSEPOS FP8  legit honest: 'Photos only for now: no video.' <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+FALSEPOS FP9  developer-only string (console.log("Instant download") in lib): scanned, flagged (conservative) <-- honest copy blocked  [AssertionError: Forbidden promise wording (fix the copy, or allowlist the exact string wit]
+SUMMARY promises: 0 caught, 0 bypass | false-positive probes: 5 allowed, 4 blocked | 0 skipped, of 75

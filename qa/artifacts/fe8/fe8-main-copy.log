@@ -1,0 +1,98 @@
+== 1. Landing (incl. collapsed FAQ), auth pages, buyer page, hosted page
+   OK   [desktop landing] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [desktop] landing contains "access to the files is shared once payment is confirmed"
+   OK   [desktop] landing contains "Verified creator"
+   OK   [desktop] landing contains "Pay $12"
+   OK   [desktop] landing contains "Access after payment"
+   OK   [desktop] FAQ answers (payouts, fees) present
+   OK   faq collapsed by default
+   OK   [desktop /login] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [desktop] auth shell: "One link, anywhere"
+   OK   [desktop /signup] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [desktop /forgot-password] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [desktop /reset-password?token=x] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [desktop buyer page] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [desktop] buyer preview line reworded
+   OK   [desktop] TrustPoints reworded
+   OK   [desktop] buy form: Pay $12.00, no promise
+   OK   [desktop hosted checkout] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [desktop hosted after paying] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [desktop] payment succeeded (mock)
+   OK   [mobile landing] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [mobile] landing contains "access to the files is shared once payment is confirmed"
+   OK   [mobile] landing contains "Verified creator"
+   OK   [mobile] landing contains "Pay $12"
+   OK   [mobile] landing contains "Access after payment"
+   OK   [mobile] FAQ answers (payouts, fees) present
+   OK   faq collapsed by default
+   OK   [mobile /login] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [mobile /signup] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [mobile /forgot-password] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [mobile /reset-password?token=x] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [mobile buyer page] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [mobile] buyer preview line reworded
+   OK   [mobile] TrustPoints reworded
+   OK   [mobile] buy form: Pay $12.00, no promise
+   OK   [mobile hosted checkout] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [mobile hosted after paying] no delivery/receipt/download/unlock wording (hits: [])
+   OK   [mobile] payment succeeded (mock)
+== 2. FE-16 labels, notes, numbers (desktop + 390px) for Maya, Ned, Sam and the never-paid seller
+   OK   [maya/desktop] Gross card: "Gross sales $491.00 35 sales charged, before refunds" (API salesCount 35, gross $491.00)
+   OK   [maya/desktop] overview reversals line quotes kept $448.00: " returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($448.00 kept)."
+   OK   [maya/desktop] dashboard overview has no delivery/receipt wording
+   OK   [maya/desktop] drops note: "Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees."
+   OK   [maya] table headers "Sold (net)" / "Revenue (kept)" with tooltips: [{"t":"SOLD (NET)","title":"Sales kept after refunds and chargebacks"},{"t":"REVENUE (KEPT)","title":"Gross kept after refunds and chargebacks"}]
+   OK   [maya/desktop] sum of per-drop Revenue (kept) $448.00 == API gross − refunded − charged back $448.00 == ledger
+   OK   [maya] Autumn preview (draft): 0 sold (net) / $0.00 kept == ledger 0 / $0.00
+   OK   [maya] Pop-up reel: 0 sold (net) / $0.00 kept == ledger 0 / $0.00
+   OK   [maya] Spring collection pack: 23 sold (net) / $276.00 kept == ledger 23 / $276.00
+   OK   [maya] Studio colour study: 6 sold (net) / $140.00 kept == ledger 6 / $140.00
+   OK   [maya] Travel set, vol. 2: 4 sold (net) / $32.00 kept == ledger 4 / $32.00
+   OK   [maya] Winter archive: 0 sold (net) / $0.00 kept == ledger 0 / $0.00
+   OK   [maya/desktop] drop detail "Spring collection pack": Sold (net) 23 / Revenue (kept) $276.00
+   OK   [maya/390px] Gross card: "Gross sales $491.00 35 sales charged, before refunds" (API salesCount 35, gross $491.00)
+   OK   [maya/390px] overview reversals line quotes kept $448.00: " returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($448.00 kept)."
+   OK   [maya/390px] dashboard overview has no delivery/receipt wording
+   OK   [maya/390px] drops note: "Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees."
+   OK   [maya/390px] mobile card labels: ["Files","Sold (net)","Revenue (kept)"]
+   OK   [maya/390px] sum of per-drop Revenue (kept) $448.00 == API gross − refunded − charged back $448.00 == ledger
+   OK   [maya/390px] drop detail "Spring collection pack": Sold (net) 23 / Revenue (kept) $276.00
+   OK   [ned/desktop] Gross card: "Gross sales $60.00 1 sale charged, before refunds" (API salesCount 1, gross $60.00)
+   OK   [ned/desktop] overview reversals line quotes kept $0.00: "re returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($0.00 kept)."
+   OK   [ned/desktop] dashboard overview has no delivery/receipt wording
+   OK   [ned/desktop] drops note: "Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees."
+   OK   [ned] table headers "Sold (net)" / "Revenue (kept)" with tooltips: [{"t":"SOLD (NET)","title":"Sales kept after refunds and chargebacks"},{"t":"REVENUE (KEPT)","title":"Gross kept after refunds and chargebacks"}]
+   OK   [ned/desktop] sum of per-drop Revenue (kept) $0.00 == API gross − refunded − charged back $0.00 == ledger
+   OK   [ned] Print pack: 0 sold (net) / $0.00 kept == ledger 0 / $0.00
+   OK   [ned/desktop] drop detail "Print pack": Sold (net) 0 / Revenue (kept) $0.00
+   OK   [ned/390px] Gross card: "Gross sales $60.00 1 sale charged, before refunds" (API salesCount 1, gross $60.00)
+   OK   [ned/390px] overview reversals line quotes kept $0.00: "re returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($0.00 kept)."
+   OK   [ned/390px] dashboard overview has no delivery/receipt wording
+   OK   [ned/390px] drops note: "Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees."
+   OK   [ned/390px] mobile card labels: ["Files","Sold (net)","Revenue (kept)"]
+   OK   [ned/390px] sum of per-drop Revenue (kept) $0.00 == API gross − refunded − charged back $0.00 == ledger
+   OK   [ned/390px] drop detail "Print pack": Sold (net) 0 / Revenue (kept) $0.00
+   OK   [sam/desktop] Gross card: "Gross sales $0.00 0 sales charged, before refunds" (API salesCount 0, gross $0.00)
+   OK   [sam/desktop] no reversals line when nothing reversed
+   OK   [sam/desktop] dashboard overview has no delivery/receipt wording
+   OK   [sam/desktop] no drops -> empty state, no note
+   OK   [sam/390px] Gross card: "Gross sales $0.00 0 sales charged, before refunds" (API salesCount 0, gross $0.00)
+   OK   [sam/390px] no reversals line when nothing reversed
+   OK   [sam/390px] dashboard overview has no delivery/receipt wording
+   OK   [sam/390px] no drops -> empty state, no note
+   OK   [never-paid cb seller/desktop] Gross card: "Gross sales $40.00 2 sales charged, before refunds" (API salesCount 2, gross $40.00)
+   OK   [never-paid cb seller/desktop] overview reversals line quotes kept $20.00: "e returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($20.00 kept)."
+   OK   [never-paid cb seller/desktop] dashboard overview has no delivery/receipt wording
+   OK   [never-paid cb seller/desktop] drops note: "Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees."
+   OK   [never-paid cb seller] table headers "Sold (net)" / "Revenue (kept)" with tooltips: [{"t":"SOLD (NET)","title":"Sales kept after refunds and chargebacks"},{"t":"REVENUE (KEPT)","title":"Gross kept after refunds and chargebacks"}]
+   OK   [never-paid cb seller/desktop] sum of per-drop Revenue (kept) $20.00 == API gross − refunded − charged back $20.00 == ledger
+   OK   [never-paid cb seller] CB drop: 1 sold (net) / $20.00 kept == ledger 1 / $20.00
+   OK   [never-paid cb seller/desktop] drop detail "CB drop": Sold (net) 1 / Revenue (kept) $20.00
+   OK   [never-paid cb seller/390px] Gross card: "Gross sales $40.00 2 sales charged, before refunds" (API salesCount 2, gross $40.00)
+   OK   [never-paid cb seller/390px] overview reversals line quotes kept $20.00: "e returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($20.00 kept)."
+   OK   [never-paid cb seller/390px] dashboard overview has no delivery/receipt wording
+   OK   [never-paid cb seller/390px] drops note: "Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees."
+   OK   [never-paid cb seller/390px] mobile card labels: ["Files","Sold (net)","Revenue (kept)"]
+   OK   [never-paid cb seller/390px] sum of per-drop Revenue (kept) $20.00 == API gross − refunded − charged back $20.00 == ledger
+   OK   [never-paid cb seller/390px] drop detail "CB drop": Sold (net) 1 / Revenue (kept) $20.00
+RESULT fails=0

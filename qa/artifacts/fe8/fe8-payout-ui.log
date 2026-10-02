@@ -1,0 +1,10 @@
+◇ injected env (0) from .env
+   before: {"av":"$87.64","pe":"$139.62","ip":"$60.00","po":"$150.00"}
+   OK   start state matches API
+   OK   requested $30.00: In payout $90.00, Available $57.64 (was $87.64), Paid out unchanged $150.00
+   OK   approved: still In payout $90.00
+   OK   paid: Paid out $180.00 (+$30.00), In payout back to $60.00, Available $57.64
+   OK   available + pending + in payout + paid out = net still holds
+   OK   failed payout: funds return, Available $57.64 == $57.64 (was $32.64 while requested)
+   OK   below-minimum request rejected: below_minimum_payout
+RESULT fails=0

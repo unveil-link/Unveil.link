@@ -1,0 +1,45 @@
+-- ned: card="Balance owed -$46.80 Below zero. It will be deducted from future earnings."
+   OK   negative-balance alert present once
+   alert: {"role":"status","ah":null,"live":null,"cls":"flex items-start gap-3 rounded-lg border p-3.5 text-sm sm:p-4 border-danger/30 bg-danger-soft text-ink mt-4","text":"You owe $46.80 Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.","bg":"rgb(253, 234, 234)","border":"oklab(0.53858 0.173048 0.0871324 / 0.3)","color":"rgb(20, 18, 31)","iconColor":"rgb(198, 40, 40)","tag":"DIV"}
+   OK   FE8: alert now has role="status" (got status); still visible text, not hidden (aria-hidden=null)
+   OK   alert is danger-toned, not warning: border-danger/30,bg-danger-soft
+   OK   exposed as role=status (polite), not role=alert
+   OK   card is red (border-danger) — same family as the alert
+   colours bg=rgb(253, 234, 234) text=rgb(20, 18, 31) border=oklab(0.53858 0.173048 0.0871324 / 0.3) icon=rgb(198, 40, 40)
+   OK   text contrast 16.0:1 >= 4.5
+   OK   icon contrast 4.9:1 >= 3
+   OK   FE-12: no 'after a payout' claim in card or alert
+   OK   FE-12: card hint reads 'Below zero. It will be deducted from future earnings.'
+   OK   alert text: You owe $46.80 Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.
+   OK   FE-12: no such wording anywhere on /dashboard
+-- ned-mobile: card="Balance owed -$46.80 Below zero. It will be deducted from future earnings."
+   OK   negative-balance alert present once
+   alert: {"role":"status","ah":null,"live":null,"cls":"flex items-start gap-3 rounded-lg border p-3.5 text-sm sm:p-4 border-danger/30 bg-danger-soft text-ink mt-4","text":"You owe $46.80 Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.","bg":"rgb(253, 234, 234)","border":"oklab(0.53858 0.173048 0.0871324 / 0.3)","color":"rgb(20, 18, 31)","iconColor":"rgb(198, 40, 40)","tag":"DIV"}
+   OK   FE8: alert now has role="status" (got status); still visible text, not hidden (aria-hidden=null)
+   OK   alert is danger-toned, not warning: border-danger/30,bg-danger-soft
+   OK   exposed as role=status (polite), not role=alert
+   OK   card is red (border-danger) — same family as the alert
+   colours bg=rgb(253, 234, 234) text=rgb(20, 18, 31) border=oklab(0.53858 0.173048 0.0871324 / 0.3) icon=rgb(198, 40, 40)
+   OK   text contrast 16.0:1 >= 4.5
+   OK   icon contrast 4.9:1 >= 3
+   OK   FE-12: no 'after a payout' claim in card or alert
+   OK   FE-12: card hint reads 'Below zero. It will be deducted from future earnings.'
+   OK   alert text: You owe $46.80 Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.
+   OK   FE-12: no such wording anywhere on /dashboard
+-- cb-never-paid-out: card="Balance owed -$5.00 Below zero. It will be deducted from future earnings."
+   OK   negative-balance alert present once
+   alert: {"role":"status","ah":null,"live":null,"cls":"flex items-start gap-3 rounded-lg border p-3.5 text-sm sm:p-4 border-danger/30 bg-danger-soft text-ink mt-4","text":"You owe $5.00 Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.","bg":"rgb(253, 234, 234)","border":"oklab(0.53858 0.173048 0.0871324 / 0.3)","color":"rgb(20, 18, 31)","iconColor":"rgb(198, 40, 40)","tag":"DIV"}
+   OK   FE8: alert now has role="status" (got status); still visible text, not hidden (aria-hidden=null)
+   OK   alert is danger-toned, not warning: border-danger/30,bg-danger-soft
+   OK   exposed as role=status (polite), not role=alert
+   OK   card is red (border-danger) — same family as the alert
+   colours bg=rgb(253, 234, 234) text=rgb(20, 18, 31) border=oklab(0.53858 0.173048 0.0871324 / 0.3) icon=rgb(198, 40, 40)
+   OK   text contrast 16.0:1 >= 4.5
+   OK   icon contrast 4.9:1 >= 3
+   OK   FE-12: no 'after a payout' claim in card or alert
+   OK   FE-12: card hint reads 'Below zero. It will be deducted from future earnings.'
+   OK   alert text: You owe $5.00 Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.
+   OK   FE-12: no such wording anywhere on /dashboard
+-- maya (positive control): card="Available $87.64 You’ve reached the $25.00 minimum. Payout requests are coming soon"
+   OK   positive seller: no alert, 'Available' card
+RESULT fails=0

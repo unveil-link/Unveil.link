@@ -1,0 +1,22 @@
+baseline (unmodified copy): guard PASS
+CAUGHT  M1 re-introduce the ORIGINAL AuthShell line ('Instant delivery… delivered automatically') — the line also contains DownloadIcon
+CAUGHT  M2 re-introduce 'Instant download' in TrustPoints (same line as DownloadIcon)
+CAUGHT  M3 BuyerTrust 'Instant download' on the DownloadIcon line
+CAUGHT  M4 Hero: 'and download instantly'
+CAUGHT  M5 Hero: 'We will email you a confirmation with your files' (no forbidden word)
+CAUGHT  M6 Hero: 'Your photos arrive in your inbox seconds after you pay' (synonyms)
+CAUGHT  M7 Hero: split word 'In'+'stant' via string concat
+CAUGHT  M8 Hero: HTML entity 'Downl&#111;ad now'
+CAUGHT  M9 layout.tsx site meta description: 'download instantly'
+CAUGHT  M10 Faq 'We send a receipt' (Delivery-options allowlist regex only matches the same line)
+CAUGHT  M11 Faq: receipt promise on a line WITHOUT the allowlisted phrase
+CAUGHT  M12 DownloadPanel (fully exempt file) gains 'Instant download'
+CAUGHT  M13 Dashboard overview (src/app/dashboard/page.tsx allowlist: 'Becomes available right away')—add buyer promise on another line
+CAUGHT  M14 hosted page copy lib/purchase-copy.ts 'delivered immediately' (has separate test)
+CAUGHT  M15 hosted page copy lib/purchase-copy.ts 'You will get a receipt by email.' appended
+CAUGHT  M16 e-mail template (password-reset.ts, src/server not scanned): add receipt promise
+src/server/services/password-reset.ts:37:      `We received a request to reset your Unveil password.\n\nOpen this link within ${RESET_TTL_MINUTES} minutes to ch
+src/server/services/password-reset.ts:40:      `<p>We received a request to reset your Unveil password.</p><p><a href="${link}">Choose a new password</a> (valid
+CAUGHT  M17 site-wide error string in src/app/api (skipped by design)
+BYPASS  M18 public/manifest-like text via next.config.ts (not scanned)
+scratch: /tmp/mut.KVm9

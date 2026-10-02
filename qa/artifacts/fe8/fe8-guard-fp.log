@@ -1,0 +1,71 @@
+BLOCKED  [bank-promise] You may withdraw your consent at any time.
+BLOCKED  [bank-promise] We do not guarantee that the service will be uninterrupted.
+BLOCKED  [bank-promise] We make no guarantee of earnings.
+BLOCKED  [bank-promise] Unveil does not guarantee that any buyer will purchase.
+ALLOWED  Payments are processed by a third-party payment processor.
+ALLOWED  We may withhold or delay payouts where we suspect fraud.
+ALLOWED  Funds may be held while a dispute is open.
+ALLOWED  A chargeback reverses the sale and any fees.
+ALLOWED  You are responsible for the content you upload.
+ALLOWED  Sellers must be at least 18 years old.
+BLOCKED  [trusted-provider] We encrypt passwords with bcrypt.
+BLOCKED  [trusted-provider] Data is encrypted in transit.
+ALLOWED  You can request deletion of your account at any time.
+BLOCKED  [trusted-provider] Certified copies of your ID may be requested.
+ALLOWED  We comply with the DMCA and respond to valid notices.
+ALLOWED  Send DMCA notices to the designated agent listed below.
+ALLOWED  These terms are governed by the laws of the State of New York.
+ALLOWED  We may update these terms from time to time.
+ALLOWED  Refunds are handled case by case.
+ALLOWED  We store the email address you give at checkout.
+ALLOWED  Cookies are used to keep you signed in.
+ALLOWED  Your session lasts 7 days.
+ALLOWED  Your reset link expires in 60 seconds.
+ALLOWED  Try again in 30 seconds.
+ALLOWED  Please wait 15 seconds before requesting another code.
+ALLOWED  Locked for 15 minutes after too many attempts.
+BLOCKED  [video-claim] Photos only for now: no video.
+BLOCKED  [video-claim] Video is not supported yet.
+ALLOWED  Receipts are not available yet.
+ALLOWED  Downloads are not available yet.
+BLOCKED  [deliver] Delivery options are coming soon.
+ALLOWED  Payout requests are coming soon.
+ALLOWED  Your link is ready to share.
+ALLOWED  Share your link anywhere.
+ALLOWED  Publish in one click.
+ALLOWED  Supports JPG, PNG and WebP.
+ALLOWED  Download your sales as CSV.
+ALLOWED  Export your earnings as a spreadsheet.
+ALLOWED  Files up to 25 MB.
+ALLOWED  Buyers pay by card — no account needed.
+ALLOWED  Pay securely with your card.
+ALLOWED  Your card is charged once.
+ALLOWED  Sales are final unless the seller agrees otherwise.
+ALLOWED  Earnings are shown after fees.
+BLOCKED  [hard-coded-payout-number] Available balance can be requested once it clears the 7-day hold.
+ALLOWED  Pending until the hold ends.
+ALLOWED  Sign in to see your earnings.
+ALLOWED  Reset your password.
+ALLOWED  Create your account.
+ALLOWED  Sign up
+ALLOWED  Start selling
+ALLOWED  Photos stay private until a buyer pays.
+ALLOWED  Only people with your link can see the preview.
+ALLOWED  You choose the price.
+ALLOWED  Set a price between $1 and $500.
+ALLOWED  Prices are in US dollars.
+ALLOWED  Contact the seller directly if you have questions about the content.
+ALLOWED  Email addresses are never shown to other users.
+ALLOWED  We never sell your data.
+ALLOWED  Copyright © 2026 Unveil.
+ALLOWED  All rights reserved.
+ALLOWED  Now you can see it.
+ALLOWED  Read more
+BLOCKED  [download] Download
+BLOCKED  [deliver] Deliver
+BLOCKED  [deliver] Delivered
+BLOCKED  [receipt] Receipt
+BLOCKED  [instant] Instantly
+BLOCKED  [bank-promise] Withdraw
+BLOCKED  [instant] Instant
+SUMMARY honest strings: 52 allowed, 18 blocked, of 70

@@ -1,0 +1,10 @@
+- banner:
+  - link "Skip to content":
+    - /url: "#main"
+  - link "Unveil home":
+    - /url: /
+    - text: Unveil
+  - link "Sign in":
+    - /url: /signin
+  - link "Start selling":
+    - /url: /signup
