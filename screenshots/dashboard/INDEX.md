@@ -33,6 +33,7 @@ Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. F
 - forgot-password-sent
 - forgot-password-validation
 - landing
+- landing-faq-expanded
 - new-drop-empty
 - new-drop-file-and-price-validation
 - new-drop-filled
