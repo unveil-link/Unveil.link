@@ -13,7 +13,7 @@ npm run migrate
 npm run build && bash scripts/dev-start.sh 3400     # or: npm run dev -- -p 3400   (3000 may be taken by another agent)
 npx tsx scripts/seed-demo.ts      # creates 3 sellers via the real API (+ SQL for sales/payouts/flagged) -> .e2e/seed.json
 node scripts/screenshots-dashboard.mjs              # re-takes every screenshot into screenshots/dashboard/
-npm run lint && npm run build && npm test           # all pass;  npm run e2e  (backend regression + FE-03/04/06 checks) 47/47
+npm run lint && npm run build && npm test           # all pass;  npm run e2e  (backend + payments regression + FE checks)
 ```
 `/design` is a 404 in production builds unless `ENABLE_DESIGN_PAGE=1` — start the screenshot server with `ENABLE_DESIGN_PAGE=1 bash scripts/dev-start.sh 3400`.
 Optional `.env` knobs used while capturing screenshots: `LOGIN_DELAY_THRESHOLD=3`, `LOGIN_DELAY_BASE_SECONDS=20`, `LOGIN_DELAY_CAP_SECONDS=60`
@@ -44,7 +44,7 @@ Wrong password 4× on one email → 429 `login_delayed` → countdown on the but
 App components: `components/auth/*` (AuthShell, PasswordInput, PasswordStrength, ThrottleNotice, useThrottle), `components/dashboard/*`, `components/buyer/*`. No new colour tokens were needed; `lib/` gained `api.ts` (typed fetch, `Retry-After` parser), `useCountdown.ts`, `upload.ts`, `upload-limits.ts`, `password-hint.ts`, `format.ts`, `share.ts`. 19 unit tests added (`tests/frontend-lib.test.ts`).
 
 ## Backend API gaps / mismatches found (not fixed — out of scope)
-1. **No earnings/payouts/stats API.** No `GET /api/earnings`, `/api/payouts`, `/api/transactions`, or per-drop stats. The dashboard reads aggregates directly from `transactions`/`payouts` in a server component (`src/app/dashboard/data.ts`) — nothing writes those tables yet, so real accounts show $0. Swap for a fetch once an endpoint exists.
+1. ~~No earnings API~~ — resolved: `main` now has `GET /api/earnings` / `getEarningsSummary` (see "Earnings data source"). Still missing: per-drop stats (units/revenue come from two small queries), payout request UI/API for sellers.
 2. **No views counter anywhere** — only units/revenue (from `transactions`) are shown; "views" are omitted.
 3. **`fee_percent` is not exposed by `GET /api/settings`**; the dashboard reads `platform_settings` server-side. Suggest adding `feePercent` to `/api/settings`. Also `transactions.platform_fee_cents`/`processing_fee_cents` are never computed (no fee logic). (Superseded: the dashboard no longer hard-codes any percentage — see QA follow-up.)
 4. **Video upload not implemented** (`/api/drops/:id/files` is images-only, 15 MiB cap from `max_image_size_bytes`; `max_video_size_bytes` 500 MiB exists but unused; `/api/settings` doesn't return it). UI accepts `.mp4` selection but blocks it with a clear message (`videoUploadEnabled` flag in `lib/upload-limits.ts`). The spec "500 MB/file" currently only applies to video; **images are capped at 15 MB** on the backend.
@@ -68,11 +68,47 @@ App components: `components/auth/*` (AuthShell, PasswordInput, PasswordStrength,
 | FE-06 | `/design` calls `notFound()` when `NODE_ENV==='production'` unless `ENABLE_DESIGN_PAGE=1` (page is `force-dynamic`, so the env var is read at request time). Documented in `.env.example`. | `curl -o /dev/null -w '%{http_code}' localhost:3400/design` → 404 (200 with the flag); e2e check. |
 | Placeholders | `/terms`, `/privacy`, `/dmca`, `/contact`: shared `ComingSoon` page ("Coming soon." + back link), `robots: noindex`, no legal wording. The footer / signup / Buy-flow links now resolve. | Click *Terms* on a buyer page; screenshots `placeholder-terms-*`, `placeholder-privacy-*`. |
 
-### Earnings data source — IMPORTANT
-`GET /api/earnings` does **not exist on this branch's base (`main` @ `94af2c0`)**; it lives on `origin/payments/abstraction` (ledger-based). Merging that backend branch here was out of scope, so `src/app/dashboard/data.ts` keeps reading `transactions`/`payouts` directly but now produces the **same semantics as that endpoint's `lifetime` totals**: fee totals are net of fee shares returned on refunds/chargebacks (a reversed sale contributes 0 fees), `refunded` and `chargeback` are separate gross amounts, and refunds are subtracted **once** (from gross) — never again from the fees. On this base a reversal is always a full reversal (`transactions.status`), so the numbers reconcile exactly with the ledger model. Once payments lands, replace `getEarnings` with a fetch of `/api/earnings` and map `lifetime.{grossCents, platformFeeCents, processingFeeCents, refundedCents, chargebackCents, paidOutCents, requestedPayoutCents}` + `balance.{availableCents,pendingCents}` into `EarningsTotals` (`lib/earnings.ts`); the UI needs no other change. Note that payments' `balance.pendingCents` means *held for N days*, whereas the card here labelled **Pending payouts** means *payouts requested but not yet paid* (this base has no hold period) — add a "Pending (in hold)" card at that point.
+### Earnings data source (updated after rebasing onto `main` with payments)
+`main` now contains the payments layer (migrations 005–012, ledger, `GET /api/earnings`). The dashboard no longer has any earnings maths of its own:
+`src/app/dashboard/data.ts#getEarnings` calls payments' `getEarningsSummary(sellerId)` **directly** (the function behind `GET /api/earnings`). That is the idiomatic choice for a server component: the seller id comes from the session (`getSessionSellerId`), never from the client (seller isolation), and there is no extra HTTP hop or cookie forwarding. The HTTP endpoint is unchanged and is checked against the dashboard in the e2e.
+`lib/earnings.ts#toEarningsView` only maps names and derives display figures. Mapping (`EarningsSummary` → UI):
+
+| UI figure | Source |
+|---|---|
+| Gross sales (+ sales count) | `lifetime.grossCents`, `lifetime.salesCount` (sum of `sale_credit`; refunded/charged-back sales stay in gross) |
+| Platform fee | `lifetime.platformFeeCents` (ledger, already net of fee shares returned on refunds/chargebacks) |
+| Processing fees | `lifetime.processingFeeCents` (same) |
+| Refunded / Charged back | `lifetime.refundedCents` / `lifetime.chargebackCents` (partial refunds included; always shown separately) |
+| Your earnings (net) | `balance.totalCents + lifetime.paidOutCents + lifetime.requestedPayoutCents` (payouts only move money out of the balance, so adding them back gives lifetime net; includes chargeback fees) |
+| Chargeback fees (only if ≠ 0) | residual `gross − refunded − chargebacks − platform − processing − net` (the summary doesn't list them separately) |
+| Available | `balance.availableCents` — **may be negative**, shown as "Balance owed" (red) + explanation, never clamped |
+| Pending | `balance.pendingCents` (inside the `holdDays` hold, e.g. 7 days) |
+| In payout | `lifetime.requestedPayoutCents` (payouts `requested`/`approved`) |
+| Paid out | `lifetime.paidOutCents` |
+| hint texts | `holdDays`, `minPayoutCents`, `payoutEligible` |
+
+Invariant (unit-tested and used in the e2e): Available + Pending + In payout + Paid out = Net.
+Per-drop *Sold / Revenue* in the drops table still come from two small `transactions` queries (succeeded sales, gross) because the summary has no per-drop data.
+
+### Round 2 QA (`qa/results-frontend-dashboard-2.md`)
+| ID | What changed | How to verify |
+|---|---|---|
+| FE-07 | Duplicated SQL/maths removed (see above): pending/in-payout, hold, partial refunds, chargeback fees, failed/pending checkouts all come from the ledger. | `qa/scripts/qa-fe2-divergence.mjs` scenario; or seed + compare `/dashboard` to `GET /api/earnings` (e2e check "[FE-07/08]"). |
+| FE-08 | No `Math.max(0, …)`: negative available shows as **Balance owed −$46.80**, red card + alert "You owe …, deducted from future earnings". | seed seller `ned` (sale paid out, then refunded); screenshot `dashboard-overview-negative-balance`. |
+| FE-09 | `X-Robots-Tag: noindex, nofollow` on `/terms /privacy /dmca /contact` via `next.config.ts` headers (meta robots kept). | `curl -sI localhost:3400/terms | grep -i x-robots`. |
+| FE-10 | `components/LegalLinks.tsx` (Terms · Privacy · DMCA · Contact) under the auth forms (`/login /signup /forgot-password /reset-password`), in the dashboard shell footer, in the buyer-page footer (so also the unavailable page). Landing footer reuses the same list. | `curl -s localhost:3400/login | grep -o 'href="/\(terms\|privacy\|dmca\|contact\)"' | sort -u`; e2e check. |
+| FE-11 | New-drop 429 banner and upload errors use `formatDurationLong` ("…in 58 minutes"). | `tests/frontend-earnings.test.ts`. |
+| og/twitter | `/u/<id>` has page-specific `og:*`/`twitter:*`: title "<drop title> · Unveil", description "A payment link by <seller name> on Unveil." (only what the page already shows publicly), generic `/icons/icon-512.png`, canonical URL. No description text, price, file names or preview images. Unavailable links keep the generic site tags. | view-source of `/u/<id>`; e2e check. |
+| Buy flow | After the rebase `main` has a real checkout (`POST /api/checkout` → hosted page). `BuyPanel` was re-pointed at that contract (email + 18+ confirmation + `Idempotency-Key`, redirect to `checkoutUrl`, 429 countdown) and keeps our design; main's plain `BuyForm.tsx` is left in the tree but unused. The "All sales are final" text now comes from `lib/purchase-copy.ts`. | `/u/<id>` → fill email, tick box → lands on `/pay/mock/<session>` (local/test only). |
+
+Rebase note: 12 frontend commits replayed onto `origin/main` @ `10c4e65`; conflicts: `src/app/u/[linkId]/page.tsx` (main changed it for BuyForm; ours kept) and `.env.example` (both blocks kept). `src/app/components/AppShell.tsx` (deleted by our dashboard rewrite) is restored because main's admin/hosted-checkout pages import it.
+
+`seed-demo` now drives the **real** payments pipeline (mock processor: checkout → pay → refund/partial refund/chargeback webhooks → payout service) and needs `PAYMENT_WEBHOOK_SECRET` and `MOCK_PAYMENTS_ENABLED=1` in `.env`. Sellers: `maya` (available + pending + in-payout + paid-out, full and partial refund, chargeback with $5 fee), `ned` (negative balance), `sam`, `jo`.
 
 ## Screenshots
 `screenshots/dashboard/<name>-mobile-390x844.png` (2× DPR) and `<name>-desktop-1280x800.png`, full-page, produced by `scripts/screenshots-dashboard.mjs` (list in `screenshots/dashboard/INDEX.md`; horizontal-overflow audit at 360/390/1280 in `overflow-report.json` — all 0px).
 Notes: the signup 429 screenshot uses a mocked 429 response (same shape as the real `SIGNUP_IP` limiter: `429`, `Retry-After`, `{code:"rate_limited"}`); the sign-in lockout shots use the **real** progressive login delay.
 
 Retaken for the QA follow-up: `dashboard-overview`, `drop-unpublish-confirm`, `drop-publish-attestation-dialog`; new: `signup-429-long-wait`, `buyer-429-long-wait`, `placeholder-terms`, `placeholder-privacy`. `seed-demo` now also inserts one refunded and one charged-back sale for maya.
+
+Round-2 screenshot changes: `dashboard-overview` (ledger-backed: available / pending / in payout / paid out, partial refund + chargeback + chargeback fee), new `dashboard-overview-negative-balance`, `buyer-ready-to-buy` / `buyer-hosted-checkout` (real checkout flow), and every auth / buyer / dashboard page now shows the Terms · Privacy · DMCA · Contact footer. The remaining pages (landing, `/design`) are unchanged.

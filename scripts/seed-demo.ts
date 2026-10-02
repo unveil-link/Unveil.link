@@ -1,4 +1,4 @@
-// Seeds demo data through the REAL API (+ a few SQL rows for things the API can't create yet: sales, payouts, flagged status).
+// Seeds demo data through the REAL API and the REAL payments pipeline (mock processor: checkout -> pay -> refund/chargeback webhooks -> payouts service).
 // usage: BASE_URL=http://localhost:3400 npx tsx scripts/seed-demo.ts      (needs .env for DATABASE_URL; idempotent per run via a unique suffix)
 import { config } from "dotenv";
 import sharp from "sharp";
@@ -69,29 +69,65 @@ async function main() {
   const flagged = await mk("Pop-up reel", 999, "Paused drop.", 1, false, 5);
   await db.query("UPDATE drops SET status='flagged' WHERE id=$1", [flagged.id]);
 
-  const sale = async (dropId: string, cents: number, n: number) => {
-    for (let i = 0; i < n; i++) {
-      const platform = Math.round(cents * 0.1), processing = Math.round(cents * 0.029 + 30);
-      await db.query(
-        `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, processor_ref, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now() - ($9 || ' days')::interval)`,
-        [dropId, mayaId, `buyer${i}@example.test`, cents, platform, processing, cents - platform - processing, `demo_${stamp}_${dropId.slice(0, 6)}_${i}`, String(i)],
-      );
-    }
+  // ---- Money: everything goes through the REAL payments pipeline (mock processor), so the ledger, fees and hold are exactly what
+  // production code produces. Needs PAYMENT_WEBHOOK_SECRET and MOCK_PAYMENTS_ENABLED=1 in .env (loopback APP_URL only).
+  const { mockEvents, signMockEvent } = await import("../src/server/payments/mock/events");
+  const { requestPayout, approvePayout, markPayoutPaid } = await import("../src/server/payments/payouts");
+  const { pool } = await import("../src/server/db");
+  const setHold = (d: number) => db.query("UPDATE platform_settings SET payout_hold_days=$1 WHERE id=1", [d]);
+  const setCbFee = (c: number) => db.query("UPDATE platform_settings SET chargeback_fee_cents=$1 WHERE id=1", [c]);
+  const secret = process.env.PAYMENT_WEBHOOK_SECRET ?? "";
+  if (secret.length < 32) throw new Error("PAYMENT_WEBHOOK_SECRET (>= 32 chars) must be set in .env to seed sales");
+
+  let n = 0;
+  /** buy one drop as an anonymous buyer; returns our transaction id */
+  const buy = async (link: string): Promise<string> => {
+    const buyer = new Session();
+    const co = await buyer.req("POST", "/api/checkout", { json: { linkId: link, email: `buyer${n++}+${stamp}@example.test`, confirmOver18: true } });
+    const sessionId = String(co.checkoutUrl).split("/").pop()!;
+    const paid = await buyer.req("POST", "/api/dev/payments/pay", { json: { sessionId, card: "4242424242424242" } });
+    if (paid.status !== "succeeded") throw new Error("mock payment did not succeed: " + JSON.stringify(paid));
+    return co.transactionId as string;
   };
-  await sale(spring.id, 1200, 18);
-  await sale(studio.id, 2500, 7);
-  await sale(travel.id, 800, 5);
-  // One refunded and one charged-back sale (fees on these were returned, so they must not change fee totals/net).
-  for (const [i, st, cents] of [[0, "refunded", 5000], [1, "charged_back", 2500]] as const) {
-    const platform = Math.round(cents * 0.1), processing = Math.round(cents * 0.029 + 30);
-    await db.query(
-      `INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, processor_ref, status, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now() - interval '3 days')`,
-      [studio.id, mayaId, `reversed${i}@example.test`, cents, platform, processing, cents - platform - processing, `demo_${stamp}_rev_${i}`, st],
-    );
-  }
-  await db.query("INSERT INTO payouts (seller_id, amount_cents, status, provider_ref) VALUES ($1, 15000, 'paid', $2), ($1, 6000, 'pending', $3)", [mayaId, `po_${stamp}_1`, `po_${stamp}_2`]);
+  const refund = (txId: string, amountCents?: number) => new Session().req("POST", "/api/dev/payments/refund", { json: { transactionId: txId, amountCents } });
+  const chargeback = async (txId: string) => {
+    const sgn = signMockEvent(mockEvents.chargeback({ transactionId: txId, amountCents: null }), secret);
+    const res = await fetch(BASE + "/api/webhooks/mock", { method: "POST", headers: sgn.headers, body: sgn.rawBody });
+    if (!res.ok) throw new Error("chargeback webhook -> " + res.status + " " + (await res.text()));
+  };
+  const buyMany = async (link: string, count: number) => { const ids: string[] = []; for (let i = 0; i < count; i++) ids.push(await buy(link)); return ids; };
+
+  // Maya: older sales (hold 0 => already AVAILABLE), reversals, payouts; then fresh sales inside the 7-day hold (PENDING).
+  await setHold(0);
+  await buyMany(spring.public_link_id, 18);
+  const studioTx = await buyMany(studio.public_link_id, 7);
+  const travelTx = await buyMany(travel.public_link_id, 5);
+  await refund(studioTx[0]);                 // full refund of a $25.00 sale
+  await refund(studioTx[1], 1000);           // PARTIAL refund: $10.00 of a $25.00 sale
+  await setCbFee(500);
+  await chargeback(travelTx[0]);             // chargeback on a $8.00 sale + $5.00 chargeback fee
+  await setCbFee(0);
+  const paidOut = await requestPayout(mayaId, 15000);   // $150.00: requested -> approved -> paid
+  await markPayoutPaid((await approvePayout(paidOut.id)).id);
+  await requestPayout(mayaId, 6000);                    // $60.00: requested (funds reserved)
+  await setHold(7);
+  await buyMany(spring.public_link_id, 3);              // these 3 sales sit inside the hold -> "Pending"
+
+  // Ned: negative balance. A $60.00 sale is paid out in full, then refunded afterwards => available < 0 ("you owe").
+  const ned = new Session();
+  const nedEmail = `ned+${stamp}@example.test`;
+  await ned.req("POST", "/api/auth/signup", { json: { email: nedEmail, password: PASSWORD, displayName: "Ned Okafor" } });
+  await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [nedEmail]);
+  const nedId = (await db.query("SELECT id FROM sellers WHERE email=$1", [nedEmail])).rows[0].id as string;
+  const nd = (await ned.req("POST", "/api/drops", { json: { title: "Print pack", priceCents: 6000, description: "Printable pack." } })).drop;
+  await upload(ned, nd.id, 2, "print-pack-1.jpg");
+  await ned.req("POST", `/api/drops/${nd.id}/publish`, { json: { attestation: { over18: true, ownsRights: true, consentOfSubjects: true } } });
+  await setHold(0);
+  const nedTx = await buy(nd.public_link_id);
+  await markPayoutPaid((await approvePayout((await requestPayout(nedId)).id)).id);
+  await refund(nedTx);
+  await setHold(7);
+  await pool().end();
 
   // --- Seller B: brand-new (empty state), pending verification
   const sam = new Session();
@@ -109,7 +145,7 @@ async function main() {
   const out = {
     base: BASE, password: PASSWORD,
     maya: { email: mayaEmail, links: { spring: spring.public_link_id, studio: studio.public_link_id, travel: travel.public_link_id, unpublished: unpub.public_link_id, draft: draft.public_link_id }, dropIds: { spring: spring.id, draft: draft.id, flagged: flagged.id } },
-    sam: { email: samEmail }, jo: { email: joEmail, dropId: jd.id },
+    sam: { email: samEmail }, jo: { email: joEmail, dropId: jd.id }, ned: { email: nedEmail },
   };
   const fs = await import("node:fs");
   fs.mkdirSync(".e2e", { recursive: true });

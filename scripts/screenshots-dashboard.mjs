@@ -175,11 +175,17 @@ const phases = {
     await page.getByTestId("buy-button").click();
     await page.getByText("Please confirm to continue").waitFor();
     await snap(page, "buyer-needs-confirmation", vp);
-    await page.getByLabel(/I agree to the/).check();
+    // real checkout: email + 18+ confirmation -> POST /api/checkout -> hosted (mock) checkout page
+    await page.getByLabel(/Email/).fill("buyer@example.test");
+    await page.getByTestId("over18").check();
+    await snap(page, "buyer-ready-to-buy", vp);
     await page.getByTestId("buy-button").click();
-    await page.getByTestId("checkout-notice").waitFor();
-    await snap(page, "buyer-checkout-test-mode", vp);
+    await page.waitForURL(/\/pay\/mock\//, { timeout: 15000 });
+    await snap(page, "buyer-hosted-checkout", vp);
+    await go(page, `/u/${seed.maya.links.spring}`);
     // long 429 wait on the Buy button (FE-05)
+    await page.getByLabel(/Email/).fill("buyer@example.test");
+    await page.getByTestId("over18").check();
     await page.route("**/api/checkout", (r) => r.fulfill({ status: 429, headers: { "retry-after": "3481", "content-type": "application/json" }, body: JSON.stringify({ error: "Too many requests.", code: "rate_limited" }) }));
     await page.getByTestId("buy-button").click({ force: true }).catch(() => {});
     await page.getByRole("button", { name: /Try again in/ }).waitFor();
@@ -202,6 +208,12 @@ const phases = {
     const ctx = await ctxFor(vp, "sam"); const page = await ctx.newPage();
     await go(page, "/dashboard"); await snap(page, "dashboard-empty-state", vp);
     await go(page, "/dashboard/drops"); await snap(page, "drop-list-empty", vp);
+    await ctx.close();
+  },
+  async negative(vp) {
+    // seller whose only sale was paid out and then refunded: available < 0 ("you owe")
+    const ctx = await ctxFor(vp, "ned"); const page = await ctx.newPage();
+    await go(page, "/dashboard"); await snap(page, "dashboard-overview-negative-balance", vp);
     await ctx.close();
   },
   async overview(vp) {

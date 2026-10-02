@@ -5,13 +5,16 @@ Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. F
 - buyer-429-long-wait
 - buyer-checkout-test-mode
 - buyer-draft-not-found
+- buyer-hosted-checkout
 - buyer-needs-confirmation
 - buyer-not-found
 - buyer-published
 - buyer-published-3-files
+- buyer-ready-to-buy
 - buyer-unpublished
 - dashboard-empty-state
 - dashboard-overview
+- dashboard-overview-negative-balance
 - dashboard-pending-verification
 - design
 - download-page-panel
