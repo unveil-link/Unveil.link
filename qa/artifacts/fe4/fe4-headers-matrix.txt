@@ -1,0 +1,42 @@
+### 4401
+/api/earnings                      HTTP/1.1 401 Unauthorized Cache-Control: no-store 
+/api/earnings/                     HTTP/1.1 308 Permanent Redirect 
+/api/earnings?x=1                  HTTP/1.1 401 Unauthorized Cache-Control: no-store 
+/api/auth/me                       HTTP/1.1 401 Unauthorized 
+/api/drops                         HTTP/1.1 401 Unauthorized 
+/dashboard                         HTTP/1.1 307 Temporary Redirect Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/                                  HTTP/1.1 200 OK Cache-Control: s-maxage=31536000 
+/login                             HTTP/1.1 200 OK Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/u/zzz                             HTTP/1.1 404 Not Found X-Robots-Tag: noindex, nofollow Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/terms                             HTTP/1.1 200 OK X-Robots-Tag: noindex, nofollow Cache-Control: s-maxage=31536000 
+/privacy                           HTTP/1.1 200 OK X-Robots-Tag: noindex, nofollow Cache-Control: s-maxage=31536000 
+/dmca                              HTTP/1.1 200 OK X-Robots-Tag: noindex, nofollow Cache-Control: s-maxage=31536000 
+/contact                           HTTP/1.1 200 OK X-Robots-Tag: noindex, nofollow Cache-Control: s-maxage=31536000 
+/api/checkout                      HTTP/1.1 405 Method Not Allowed 
+/api/payments/webhook              HTTP/1.1 404 Not Found Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/_next/static/chunks/nonexistent.js HTTP/1.1 404 Not Found Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/icons/icon-512.png                HTTP/1.1 200 OK Cache-Control: public, max-age=0 
+/manifest.webmanifest              HTTP/1.1 200 OK cache-control: public, max-age=0, must-revalidate 
+/api/health                        HTTP/1.1 404 Not Found Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/pay/mock/x                        HTTP/1.1 404 Not Found Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+### 4411
+/api/earnings                      HTTP/1.1 401 Unauthorized 
+/api/earnings/                     HTTP/1.1 308 Permanent Redirect 
+/api/earnings?x=1                  HTTP/1.1 401 Unauthorized 
+/api/auth/me                       HTTP/1.1 401 Unauthorized 
+/api/drops                         HTTP/1.1 401 Unauthorized 
+/dashboard                         HTTP/1.1 307 Temporary Redirect Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/                                  HTTP/1.1 200 OK Cache-Control: s-maxage=31536000 
+/login                             HTTP/1.1 200 OK Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/u/zzz                             HTTP/1.1 404 Not Found X-Robots-Tag: noindex, nofollow Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/terms                             HTTP/1.1 200 OK X-Robots-Tag: noindex, nofollow Cache-Control: s-maxage=31536000 
+/privacy                           HTTP/1.1 200 OK X-Robots-Tag: noindex, nofollow Cache-Control: s-maxage=31536000 
+/dmca                              HTTP/1.1 200 OK X-Robots-Tag: noindex, nofollow Cache-Control: s-maxage=31536000 
+/contact                           HTTP/1.1 200 OK X-Robots-Tag: noindex, nofollow Cache-Control: s-maxage=31536000 
+/api/checkout                      HTTP/1.1 405 Method Not Allowed 
+/api/payments/webhook              HTTP/1.1 404 Not Found Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/_next/static/chunks/nonexistent.js HTTP/1.1 404 Not Found Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/icons/icon-512.png                HTTP/1.1 200 OK Cache-Control: public, max-age=0 
+/manifest.webmanifest              HTTP/1.1 200 OK cache-control: public, max-age=0, must-revalidate 
+/api/health                        HTTP/1.1 404 Not Found Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 
+/pay/mock/x                        HTTP/1.1 404 Not Found Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate 

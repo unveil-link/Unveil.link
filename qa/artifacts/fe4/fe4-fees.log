@@ -1,0 +1,31 @@
+== M3-05/06 fee math
+   $20.00: platform $2.00 processing $2.40 net $15.60 (10.00% / 12.00%)
+   OK   $20.00: platform + processing + net = gross exactly, ledger sum = net, integer cents
+   OK   $20.00 -> platform $2.00, processing $2.40, net $15.60 (spec M3-05)
+   $1.00: platform $0.10 processing $0.12 net $0.78 (10.00% / 12.00%)
+   OK   $1.00: platform + processing + net = gross exactly, ledger sum = net, integer cents
+   $1.01: platform $0.10 processing $0.12 net $0.79 (10.00% / 12.00%)
+   OK   $1.01: platform + processing + net = gross exactly, ledger sum = net, integer cents
+   $9.99: platform $1.00 processing $1.20 net $7.79 (10.00% / 12.00%)
+   OK   $9.99: platform + processing + net = gross exactly, ledger sum = net, integer cents
+   $49.99: platform $5.00 processing $6.00 net $38.99 (10.00% / 12.00%)
+   OK   $49.99: platform + processing + net = gross exactly, ledger sum = net, integer cents
+   $123.45: platform $12.35 processing $14.81 net $96.29 (10.00% / 12.00%)
+   OK   $123.45: platform + processing + net = gross exactly, ledger sum = net, integer cents
+   $500.00: platform $50.00 processing $60.00 net $390.00 (10.00% / 12.00%)
+   OK   $500.00: platform + processing + net = gross exactly, ledger sum = net, integer cents
+== M3-07 change fee % in settings (SQL) -> applies to new sales only, no deploy
+   OK   15%: new sale platform $3.00 (=$3.00), earlier sale unchanged $2.00
+== M3-03 decline cards: no succeeded tx, no ledger, friendly message, retry on same session
+   OK   declined: 200 status failed, 0 ledger lines, message 'Your card was declined. Please try a different card.'
+   OK   retry with a good card on the same session succeeds
+   OK   insufficient funds: 200 status failed, 0 ledger lines, message 'Your card has insufficient funds. Please try a different card.'
+   OK   expired: 200 status failed, 0 ledger lines, message 'Your card has expired. Please try a different card.'
+   OK   bad CVC: 200 status failed, 0 ledger lines, message 'The security code you entered is incorrect. Please check it and try again.'
+   OK   garbage: 200 status failed, 0 ledger lines, message 'That card number doesn't look right. Please check it and try again.'
+== M3-04 3-D Secure
+   no 3DS card/challenge in mock processor (cards.ts has 5 outcomes) -> BLOCKED
+== M3-20 timing (API-level, no human steps): open page -> checkout -> pay
+   page 15 ms, checkout+pay 15 ms; download page does not exist -> M3-20 stays BLOCKED
+   OK   paid
+RESULT fails=0

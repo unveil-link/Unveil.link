@@ -1,0 +1,34 @@
+   OK   signup
+== hold = 7 days (default): sale lands pending, available_at = sale time + 7 days
+   entries: [["sale_credit",2000,{"days":7}],["platform_fee",-200,{"days":7}],["processing_fee",-240,{"days":7}]]
+   OK   new sale: pending $15.60 / available $0.00 (hold 7d)
+   OK   available_at − created_at = exactly 7 days on all 3 lines
+   OK   UI: pending $15.60, available $0.00, 'Becomes available 7 days after each sale'
+== boundaries: move the sale's available_at relative to now (throwaway DB)
+   OK   now() + 1 hour (inside hold): API pending (avail $0.00, pend $15.60)
+   OK   now() + 1 second: API pending (avail $0.00, pend $15.60)
+   OK   now() − 1 second: API available (avail $15.60, pend $0.00)
+   OK   now() − 1 microsecond: API available (avail $15.60, pend $0.00)
+   OK   7 days − 1 s after sale (not yet): API pending (avail $0.00, pend $15.60)
+   live flip: available_at = now()+3s, poll API every 500ms without any other change
+   timeline (ms,pending,available): ["5:1560:0","414:1560:0","822:1560:0","1231:1560:0","1640:1560:0","2049:1560:0","2458:1560:0","2867:1560:0","3274:0:1560","3686:0:1560","4094:0:1560","4502:0:1560","4910:0:1560","5318:0:1560","5727:0:1560"]
+   OK   flips pending→available at ~3274 ms (target 3000); pending+available never loses/duplicates cents
+   OK   UI after flip: available $15.60, pending $0.00
+== hold changed in settings does not rewrite existing entries
+   OK   hold setting 0: existing entry stays pending $15.60 (hold is stamped at sale time); hint switches to 'right away'
+   OK   hold 0: new sale entries have available_at = created_at ({})
+   OK   hold 0: new sale immediately available $15.60, old one still pending $15.60
+   OK   hold 1: '1 day' hint grammar + entry hold {"days":1}
+   hint at hold=1: Becomes available 1 day after each sale
+   OK   singular 'day'
+== refund inside the hold window reduces PENDING, not available; after the window, available
+   refund tx1 $5.00 (tx1 still pending, available_at +5d) -> 200 {"transactionId":"0c3bddb7-1897-4fb6-ac13-1de96de23833","amountCents":500,"providerRefundId":"mockrf_e922595bc036dc3a880
+   OK   refund inside hold: pending $31.20 → $27.30, available unchanged $15.60
+   OK   after tx1's window ends: its (net of refund) money is available; only the hold=1 sale tx3 ($15.60) stays pending; total $42.90 = ledger sum
+   OK   UI available $27.30 pending $15.60
+   min payout $25.00, available $27.30, payoutEligible=true
+   OK   payoutEligible consistent with available vs min payout
+   available hint: Ready for a payout
+== hold stamping across hold change for chargeback fee line (inherit sale available_at)
+   (chargeback webhook path covered by maya's seed + payments rounds; skipping signed webhook here)
+RESULT fails=0

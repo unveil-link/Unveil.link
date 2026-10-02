@@ -1,0 +1,33 @@
+== A. MOCK_PAYMENTS_ENABLED unset/0 (production-like): buyer page + checkout
+   [mock disabled] url /u/K7lU34V_n8un notice: Couldn’t start checkout Payments are not available | button: Pay $25.00
+   OK   buyer sees a friendly notice, no redirect, no raw code
+   OK   button re-enabled so buyer can retry
+   OK   API checkout -> 503 {"error":"Payments are not available","code":"payments_unavailable"}
+   GET /pay/mock/mocksess_x -> 404
+   OK   /pay/mock/mocksess_x: 404 (not usable)
+   POST /api/dev/payments/pay -> 404
+   OK   /api/dev/payments/pay: 404 (not usable)
+   POST /api/dev/payments/refund -> 404
+   OK   /api/dev/payments/refund: 404 (not usable)
+   POST /api/webhooks/mock -> 503
+   OK   /api/webhooks/mock: 503 (not usable)
+   OK   buyer page still renders (200) without mock
+== B. seller no longer verified / drop unpublished after page load (409/404 surfaced to the buyer)
+   [seller manual_review] url /u/K7lU34V_n8un notice: Couldn’t start checkout This drop can't be purchased right now | button: Pay $25.00
+   OK   unverified seller: friendly server message, no redirect
+   OK   API: 409
+   [unpublished after page load] notice: Couldn’t start checkout Drop not found; url /u/K7lU34V_n8un
+   OK   unpublished after load: friendly notice, no redirect
+== C. real checkout rate limit (default limits instance) -> countdown UI
+   statuses: 201,201,201,201,201,201,201,201,201,201,429,429,429,429 Retry-After: 60
+   OK   default CHECKOUT limit 10/60s then 429 + Retry-After
+   UI button 'Try again in 60s' notice 'Please slow down Too many attempts. You can try again in 60 seconds.'
+   OK   real 429: button disabled with countdown, notice in plain words
+   after wait, button: Pay $25.00
+   OK   button re-enabled when countdown ends
+== D. webhook-driven unlock (signed vs unsigned) on the limits-off instance
+   OK   unsigned webhook -> 401
+   OK   bad signature -> 401
+   OK   after rejected webhooks the tx is still pending (not unlocked by a forged event)
+   OK   buyer status endpoint exposes no seller/fee/email: {"transactionId":"18f40fe8-e0c1-4d3a-9585-212f1e2b2c93","status":"pending","amountCents":2500,"retryable":false,"message":null}
+RESULT fails=0

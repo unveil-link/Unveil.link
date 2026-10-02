@@ -1,0 +1,138 @@
+== FE-09 X-Robots-Tag on legal placeholders (+ variants)
+   GET /terms -> 200 x-robots-tag: noindex, nofollow meta: true
+   OK   /terms: 200, X-Robots-Tag 'noindex, nofollow', meta robots noindex
+   GET /privacy -> 200 x-robots-tag: noindex, nofollow meta: true
+   OK   /privacy: 200, X-Robots-Tag 'noindex, nofollow', meta robots noindex
+   GET /dmca -> 200 x-robots-tag: noindex, nofollow meta: true
+   OK   /dmca: 200, X-Robots-Tag 'noindex, nofollow', meta robots noindex
+   GET /contact -> 200 x-robots-tag: noindex, nofollow meta: true
+   OK   /contact: 200, X-Robots-Tag 'noindex, nofollow', meta robots noindex
+   GET /terms/ -> 308 x-robots-tag: null meta: false
+   OK   trailing slash handled (308, null)
+   GET /terms?x=1 -> 200 x-robots-tag: noindex, nofollow meta: true
+   OK   /terms?x=1: 200, X-Robots-Tag 'noindex, nofollow', meta robots noindex
+   GET /contact?utm=a -> 200 x-robots-tag: noindex, nofollow meta: true
+   OK   /contact?utm=a: 200, X-Robots-Tag 'noindex, nofollow', meta robots noindex
+   GET /TERMS -> 404 x-robots-tag: noindex, nofollow meta: false
+   GET /terms/x -> 404 x-robots-tag: null meta: false
+   OK   HEAD /terms also carries the header
+   (info) / -> 200 x-robots-tag: null
+   (info) /login -> 200 x-robots-tag: null
+   (info) /signup -> 200 x-robots-tag: null
+   (info) /forgot-password -> 200 x-robots-tag: null
+   (info) /reset-password -> 200 x-robots-tag: null
+   (info) /dashboard -> 307 x-robots-tag: null
+   (info) /design -> 404 x-robots-tag: null
+   (info) /robots.txt -> 200 x-robots-tag: null
+   (info) /2257 -> 404 x-robots-tag: null
+   OK   /u/<id> keeps X-Robots-Tag 'noindex, nofollow'
+   OK   /u/<unknown> has it too
+   robots.txt: User-Agent: * ⏎ Disallow: /u/ ⏎ Disallow: /d/ ⏎ Disallow: /api/ ⏎ Disallow: /dashboard ⏎ Disallow: /admin ⏎  ⏎ 
+== placeholders content
+   /terms: title=Terms · Unveil text= Terms · Unveil Unveil Terms Coming soon. Back to Unveil Unveil Sell your files with a simple payment link. Terms Privacy DMCA Contact © 2026 Unveil · unveil.link. All rights reserved. 
+   OK   /terms still a 'Coming soon' placeholder
+   OK   /terms: no invented legal claims
+   /privacy: title=Privacy · Unveil text= Privacy · Unveil Unveil Privacy Coming soon. Back to Unveil Unveil Sell your files with a simple payment link. Terms Privacy DMCA Contact © 2026 Unveil · unveil.link. All rights reserved. 
+   OK   /privacy still a 'Coming soon' placeholder
+   OK   /privacy: no invented legal claims
+   /dmca: title=DMCA · Unveil text= DMCA · Unveil Unveil DMCA Coming soon. Back to Unveil Unveil Sell your files with a simple payment link. Terms Privacy DMCA Contact © 2026 Unveil · unveil.link. All rights reserved. 
+   OK   /dmca still a 'Coming soon' placeholder
+   OK   /dmca: no invented legal claims
+   /contact: title=Contact · Unveil text= Contact · Unveil Unveil Contact Coming soon. Back to Unveil Unveil Sell your files with a simple payment link. Terms Privacy DMCA Contact © 2026 Unveil · unveil.link. All rights reserved. 
+   OK   /contact still a 'Coming soon' placeholder
+   OK   /contact: no invented legal claims
+   OK   query not reflected on /terms
+== FE-10 legal links per surface
+   OK   landing (/): /contact /dmca /privacy /terms
+   OK   login (/login): /contact /dmca /privacy /terms
+   OK   signup (/signup): /contact /dmca /privacy /terms
+   OK   forgot-password (/forgot-password): /contact /dmca /privacy /terms
+   OK   reset-password (/reset-password?token=): /contact /dmca /privacy /terms
+   OK   buyer page (/u/RMNRlzcg36_a): /contact /dmca /privacy /terms
+   OK   unavailable link (/u/zzzzzzzzzzzz): /contact /dmca /privacy /terms
+   OK   draft link (/u/-dClkrqZ0wab): /contact /dmca /privacy /terms
+   OK   /terms -> 200
+   OK   /privacy -> 200
+   OK   /dmca -> 200
+   OK   /contact -> 200
+   OK   dashboard overview: /contact /dmca /privacy /terms
+   OK   drops list: /contact /dmca /privacy /terms
+   OK   new drop: /contact /dmca /privacy /terms
+   OK   drop detail: /contact /dmca /privacy /terms
+   OK   dashboard shell: all 4 legal links are visible & clickable (/terms /privacy /dmca /contact)
+   dashboard @390 visible legal links: true,true,true,true  horizontal scroll: false
+   OK   dashboard @390: legal links visible without a drawer
+== FE-11 upload 429 human-readable (mocked Retry-After)
+   POST /api/drops 429 Retry-After 30 -> "We couldn’t create your drop Too many requests. Please try again in 30 seconds. | "
+   OK   new-drop banner says '30 seconds' (rounded up, same helper as FE-05)
+   OK   no raw '30 seconds' for long waits
+   POST /api/drops 429 Retry-After 59 -> "We couldn’t create your drop Too many requests. Please try again in 59 seconds. | "
+   OK   new-drop banner says '59 seconds' (rounded up, same helper as FE-05)
+   OK   no raw '59 seconds' for long waits
+   POST /api/drops 429 Retry-After 60 -> "We couldn’t create your drop Too many requests. Please try again in 60 seconds. | "
+   OK   new-drop banner says '60 seconds' (rounded up, same helper as FE-05)
+   OK   no raw '60 seconds' for long waits
+   POST /api/drops 429 Retry-After 121 -> "We couldn’t create your drop Too many requests. Please try again in 3 minutes. | "
+   OK   new-drop banner says '3 minutes' (rounded up, same helper as FE-05)
+   OK   no raw '121 seconds' for long waits
+   POST /api/drops 429 Retry-After 3480 -> "We couldn’t create your drop Too many requests. Please try again in 58 minutes. | "
+   OK   new-drop banner says '58 minutes' (rounded up, same helper as FE-05)
+   OK   no raw '3480 seconds' for long waits
+   POST /api/drops 429 Retry-After 3500 -> "We couldn’t create your drop Too many requests. Please try again in 59 minutes. | "
+   OK   new-drop banner says '59 minutes' (rounded up, same helper as FE-05)
+   OK   no raw '3500 seconds' for long waits
+   POST /api/drops 429 Retry-After 3600 -> "We couldn’t create your drop Too many requests. Please try again in 1 hour. | "
+   OK   new-drop banner says '1 hour' (rounded up, same helper as FE-05)
+   OK   no raw '3600 seconds' for long waits
+   POST /api/drops 429 Retry-After 4320 -> "We couldn’t create your drop Too many requests. Please try again in 1 hour 12 minutes. | "
+   OK   new-drop banner says '1 hour 12 minutes' (rounded up, same helper as FE-05)
+   OK   no raw '4320 seconds' for long waits
+   POST /api/drops 429 Retry-After 86400 -> "We couldn’t create your drop Too many requests. Please try again in 24 hours. | "
+   OK   new-drop banner says '24 hours' (rounded up, same helper as FE-05)
+   OK   no raw '86400 seconds' for long waits
+   file upload 429 (Retry-After 3500): jpg 11 KB · Too many requests — try again in 59 minutes.
+   OK   file-upload 429 text human-readable ('59 minutes')
+   file upload 429 (Retry-After 4320): jpg 11 KB · Too many requests — try again in 1 hour 12 minutes.
+   OK   file-upload 429 text human-readable ('1 hour 12 minutes')
+== og/twitter tags on /u/<id>
+   tags: {"description":"Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.","og:title":"Spring collection pack · Unveil","og:description":"A payment link by Maya Lin on Unveil.","og:url":"https://unveil.link/u/RMNRlzcg36_a","og:site_name":"Unveil","og:image":"https://unveil.link/icons/icon-512.png","og:image:width":"512","og:image:height":"512","og:image:alt":"Unveil","og:type":"website","twitter:card":"summary","twitter:title":"Spring collection pack · Unveil","twitter:description":"A payment link by Maya Lin on Unveil.","twitter:image":"https://unveil.link/icons/icon-512.png"} canonical: https://unveil.link/u/RMNRlzcg36_a title: Spring collection pack · Unveil
+   OK   og:title/twitter:title = '<drop title> · Unveil'
+   OK   description neutral: 'A payment link by Maya Lin on Unveil.'
+   OK   generic icon: og:image=https://unveil.link/icons/icon-512.png twitter:image=https://unveil.link/icons/icon-512.png
+   OK   twitter:card=summary
+   OK   og:url + canonical = /u/<id>
+   OK   no price/preview/original/file info in the tags
+   OK   drop description only in page body
+   image check: 200 image/png
+   draft link: title=Link unavailable · Unveil og:title=Unveil — Sell your files with a simple payment link og:desc=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+   OK   draft: generic tags, no drop/seller name leaked
+   unpublished link: title=Link unavailable · Unveil og:title=Unveil — Sell your files with a simple payment link og:desc=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+   OK   unpublished: generic tags, no drop/seller name leaked
+   OK   unknown id: generic tags
+   hostile titles + seller names
+   OK   title "<script>alert(1)</script> & \"q\" 's'" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="&lt;script&gt;alert(1)&lt;/script&gt; &a"
+   OK   title "<script>alert(1)</script> & \"q\" 's'" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="&lt;script&gt;alert(1)&lt;/script&gt; &a"
+   OK   title "</title><meta property=\"og:image\" co" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="&lt;/title&gt;&lt;meta property=&quot;og"
+   OK   title "</title><meta property=\"og:image\" co" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="&lt;/title&gt;&lt;meta property=&quot;og"
+   OK   title "\"><svg onload=alert(1)>" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="&quot;&gt;&lt;svg onload=alert(1)&gt; · "
+   OK   title "\"><svg onload=alert(1)>" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="&quot;&gt;&lt;svg onload=alert(1)&gt; · "
+   OK   title "Unveil" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="Unveil · Unveil"
+   OK   title "Unveil" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="Unveil · Unveil"
+   OK   title "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+   OK   title "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+   OK   title "emoji 🔥 ‮ RTL ​ zero" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="emoji 🔥 ‮ RTL ​ zero · Unveil"
+   OK   title "emoji 🔥 ‮ RTL ​ zero" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="emoji 🔥 ‮ RTL ​ zero · Unveil"
+   OK   title "{{7*7}} ${7*7} %s %d" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="{{7*7}} ${7*7} %s %d · Unveil"
+   OK   title "{{7*7}} ${7*7} %s %d" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="{{7*7}} ${7*7} %s %d · Unveil"
+   OK   title "a\nb\r\nc" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="a\nb\r\nc · Unveil"
+   OK   title "a\nb\r\nc" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="a\nb\r\nc · Unveil"
+   OK   title "ü é 日本語" / seller "Maya Lin": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="ü é 日本語 · Unveil"
+   OK   title "ü é 日本語" / seller "Eve \"><script>": 200, escaped (no raw tags), 1 <title>, 1 og:image, og:title="ü é 日本語 · Unveil"
+   OK   buyer page: hostile title/name rendered as text, nothing executed
+   h1 text: <img src=x onerror="window.__xss=1"><script>window.__xss=1</script>
+   OK   dashboard /dashboard: hostile title/name rendered as text, nothing executed
+   greeting: Hi, <img
+   OK   dashboard /dashboard/drops: hostile title/name rendered as text, nothing executed
+   OK   dashboard /dashboard/drops/4c890: hostile title/name rendered as text, nothing executed
+   OK   unpublish confirm modal with hostile title: nothing executed
+RESULT fails=0

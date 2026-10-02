@@ -1,0 +1,26 @@
+GET /dashboard/transactions  404
+GET /dashboard/sales         404
+GET /dashboard/payouts       404
+GET /dashboard/settings      404
+GET /dashboard/profile       404
+GET /settings                404
+GET /profile                 404
+GET /status                  404
+GET /api/status              404
+GET /api/transactions        404
+GET /api/payouts             404
+GET /api/auth/me             200
+GET /api/orders              404
+GET /receipt                 404
+PATCH /api/auth/me 405
+PUT /api/auth/me 405
+PATCH /api/drops/<id> 405
+PUT /api/drops/<id> 405
+DELETE /api/drops/<id> 405
+seller payout request endpoints:
+POST /api/payouts           404
+POST /api/payouts/request   404
+POST /api/seller/payouts    404
+20
+["amountCents","createdAt","displayStatus","dropId","dropTitle","id","reversedCents","sellerNetCents","status"]
+dashboard anon 307
