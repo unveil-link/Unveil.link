@@ -1,3 +1,5 @@
+import { formatDurationLong } from "./format";
+
 export type UploadOutcome =
   | { ok: true; file: { id: string; filename?: string; mime?: string; size_bytes?: number } }
   | { ok: false; status: number; error: string; code?: string; retryAfter?: number; aborted?: boolean };
@@ -51,7 +53,7 @@ export function uploadErrorMessage(r: Extract<UploadOutcome, { ok: false }>): st
     case "invalid_image": return "We couldn’t read this image. Try re-exporting it as JPG or PNG.";
     case "empty_file": return "This file is empty.";
     case "unauthenticated": return "Your session expired. Sign in again to continue.";
-    case "rate_limited": return `Too many requests — try again in ${r.retryAfter ?? 30}s.`;
+    case "rate_limited": return `Too many requests — try again in ${formatDurationLong(r.retryAfter ?? 30)}.`;
     default: return r.error;
   }
 }

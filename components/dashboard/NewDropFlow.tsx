@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Alert, Button, ButtonLink, Card, CardDescription, CardTitle, ExternalIcon, Field, Input, LinkIcon, Textarea } from "@/components/ui";
 import { CheckIcon } from "@/components/landing/Icons";
 import { api } from "@/lib/api";
-import { formatBytes, usd } from "@/lib/format";
+import { formatBytes, formatDurationLong, usd } from "@/lib/format";
 import { copyText, shareLabel, shareUrl } from "@/lib/share";
 import { uploadErrorMessage, uploadFile } from "@/lib/upload";
 import { validatePrice, type UploadLimits } from "@/lib/upload-limits";
@@ -115,7 +115,7 @@ export default function NewDropFlow({ limits, verification }: { limits: UploadLi
         setPhase("form");
         if (res.code === "price_out_of_range") setErrors({ price: res.error.replace(/ cents$/, "") });
         else if (res.status === 401) router.push("/login");
-        else if (res.status === 429) setBanner(`Too many requests. Please try again in ${res.retryAfter ?? 30} seconds.`);
+        else if (res.status === 429) setBanner(`Too many requests. Please try again in ${formatDurationLong(res.retryAfter ?? 30)}.`);
         else setBanner(res.error);
         return;
       }
