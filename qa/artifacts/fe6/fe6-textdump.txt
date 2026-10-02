@@ -1,0 +1,1950 @@
+
+######## landing
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Unveil — Sell your files with a simple payment link
+--- attrs
+Unveil home
+Primary
+Illustration of a payment link card with a blurred preview, a price of $12, and a Pay button
+Footer
+--- text
+Skip to content
+Unveil
+How it works
+For sellers
+For buyers
+FAQ
+Sign in
+Start selling
+Verification required to publish
+Sell your files with one simple link.
+Upload your photos, set a price, and share a payment link anywhere. Buyers pay by card — no account needed — and access to the files is shared once payment is confirmed.
+Start selling
+See how it works
+No subscriptions
+Keep most of every sale
+Paid by card
+12 photos
+Spring collection pack
+M
+by Maya Lin
+$12
+Verified creator
+Secure checkout
+Pay $12
+Pay by card · No account needed
+HOW IT WORKS
+From upload to paid in three steps
+Step 1
+Upload your files
+Drag in photos from your phone or computer. We store them privately and generate a blurred preview.
+Step 2
+Set a price & get a link
+Choose what each link costs and get a shareable payment link in seconds.
+Step 3
+Share anywhere and get paid
+Post your link in a message, bio, or email. Buyers pay by card, with no account needed. Access to the files is shared once payment is confirmed.
+FOR CREATORS
+Turn your work into income, on your terms
+Pay only when you make a sale. Set your own prices and keep most of every sale — no subscriptions, no lock-in.
+Start selling
+Read the FAQ
+Keep most of every sale
+No subscriptions or monthly fees
+Sales, fees and balance in your dashboard
+Payout requests coming soon
+FOR BUYERS
+Checkout you can trust
+Buying from a creator should be quick and safe. Here is what you can expect every time.
+Secure card checkout
+You pay by card on a separate checkout page, and Unveil does not store card numbers.
+No account needed
+Pay with a card and go. No sign-up, no passwords, no app to install.
+Access after payment
+Once your payment is confirmed, the creator’s files are shared with you. Delivery options are coming soon.
+Private links
+Each payment link is long and unguessable, and it isn’t listed or searchable. Only people the creator shares it with have it. Files are stored privately, with blurred previews until purchase.
+Verified creators
+A seller must have a verified status before they can publish a link, and the badge only shows while that is the case.
+FAQ
+Questions, answered
+Do buyers need an account?
+How do I get paid?
+What does it cost?
+What kinds of files can I sell?
+Are my files private?
+Unveil
+Sell your files with a simple payment link.
+Terms
+Privacy
+DMCA
+Contact
+© 2026 Unveil · unveil.link. All rights reserved.
+[details] Do buyers need an account?No. Buyers pay with a card at checkout, with no sign-up or password. We ask for an email address at checkout, and access to the files is shared once the payment is confirmed. Delivery options are coming soon. | How do I get paid?Each sale is listed in your dashboard as Pending. After a 7-day hold it becomes Available, and payouts start at $25. Payout requests and processing are coming soon. | What does it cost?There are no subscriptions or monthly fees. Each sale carries a platform fee and card-processing fees, and you keep most of every sale. Your dashboard shows the exact breakdown. | What kinds of files can I sell?Photos that you created and own the rights to (video is coming soon). Publishing requires a verified account status, and sellers must follow our Terms. | Are my files private?Yes. Files are stored privately, and previews are blurred until a purchase. Payment links are long and unguessable and aren’t listed or searchable, so only people you share a link with have it.
+
+######## login
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Sign in · Unveil
+--- attrs
+Unveil home
+you@example.com
+Show password
+Legal
+--- text
+Unveil
+Sell your files with one simple link.
+Get paid by card
+Buyers check out in seconds — no accounts, no friction.
+Private by design
+Originals are stored privately. Buyers only see blurred previews.
+One link, anywhere
+Share your payment link in a message, bio or email. Buyers check out with a card.
+© 2026 Unveil · unveil.link
+Welcome back
+Sign in to manage your drops and earnings.
+Email
+Password
+Forgot your password?
+Sign in
+New to Unveil? Create an account
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## signup
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Create your account · Unveil
+--- attrs
+Unveil home
+Maya Lin
+you@example.com
+Show password
+Legal
+--- text
+Unveil
+Sell your files with one simple link.
+Get paid by card
+Buyers check out in seconds — no accounts, no friction.
+Private by design
+Originals are stored privately. Buyers only see blurred previews.
+One link, anywhere
+Share your payment link in a message, bio or email. Buyers check out with a card.
+© 2026 Unveil · unveil.link
+Create your seller account
+Set up in a minute. Start sharing paid links today.
+Display name
+Shown to buyers on your payment links.
+Email
+Password
+At least 10 characters
+— not met yet
+Not your email or name
+— not met yet
+No repeats or simple sequences (aaaa…, 1234…)
+— not met yet
+Very common passwords are also rejected when you submit.
+Create account
+By creating an account you agree to our Terms and Privacy Policy.
+Already have an account? Sign in
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## forgot-password
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Reset your password · Unveil
+--- attrs
+Unveil home
+you@example.com
+Legal
+--- text
+Unveil
+Sell your files with one simple link.
+Get paid by card
+Buyers check out in seconds — no accounts, no friction.
+Private by design
+Originals are stored privately. Buyers only see blurred previews.
+One link, anywhere
+Share your payment link in a message, bio or email. Buyers check out with a card.
+© 2026 Unveil · unveil.link
+Reset your password
+Enter the email you signed up with and we’ll send you a reset link.
+Email
+Send reset link
+Back to sign in
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## reset-password
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Choose a new password · Unveil
+--- attrs
+Unveil home
+Show password
+Legal
+--- text
+Unveil
+Sell your files with one simple link.
+Get paid by card
+Buyers check out in seconds — no accounts, no friction.
+Private by design
+Originals are stored privately. Buyers only see blurred previews.
+One link, anywhere
+Share your payment link in a message, bio or email. Buyers check out with a card.
+© 2026 Unveil · unveil.link
+Choose a new password
+You’ll be signed out of all devices after changing it.
+New password
+At least 10 characters
+— not met yet
+Not your email or name
+— not met yet
+No repeats or simple sequences (aaaa…, 1234…)
+— not met yet
+Very common passwords are also rejected when you submit.
+Update password
+Back to sign in
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## terms
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Terms · Unveil
+--- attrs
+Unveil home
+Footer
+--- text
+Unveil
+Terms
+Coming soon.
+Back to Unveil
+Unveil
+Sell your files with a simple payment link.
+Terms
+Privacy
+DMCA
+Contact
+© 2026 Unveil · unveil.link. All rights reserved.
+[details] 
+
+######## privacy
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Privacy · Unveil
+--- attrs
+Unveil home
+Footer
+--- text
+Unveil
+Privacy
+Coming soon.
+Back to Unveil
+Unveil
+Sell your files with a simple payment link.
+Terms
+Privacy
+DMCA
+Contact
+© 2026 Unveil · unveil.link. All rights reserved.
+[details] 
+
+######## dmca
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=DMCA · Unveil
+--- attrs
+Unveil home
+Footer
+--- text
+Unveil
+DMCA
+Coming soon.
+Back to Unveil
+Unveil
+Sell your files with a simple payment link.
+Terms
+Privacy
+DMCA
+Contact
+© 2026 Unveil · unveil.link. All rights reserved.
+[details] 
+
+######## contact
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Contact · Unveil
+--- attrs
+Unveil home
+Footer
+--- text
+Unveil
+Contact
+Coming soon.
+Back to Unveil
+Unveil
+Sell your files with a simple payment link.
+Terms
+Privacy
+DMCA
+Contact
+© 2026 Unveil · unveil.link. All rights reserved.
+[details] 
+
+######## buyer published
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow, nocache
+og:title=Spring collection pack · Unveil
+og:description=A payment link by Maya Lin on Unveil.
+og:url=https://unveil.link/u/8rDyovtK3Nra
+og:site_name=Unveil
+og:image=https://unveil.link/icons/icon-512.png
+og:image:width=512
+og:image:height=512
+og:image:alt=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Spring collection pack · Unveil
+twitter:description=A payment link by Maya Lin on Unveil.
+twitter:image=https://unveil.link/icons/icon-512.png
+title=Spring collection pack · Unveil
+--- attrs
+Unveil home
+Preview
+Blurred preview of the first file
+Blurred preview
+you@example.com
+Why buyers trust Unveil
+Legal
+--- text
+Unveil
+Secure payment link
+6 files: 6 images
+Previews are blurred. Access to the full files is shared once your payment is confirmed.
+Verified creator
+Spring collection pack
+M
+by Maya Lin
+A set of 12 original edits from this season, shot on location. Full resolution, ready to use in your own projects.
+Price
+$12.00
+6 files: 6 images
+Email
+I confirm that I am 18 years of age or older, and I agree to the Terms.
+Pay $12.00
+Pay by card · No account needed
+All sales are final. Because this is a digital product, purchases can't be refunded or exchanged once completed.
+Secure checkout
+You pay by card on a separate checkout page.
+Access after payment
+Access to the files is shared once your payment is confirmed. Delivery options are coming soon.
+No account needed
+Just pay — nothing to sign up for.
+© 2026 Unveil · unveil.link
+Terms
+Privacy
+DMCA
+Contact
+Card checkout on a separate page. We never store card numbers.
+[details] 
+
+######## buyer unpublished
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow, nocache
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+robots=noindex
+title=Link unavailable · Unveil
+--- attrs
+Unveil home
+Legal
+--- text
+Unveil
+Secure payment link
+This link isn’t available
+It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it.
+Go to Unveil
+© 2026 Unveil · unveil.link
+Terms
+Privacy
+DMCA
+Contact
+Card checkout on a separate page. We never store card numbers.
+[details] 
+
+######## buyer draft
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow, nocache
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+robots=noindex
+title=Link unavailable · Unveil
+--- attrs
+Unveil home
+Legal
+--- text
+Unveil
+Secure payment link
+This link isn’t available
+It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it.
+Go to Unveil
+© 2026 Unveil · unveil.link
+Terms
+Privacy
+DMCA
+Contact
+Card checkout on a separate page. We never store card numbers.
+[details] 
+
+######## buyer unknown
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow, nocache
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+robots=noindex
+title=Link unavailable · Unveil
+--- attrs
+Unveil home
+Legal
+--- text
+Unveil
+Secure payment link
+This link isn’t available
+It may have been unpublished, removed, or mistyped. If someone sent you this link, ask them to double-check it.
+Go to Unveil
+© 2026 Unveil · unveil.link
+Terms
+Privacy
+DMCA
+Contact
+Card checkout on a separate page. We never store card numbers.
+[details] 
+
+######## 404
+--- meta
+robots=noindex
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Unveil — Sell your files with a simple payment link
+--- attrs
+
+--- text
+404
+This page could not be found.
+[details] 
+
+######## admin login
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow, nocache
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Admin · Unveil
+--- attrs
+Unveil home
+--- text
+Unveil
+Admin sign in
+Email
+Password
+Sign in
+[details] 
+
+######## buyer validation errors
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow, nocache
+og:title=Spring collection pack · Unveil
+og:description=A payment link by Maya Lin on Unveil.
+og:url=https://unveil.link/u/8rDyovtK3Nra
+og:site_name=Unveil
+og:image=https://unveil.link/icons/icon-512.png
+og:image:width=512
+og:image:height=512
+og:image:alt=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Spring collection pack · Unveil
+twitter:description=A payment link by Maya Lin on Unveil.
+twitter:image=https://unveil.link/icons/icon-512.png
+title=Spring collection pack · Unveil
+--- attrs
+Unveil home
+Preview
+Blurred preview of the first file
+Blurred preview
+you@example.com
+Why buyers trust Unveil
+Legal
+--- text
+Unveil
+Secure payment link
+6 files: 6 images
+Previews are blurred. Access to the full files is shared once your payment is confirmed.
+Verified creator
+Spring collection pack
+M
+by Maya Lin
+A set of 12 original edits from this season, shot on location. Full resolution, ready to use in your own projects.
+Price
+$12.00
+6 files: 6 images
+Email
+Enter a valid email address.
+I confirm that I am 18 years of age or older, and I agree to the Terms.
+Please confirm to continue.
+Pay $12.00
+Pay by card · No account needed
+All sales are final. Because this is a digital product, purchases can't be refunded or exchanged once completed.
+Secure checkout
+You pay by card on a separate checkout page.
+Access after payment
+Access to the files is shared once your payment is confirmed. Delivery options are coming soon.
+No account needed
+Just pay — nothing to sign up for.
+© 2026 Unveil · unveil.link
+Terms
+Privacy
+DMCA
+Contact
+Card checkout on a separate page. We never store card numbers.
+[details] 
+
+######## hosted /pay/mock page
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Mock checkout · Unveil
+--- attrs
+Unveil home
+--- text
+Unveil
+Mock checkout (test mode, no real payment)
+Spring collection pack · $12.00
+All sales are final. Because this is a digital product, purchases can't be refunded or exchanged once completed.
+Test card number
+4242 4242 4242 4242 approves; …0002 declines; …9995 insufficient funds.
+Pay (mock)
+Back to the drop
+[details] 
+
+######## maya: overview
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Overview · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Sales kept after refunds and chargebacks
+Gross kept after refunds and chargebacks
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+M
+Maya Lin
+maya+muqs57q7@example.test
+Sign out
+Hi, Maya
+Here’s how your drops are doing.
+New drop
+Verified
+Earnings
+Gross sales
+$515.00
+37 sales charged, before refunds
+Platform fee
+$47.20
+10% of completed sales
+Processing fees
+$56.64
+12% of completed sales · card processor
+Your earnings (net)
+$363.16
+76.9% of completed sales, after fees
+$515.00 gross − $47.20 platform fee − $56.64 processing fees − $35.00 refunded − $8.00 charged back − $5.00 chargeback fees = $363.16
+Reversed sales: $35.00 refunded · $8.00 charged back. Fees on reversed sales are returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($472.00 kept).
+Available
+$87.64
+You’ve reached the $25.00 minimum. Payout requests are coming soon
+Pending
+$65.52
+Becomes available 7 days after each sale
+In payout
+$60.00
+Requested or approved, not yet paid
+Paid out
+$150.00
+Payouts marked as paid
+Net earnings = gross sales − platform fee − card-processing fees − refunds, chargebacks and chargeback fees. Available + pending + in payout + paid out add up to your net earnings.
+Your drops
+6 total · 3 live
+View all
+Your drops
+DROP	STATUS	PRICE	FILES	SOLD (NET)	REVENUE (KEPT)	
+ACTIONS
+Pop-up reel
+Created Oct 2, 2026
+	Under review	$9.99	1	0	$0.00	
+View
+Winter archive
+Created Oct 2, 2026
+	Unpublished	$30.00	2	0	$0.00	
+Publish
+Manage
+Autumn preview (draft)
+Created Oct 2, 2026
+	Draft	$15.00	2	0	$0.00	
+Publish
+Manage
+Travel set, vol. 2
+unveil.link/u/CUoy3OLB8z_o
+	Published	$8.00	4	4	$32.00	
+Copy link
+Unpublish
+Manage
+Studio colour study
+unveil.link/u/hvkBFaJF-Upq
+	Published	$25.00	3	6	$140.00	
+Copy link
+Unpublish
+Manage
+Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## maya: drops
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Drops · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Filter drops by status
+Sales kept after refunds and chargebacks
+Gross kept after refunds and chargebacks
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+M
+Maya Lin
+maya+muqs57q7@example.test
+Sign out
+Drops
+Everything you’re selling, in one place.
+New drop
+All
+6
+Published
+3
+Drafts
+1
+Unpublished
+1
+Under review
+1
+Your drops
+DROP	STATUS	PRICE	FILES	SOLD (NET)	REVENUE (KEPT)	
+ACTIONS
+Pop-up reel
+Created Oct 2, 2026
+	Under review	$9.99	1	0	$0.00	
+View
+Winter archive
+Created Oct 2, 2026
+	Unpublished	$30.00	2	0	$0.00	
+Publish
+Manage
+Autumn preview (draft)
+Created Oct 2, 2026
+	Draft	$15.00	2	0	$0.00	
+Publish
+Manage
+Travel set, vol. 2
+unveil.link/u/CUoy3OLB8z_o
+	Published	$8.00	4	4	$32.00	
+Copy link
+Unpublish
+Manage
+Studio colour study
+unveil.link/u/hvkBFaJF-Upq
+	Published	$25.00	3	6	$140.00	
+Copy link
+Unpublish
+Manage
+Spring collection pack
+unveil.link/u/8rDyovtK3Nra
+	Published	$12.00	6	25	$300.00	
+Copy link
+Unpublish
+Manage
+Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## maya: new drop
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=New drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Spring collection pack
+12.00
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+M
+Maya Lin
+maya+muqs57q7@example.test
+Sign out
+New drop
+Add your files, set a price, and get a link you can share anywhere.
+Details
+This is what buyers see on your payment link.
+Title
+Price (USD)
+$
+Between $1.00 and $500.00.
+Description(optional)
+0/2000
+Files
+Originals are stored privately. Buyers only see a blurred preview until they pay.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB is coming soon.
+Publishing
+Save as a draft, or switch the link on as soon as the upload finishes.
+Publish right after upload
+Otherwise it’s saved as a draft.
+Cancel
+Save draft & upload
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## maya: published drop detail
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Manage drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Blurred preview of spring-collection-pack-1.jpg
+Blurred preview of spring-collection-pack-2.jpg
+Blurred preview of spring-collection-pack-3.jpg
+Blurred preview of spring-collection-pack-4.jpg
+Blurred preview of spring-collection-pack-5.jpg
+Blurred preview of spring-collection-pack-6.jpg
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+M
+Maya Lin
+maya+muqs57q7@example.test
+Sign out
+← All drops
+Spring collection pack
+Published
+$12.00
+A set of 12 original edits from this season, shot on location. Full resolution, ready to use in your own projects.
+Copy link
+Public page
+Unpublish
+Live at unveil.link/u/8rDyovtK3Nra
+Live — anyone with the link can buy.
+Files
+6
+Sold (net)
+25
+Revenue (kept)
+$300.00
+Files (6/10)
+107 KB of 2 GB
+spring-collection-pack-1.jpg
+18 KB
+spring-collection-pack-2.jpg
+16 KB
+spring-collection-pack-3.jpg
+19 KB
+spring-collection-pack-4.jpg
+18 KB
+spring-collection-pack-5.jpg
+18 KB
+spring-collection-pack-6.jpg
+17 KB
+This is what buyers see before they pay.
+Add files
+JPG, PNG or WebP. They’re added to this drop right away.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## maya: draft drop detail
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Manage drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Blurred preview of autumn-preview-draft--1.jpg
+Blurred preview of autumn-preview-draft--2.jpg
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+M
+Maya Lin
+maya+muqs57q7@example.test
+Sign out
+← All drops
+Autumn preview (draft)
+Draft
+$15.00
+Work in progress.
+Publish
+Link (inactive until published): unveil.link/u/Ylcrl22-ZuW-
+Only you can see this. Publish it when you’re ready.
+Files
+2
+Sold (net)
+0
+Revenue (kept)
+$0.00
+Files (2/10)
+35 KB of 2 GB
+autumn-preview-draft--1.jpg
+16 KB
+autumn-preview-draft--2.jpg
+19 KB
+This is what buyers see before they pay.
+Add files
+JPG, PNG or WebP. They’re added to this drop right away.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## jo (pending): overview
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Overview · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Sales kept after refunds and chargebacks
+Gross kept after refunds and chargebacks
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+J
+Jo Park
+jo+muqs57q7@example.test
+Sign out
+Hi, Jo
+Here’s how your drops are doing.
+New drop
+Verification: Pending
+Pending
+You can create drafts and upload files now. Publishing requires a verified account status.
+Earnings
+Gross sales
+$0.00
+0 sales charged, before refunds
+Platform fee
+$0.00
+Charged on each sale
+Processing fees
+$0.00
+Paid to the card processor
+Your earnings (net)
+$0.00
+After fees
+$0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00
+Available
+$0.00
+Nothing to pay out yet
+Pending
+$0.00
+Becomes available 7 days after each sale
+In payout
+$0.00
+None in progress
+Paid out
+$0.00
+No payouts yet
+Net earnings = gross sales − platform fee − card-processing fees − refunds, chargebacks and chargeback fees. Available + pending + in payout + paid out add up to your net earnings.
+Your drops
+1 total · 0 live
+View all
+Your drops
+DROP	STATUS	PRICE	FILES	SOLD (NET)	REVENUE (KEPT)	
+ACTIONS
+Portfolio sampler
+Created Oct 2, 2026
+	Draft	$10.00	1	0	$0.00	
+Publish
+Manage
+Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## jo (pending): drops
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Drops · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Filter drops by status
+Sales kept after refunds and chargebacks
+Gross kept after refunds and chargebacks
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+J
+Jo Park
+jo+muqs57q7@example.test
+Sign out
+Drops
+Everything you’re selling, in one place.
+New drop
+All
+1
+Published
+0
+Drafts
+1
+Your drops
+DROP	STATUS	PRICE	FILES	SOLD (NET)	REVENUE (KEPT)	
+ACTIONS
+Portfolio sampler
+Created Oct 2, 2026
+	Draft	$10.00	1	0	$0.00	
+Publish
+Manage
+Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## jo (pending): new drop
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=New drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Spring collection pack
+12.00
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+J
+Jo Park
+jo+muqs57q7@example.test
+Sign out
+New drop
+Add your files, set a price, and get a link you can share anywhere.
+Details
+This is what buyers see on your payment link.
+Title
+Price (USD)
+$
+Between $1.00 and $500.00.
+Description(optional)
+0/2000
+Files
+Originals are stored privately. Buyers only see a blurred preview until they pay.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB is coming soon.
+Publishing
+Save as a draft, or switch the link on as soon as the upload finishes.
+Verification pending
+You can create drafts and upload files now. Publishing requires a verified account status (yours: pending).
+Publish right after upload
+Otherwise it’s saved as a draft.
+Cancel
+Save draft & upload
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## jo: drop detail
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Manage drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Blurred preview of sampler-1.jpg
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+J
+Jo Park
+jo+muqs57q7@example.test
+Sign out
+← All drops
+Portfolio sampler
+Draft
+$10.00
+A small sampler.
+Publish
+Link (inactive until published): unveil.link/u/ZNVAxpfrH2H9
+Only you can see this. Publish it when you’re ready.
+Files
+1
+Sold (net)
+0
+Revenue (kept)
+$0.00
+Publishing locked
+Your verification status is pending. This stays a draft until you’re verified.
+Files (1/10)
+16 KB of 2 GB
+sampler-1.jpg
+16 KB
+This is what buyers see before they pay.
+Add files
+JPG, PNG or WebP. They’re added to this drop right away.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## jo: after clicking Publish
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Manage drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Blurred preview of sampler-1.jpg
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+J
+Jo Park
+jo+muqs57q7@example.test
+Sign out
+← All drops
+Portfolio sampler
+Draft
+$10.00
+A small sampler.
+Publish
+Link (inactive until published): unveil.link/u/ZNVAxpfrH2H9
+Only you can see this. Publish it when you’re ready.
+Files
+1
+Sold (net)
+0
+Revenue (kept)
+$0.00
+Publishing locked
+Your verification status is pending. This stays a draft until you’re verified.
+Files (1/10)
+16 KB of 2 GB
+sampler-1.jpg
+16 KB
+This is what buyers see before they pay.
+Add files
+JPG, PNG or WebP. They’re added to this drop right away.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Publish “Portfolio sampler”
+Publishing turns on the payment link for this drop.
+Verification needed
+Your verification status is pending. You can’t publish until you’re verified — this drop stays a draft.
+Before you publish, please confirm
+Everyone in this content is 18 or older
+Anyone who appears in your files is an adult.
+I own the rights to this content
+I created it or have permission to sell it.
+Everyone in it agreed to its sale
+People who appear have consented to it being sold.
+Cancel
+Publish
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## sam (empty): overview
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Overview · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+S
+Sam Rivera
+sam+muqs57q7@example.test
+Sign out
+Hi, Sam
+Here’s how your drops are doing.
+New drop
+Verification: Pending
+Pending
+You can create drafts and upload files now. Publishing requires a verified account status.
+Earnings
+Gross sales
+$0.00
+0 sales charged, before refunds
+Platform fee
+$0.00
+Charged on each sale
+Processing fees
+$0.00
+Paid to the card processor
+Your earnings (net)
+$0.00
+After fees
+$0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00
+Available
+$0.00
+Nothing to pay out yet
+Pending
+$0.00
+Becomes available 7 days after each sale
+In payout
+$0.00
+None in progress
+Paid out
+$0.00
+No payouts yet
+Net earnings = gross sales − platform fee − card-processing fees − refunds, chargebacks and chargeback fees. Available + pending + in payout + paid out add up to your net earnings.
+Your drops
+Nothing here yet
+No drops yet
+A drop is a set of files with a price and a shareable link. Create your first one — it only takes a minute.
+Create your first drop
+How it works
+1. Upload your files · 2. Set a price · 3. Share the link anywhere. Buyers pay by card — no account needed.
+Takes about a minute
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## sam (empty): drops
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Drops · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+S
+Sam Rivera
+sam+muqs57q7@example.test
+Sign out
+Drops
+Everything you’re selling, in one place.
+New drop
+No drops yet
+A drop is a set of files with a price and a shareable link. Create your first one — it only takes a minute.
+Create your first drop
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## sam (empty): new drop
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=New drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Spring collection pack
+12.00
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+S
+Sam Rivera
+sam+muqs57q7@example.test
+Sign out
+New drop
+Add your files, set a price, and get a link you can share anywhere.
+Details
+This is what buyers see on your payment link.
+Title
+Price (USD)
+$
+Between $1.00 and $500.00.
+Description(optional)
+0/2000
+Files
+Originals are stored privately. Buyers only see a blurred preview until they pay.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB is coming soon.
+Publishing
+Save as a draft, or switch the link on as soon as the upload finishes.
+Verification pending
+You can create drafts and upload files now. Publishing requires a verified account status (yours: pending).
+Publish right after upload
+Otherwise it’s saved as a draft.
+Cancel
+Save draft & upload
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## ned (negative): overview
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Overview · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Sales kept after refunds and chargebacks
+Gross kept after refunds and chargebacks
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+N
+Ned Okafor
+ned+muqs57q7@example.test
+Sign out
+Hi, Ned
+Here’s how your drops are doing.
+New drop
+Verified
+Earnings
+Gross sales
+$60.00
+1 sale charged, before refunds
+Platform fee
+$0.00
+Charged on each sale
+Processing fees
+$0.00
+Paid to the card processor
+Your earnings (net)
+$0.00
+After fees
+$60.00 gross − $0.00 platform fee − $0.00 processing fees − $60.00 refunded = $0.00
+Reversed sales: $60.00 refunded. Fees on reversed sales are returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($0.00 kept).
+Balance owed
+-$46.80
+Below zero. It will be deducted from future earnings.
+Pending
+$0.00
+Becomes available 7 days after each sale
+In payout
+$0.00
+None in progress
+Paid out
+$46.80
+Payouts marked as paid
+You owe $46.80
+Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.
+Net earnings = gross sales − platform fee − card-processing fees − refunds, chargebacks and chargeback fees. Available + pending + in payout + paid out add up to your net earnings.
+Your drops
+1 total · 1 live
+View all
+Your drops
+DROP	STATUS	PRICE	FILES	SOLD (NET)	REVENUE (KEPT)	
+ACTIONS
+Print pack
+unveil.link/u/nVswNB-cAAbE
+	Published	$60.00	1	0	$0.00	
+Copy link
+Unpublish
+Manage
+Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## ned (negative): drops
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Drops · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Filter drops by status
+Sales kept after refunds and chargebacks
+Gross kept after refunds and chargebacks
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+N
+Ned Okafor
+ned+muqs57q7@example.test
+Sign out
+Drops
+Everything you’re selling, in one place.
+New drop
+All
+1
+Published
+1
+Drafts
+0
+Your drops
+DROP	STATUS	PRICE	FILES	SOLD (NET)	REVENUE (KEPT)	
+ACTIONS
+Print pack
+unveil.link/u/nVswNB-cAAbE
+	Published	$60.00	1	0	$0.00	
+Copy link
+Unpublish
+Manage
+Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## ned (negative): new drop
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=New drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Spring collection pack
+12.00
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+N
+Ned Okafor
+ned+muqs57q7@example.test
+Sign out
+New drop
+Add your files, set a price, and get a link you can share anywhere.
+Details
+This is what buyers see on your payment link.
+Title
+Price (USD)
+$
+Between $1.00 and $500.00.
+Description(optional)
+0/2000
+Files
+Originals are stored privately. Buyers only see a blurred preview until they pay.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB is coming soon.
+Publishing
+Save as a draft, or switch the link on as soon as the upload finishes.
+Publish right after upload
+Otherwise it’s saved as a draft.
+Cancel
+Save draft & upload
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## never-paid cb seller: overview
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Overview · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Sales kept after refunds and chargebacks
+Gross kept after refunds and chargebacks
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+C
+Charge Back
+qa-cb-5aa2e0@example.com
+Sign out
+Hi, Charge
+Here’s how your drops are doing.
+New drop
+Verified
+Earnings
+Gross sales
+$40.00
+2 sales charged, before refunds
+Platform fee
+$2.00
+10% of completed sales
+Processing fees
+$2.40
+12% of completed sales · card processor
+Your earnings (net)
+$10.60
+53% of completed sales, after fees
+$40.00 gross − $2.00 platform fee − $2.40 processing fees − $20.00 charged back − $5.00 chargeback fees = $10.60
+Reversed sales: $20.00 charged back. Fees on reversed sales are returned, so they are not counted above. Per-drop Sold and Revenue are net of these reversals ($20.00 kept).
+Balance owed
+-$5.00
+Below zero. It will be deducted from future earnings.
+Pending
+$15.60
+Becomes available 7 days after each sale
+In payout
+$0.00
+None in progress
+Paid out
+$0.00
+No payouts yet
+You owe $5.00
+Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.
+Net earnings = gross sales − platform fee − card-processing fees − refunds, chargebacks and chargeback fees. Available + pending + in payout + paid out add up to your net earnings.
+Your drops
+1 total · 1 live
+View all
+Your drops
+DROP	STATUS	PRICE	FILES	SOLD (NET)	REVENUE (KEPT)	
+ACTIONS
+CB drop
+unveil.link/u/6FFesmg0xHlL
+	Published	$20.00	0	1	$20.00	
+Copy link
+Unpublish
+Manage
+Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## never-paid cb seller: drops
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=Drops · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Filter drops by status
+Sales kept after refunds and chargebacks
+Gross kept after refunds and chargebacks
+Close dialog
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+C
+Charge Back
+qa-cb-5aa2e0@example.com
+Sign out
+Drops
+Everything you’re selling, in one place.
+New drop
+All
+1
+Published
+1
+Drafts
+0
+Your drops
+DROP	STATUS	PRICE	FILES	SOLD (NET)	REVENUE (KEPT)	
+ACTIONS
+CB drop
+unveil.link/u/6FFesmg0xHlL
+	Published	$20.00	0	1	$20.00	
+Copy link
+Unpublish
+Manage
+Sold and revenue are net of refunds and chargebacks: fully reversed sales are not counted, and partial refunds reduce revenue. Revenue is before fees.
+Terms
+Privacy
+DMCA
+Contact
+[details] 
+
+######## never-paid cb seller: new drop
+--- meta
+description=Unveil lets creators sell photos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed.
+robots=noindex, nofollow
+og:title=Unveil — Sell your files with a simple payment link
+og:description=Upload, set a price, share a link. Get paid by card — no subscriptions, no buyer accounts.
+og:url=https://unveil.link
+og:site_name=Unveil
+og:type=website
+twitter:card=summary
+twitter:title=Unveil
+twitter:description=Sell your files with a simple payment link.
+title=New drop · Unveil
+--- attrs
+Unveil home
+Dashboard
+Sign out
+Spring collection pack
+12.00
+Legal
+--- text
+Skip to content
+Unveil
+Overview
+Drops
+New drop
+C
+Charge Back
+qa-cb-5aa2e0@example.com
+Sign out
+New drop
+Add your files, set a price, and get a link you can share anywhere.
+Details
+This is what buyers see on your payment link.
+Title
+Price (USD)
+$
+Between $1.00 and $500.00.
+Description(optional)
+0/2000
+Files
+Originals are stored privately. Buyers only see a blurred preview until they pay.
+Drag & drop files here, or choose files
+JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+Images (JPG, PNG, WebP) up to 15 MB each. MP4 video up to 500 MB is coming soon.
+Publishing
+Save as a draft, or switch the link on as soon as the upload finishes.
+Publish right after upload
+Otherwise it’s saved as a draft.
+Cancel
+Save draft & upload
+Terms
+Privacy
+DMCA
+Contact
+[details] 

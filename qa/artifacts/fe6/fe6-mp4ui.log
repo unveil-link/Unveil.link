@@ -1,0 +1,5 @@
+dropzone text: JPG, PNG, WebP or MP4 · 10 files · 2 GB per drop
+input accept: image/jpeg,image/png,image/webp,video/mp4,.jpg,.jpeg,.png,.webp,.mp4
+after choosing t.mp4: 32 B · MP4 video uploads are coming soon — for now, add JPG, PNG or WebP images.
+   OK   an MP4 chosen from the picker is rejected with 'coming soon' (no 415 round-trip)
+RESULT fails=0

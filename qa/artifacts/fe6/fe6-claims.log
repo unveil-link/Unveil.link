@@ -1,0 +1,78 @@
+== A. FAQ 'How do I get paid?' vs behaviour
+   OK   platform_settings: payout_hold_days=7, min_payout_cents=2500 (copy: 7-day hold, $25)
+   OK   landing FAQ states Pending -> 7-day hold -> Available -> $25 minimum -> payout requests coming soon
+   OK   no 'straight to your bank' / 'payments partner' on landing
+   OK   new signup starts as verification_status=pending (nobody/nothing verifies automatically)
+   OK   sale succeeded
+   OK   immediately after the sale: Pending $15.60 (=$20 - 10% platform - 12% processing = $15.60), Available $0.00
+   ledger @ sale: sale_credit 2000, platform_fee -200, processing_fee -240
+   OK   platform_fee + processing_fee + sale_credit are all posted AT SALE TIME (fees are not deferred to payout)
+   OK   available_at = sale time + 7 days for every line (7.0000, 7.0000, 7.0000 d)
+   OK   dashboard shows Pending $15.60 'Becomes available 7 days after each sale'
+   OK   dashboard Available $0.00 'Nothing to pay out yet' (below $25 minimum)
+   OK   /api/payouts: GET 404 POST 404 (no seller payout request path -> 'coming soon' is accurate)
+   OK   /api/payouts/request: GET 404 POST 404 (no seller payout request path -> 'coming soon' is accurate)
+   OK   /api/earnings/payout: GET 404 POST 404 (no seller payout request path -> 'coming soon' is accurate)
+   OK   /dashboard/payouts: GET 404 POST 404 (no seller payout request path -> 'coming soon' is accurate)
+   OK   after hold passes and balance >= $25: payoutEligible=true, available=$31.20
+   OK   dashboard hint: 'You've reached the $25.00 minimum. Payout requests are coming soon'
+   OK   old 'Ready for a payout' hint gone
+   OK   Paid out hint 'No payouts yet' (nothing paid)
+   paid-out hint wording ('Payouts marked as paid'): payouts are record-only (see payout-ui log) - the wording does not claim money moved
+== B. Settings drift: landing copy is static (lib/features.ts), dashboard is live
+   INFO: with hold=3 / min=$50 in platform_settings the landing FAQ still says 7-day / $25: STALE (static copy)
+   /api/earnings follows settings: holdDays=3 minPayoutCents=5000
+== C. Video claim vs upload reality (main 7014c7e has no video upload; backend/m2-media not merged)
+   OK   POST video/mp4 -> 415 {"error":"Not a valid image","code":"invalid_image"} (415 = not accepted)
+   FAIL /dashboard/drops/new: no unqualified 'MP4' in the visible text
+   FAIL /dashboard/drops/new: file picker accept="image/jpeg,image/png,image/webp,video/mp4,.jpg,.jpeg,.png,.webp,.mp4" does not offer MP4
+   FAIL /dashboard/drops/3cc00a76-f2ce-4f53-bf32-cfa3e5684f1c: no unqualified 'MP4' in the visible text
+   FAIL /dashboard/drops/3cc00a76-f2ce-4f53-bf32-cfa3e5684f1c: file picker accept="image/jpeg,image/png,image/webp,video/mp4,.jpg,.jpeg,.png,.webp,.mp4" does not offer MP4
+   OK   landing: no live 'video(s)' claim (only 'video is coming soon')
+== D. Verification claims: publish gate, buyer badge only while verified, checkout refused when not verified
+   OK   seller verified: buyer-page 'Verified creator' badge shown; page 200; checkout -> 201 
+   OK   seller pending: buyer-page 'Verified creator' badge hidden; page 200; checkout -> 409 seller_not_verified
+   OK   seller failed: buyer-page 'Verified creator' badge hidden; page 200; checkout -> 409 seller_not_verified
+   OK   seller manual_review: buyer-page 'Verified creator' badge hidden; page 200; checkout -> 409 seller_not_verified
+   pending seller publish -> 403 {"error":"Identity verification required to publish (status: pending)","code":"verification_required"}
+   OK   pending seller cannot publish (403)
+   UI Publish dialog for a pending seller: Verification needed Your verification status is pending. You can’t publish until you’re verified — this drop stays a draft. Before you publish, please confirm Everyone in this content is 18 or older Anyone who appears
+   OK   Publish dialog explains verification is needed (button disabled: true)
+   OK   UI does not show the backend string 'Identity verification required to publish'
+== E. Card numbers are not stored (buy with 4242 4242 4242 4242 through the UI, then search DB dump, storage, mail dir, server logs)
+   OK   DB dump (0.3 MB): card number not present
+   OK   storage dir, mail dir and server log: card number not present 
+   NOTE: the mock hosted page POSTs the card number to Unveil's OWN /api/dev/payments/pay (mock processor, disabled in production) - 'separate checkout page' is true, 'separate PROVIDER' is not claimed.
+== F. FE-19: payment link entropy / listing / enumeration
+   OK   26 link ids: all 12 chars of [A-Za-z0-9_-] (base64url of 9 random bytes = 72 bits)
+   OK   all link ids unique
+   char distribution of 26 real ids + 4000 reference ids: chi2=60.8 (63 dof, 99.9% < 103)
+   first chars of real ids: 23 distinct over 26
+   real ids: 312 chars, 63 distinct symbols; 12-char random space = 2^72 = 4.7e21
+   OK   /u/<id> X-Robots-Tag: noindex, nofollow
+   OK   robots.txt Disallow: /u/
+   (robots.txt is advisory only; unguessability + noindex are the real protections)
+   OK   GET /sitemap.xml -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /u -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /u/ -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /api/public/drops -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /api/public/drops/ -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /api/drops -> 401 (no listing / sitemap / profile exposes links)
+   OK   GET /api/public -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /d/x -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /sellers -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /explore -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /search -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /@maya -> 404 (no listing / sitemap / profile exposes links)
+   OK   GET /maya -> 404 (no listing / sitemap / profile exposes links)
+   OK   buyer page has no external links that could leak the URL via Referer (none); Referrer-Policy: strict-origin-when-cross-origin
+   OK   public drop API does not reveal the seller's other links
+   OK   buyer page HTML does not contain the seller's other links
+   unpublished -> 404, draft -> 404, unknown -> 404
+   OK   unpublished / draft / unknown links give the same status (no existence oracle)
+   OK   unpublished vs unknown page bodies match (len 14080 vs 14080)
+   160 random /api/public/drops/<id> probes from one IP (default limits): {"404":120,"429":40}
+   OK   API enumeration from one IP is rate-limited (PUBLIC_LINK 120/min)
+   160 random /u/<id> PAGE probes from one IP (default limits): {"404":160}
+   INFO: the /u/<id> page route has no rate limit (only the JSON API and /api/checkout/status do); guessing is still infeasible (2^72 ids)
+RESULT fails=4

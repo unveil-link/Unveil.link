@@ -1,0 +1,93 @@
+◇ injected env (0) from .env
+== S1 all sales refunded
+   [S1 all-refunded] ledger: [["All refunded",0,"$0.00"]]  UI: [["All refunded","0","$0.00"]]  API kept=$0.00
+   OK   [S1 all-refunded/desktop] All refunded: UI Sold 0 / $0.00 == ledger 0 / $0.00
+   OK   [S1 all-refunded] All refunded: ledger truth == expected 0 / $0.00
+   OK   [S1 all-refunded/desktop] row count 1 == drops 1
+   OK   [S1 all-refunded/desktop] sum of per-drop revenue == API gross - refunded - charged back ($0.00)
+   OK   [S1 all-refunded/mobile] All refunded: UI Sold 0 / $0.00 == ledger 0 / $0.00
+   OK   [S1 all-refunded] All refunded: ledger truth == expected 0 / $0.00
+   OK   [S1 all-refunded/mobile] row count 1 == drops 1
+   OK   [S1 all-refunded/mobile] sum of per-drop revenue == API gross - refunded - charged back ($0.00)
+   tx statuses: [{"status":"refunded","amount_cents":2000,"reversed_cents":2000},{"status":"refunded","amount_cents":2000,"reversed_cents":2000},{"status":"refunded","amount_cents":2000,"reversed_cents":2000}]
+   OK   API refunded $60.00
+== S2 drop with zero sales / mixed
+   [S2 zero-sales] ledger: [["Draft",0,"$0.00"],["Never sold",0,"$0.00"],["One sale",1,"$20.00"]]  UI: [["Draft","0","$0.00"],["One sale","1","$20.00"],["Never sold","0","$0.00"]]  API kept=$20.00
+   OK   [S2 zero-sales/desktop] Draft: UI Sold 0 / $0.00 == ledger 0 / $0.00
+   OK   [S2 zero-sales] Draft: ledger truth == expected 0 / $0.00
+   OK   [S2 zero-sales/desktop] Never sold: UI Sold 0 / $0.00 == ledger 0 / $0.00
+   OK   [S2 zero-sales] Never sold: ledger truth == expected 0 / $0.00
+   OK   [S2 zero-sales/desktop] One sale: UI Sold 1 / $20.00 == ledger 1 / $20.00
+   OK   [S2 zero-sales] One sale: ledger truth == expected 1 / $20.00
+   OK   [S2 zero-sales/desktop] row count 3 == drops 3
+   OK   [S2 zero-sales/desktop] sum of per-drop revenue == API gross - refunded - charged back ($20.00)
+   OK   [S2 zero-sales/mobile] Draft: UI Sold 0 / $0.00 == ledger 0 / $0.00
+   OK   [S2 zero-sales] Draft: ledger truth == expected 0 / $0.00
+   OK   [S2 zero-sales/mobile] Never sold: UI Sold 0 / $0.00 == ledger 0 / $0.00
+   OK   [S2 zero-sales] Never sold: ledger truth == expected 0 / $0.00
+   OK   [S2 zero-sales/mobile] One sale: UI Sold 1 / $20.00 == ledger 1 / $20.00
+   OK   [S2 zero-sales] One sale: ledger truth == expected 1 / $20.00
+   OK   [S2 zero-sales/mobile] row count 3 == drops 3
+   OK   [S2 zero-sales/mobile] sum of per-drop revenue == API gross - refunded - charged back ($20.00)
+== S3 chargeback after payout (+ $5 fee)
+   chargeback webhook -> 200
+   [S3 chargeback-after-payout] ledger: [["Paid then disputed",0,"$0.00"],["Stays good",2,"$60.00"]]  UI: [["Stays good","2","$60.00"],["Paid then disputed","0","$0.00"]]  API kept=$60.00
+   OK   [S3 chargeback-after-payout/desktop] Paid then disputed: UI Sold 0 / $0.00 == ledger 0 / $0.00
+   OK   [S3 chargeback-after-payout] Paid then disputed: ledger truth == expected 0 / $0.00
+   OK   [S3 chargeback-after-payout/desktop] Stays good: UI Sold 2 / $60.00 == ledger 2 / $60.00
+   OK   [S3 chargeback-after-payout] Stays good: ledger truth == expected 2 / $60.00
+   OK   [S3 chargeback-after-payout/desktop] row count 2 == drops 2
+   OK   [S3 chargeback-after-payout/desktop] sum of per-drop revenue == API gross - refunded - charged back ($60.00)
+   OK   [S3 chargeback-after-payout/mobile] Paid then disputed: UI Sold 0 / $0.00 == ledger 0 / $0.00
+   OK   [S3 chargeback-after-payout] Paid then disputed: ledger truth == expected 0 / $0.00
+   OK   [S3 chargeback-after-payout/mobile] Stays good: UI Sold 2 / $60.00 == ledger 2 / $60.00
+   OK   [S3 chargeback-after-payout] Stays good: ledger truth == expected 2 / $60.00
+   OK   [S3 chargeback-after-payout/mobile] row count 2 == drops 2
+   OK   [S3 chargeback-after-payout/mobile] sum of per-drop revenue == API gross - refunded - charged back ($60.00)
+   balance: {"pendingCents":0,"availableCents":-2060,"totalCents":-2060} paid out: 6240
+   OK   seller now owes $20.60 (negative balance) while per-drop revenue stays ledger-true
+== S4 partial refund then chargeback; S5 partial chargeback; S6 over-refund
+   chargeback after partial refund -> 200
+   partial chargeback $10 -> 200
+   over-refund $50 of $40 -> 200
+   refund $15 + chargeback $30 (more than the $25 remaining) -> 200 200
+   [S4-S6 combos] ledger: [["Combo",3,"$95.00"]]  UI: [["Combo","3","$95.00"]]  API kept=$95.00
+   OK   [S4-S6 combos/desktop] Combo: UI Sold 3 / $95.00 == ledger 3 / $95.00
+   OK   [S4-S6 combos/desktop] row count 1 == drops 1
+   OK   [S4-S6 combos/desktop] sum of per-drop revenue == API gross - refunded - charged back ($95.00)
+   OK   [S4-S6 combos/mobile] Combo: UI Sold 3 / $95.00 == ledger 3 / $95.00
+   OK   [S4-S6 combos/mobile] row count 1 == drops 1
+   OK   [S4-S6 combos/mobile] sum of per-drop revenue == API gross - refunded - charged back ($95.00)
+   tx rows: [{"status":"charged_back","amount_cents":4000,"reversed_cents":4000},{"status":"charged_back","amount_cents":4000,"reversed_cents":1000},{"status":"succeeded","amount_cents":4000,"reversed_cents":0},{"status":"succeeded","amount_cents":4000,"reversed_cents":1500}]
+   OK   revenue never negative
+== S7 pending/declined checkouts ignored; price edited after the sale
+   declined pay status: failed
+   [S7 pending-declined-priceedit] ledger: [["Pending mix",1,"$20.00"]]  UI: [["Pending mix","1","$20.00"]]  API kept=$20.00
+   OK   [S7 pending-declined-priceedit/desktop] Pending mix: UI Sold 1 / $20.00 == ledger 1 / $20.00
+   OK   [S7 pending-declined-priceedit] Pending mix: ledger truth == expected 1 / $20.00
+   OK   [S7 pending-declined-priceedit/desktop] row count 1 == drops 1
+   OK   [S7 pending-declined-priceedit/desktop] sum of per-drop revenue == API gross - refunded - charged back ($20.00)
+   OK   [S7 pending-declined-priceedit/mobile] Pending mix: UI Sold 1 / $20.00 == ledger 1 / $20.00
+   OK   [S7 pending-declined-priceedit] Pending mix: ledger truth == expected 1 / $20.00
+   OK   [S7 pending-declined-priceedit/mobile] row count 1 == drops 1
+   OK   [S7 pending-declined-priceedit/mobile] sum of per-drop revenue == API gross - refunded - charged back ($20.00)
+== S8 two sellers, same-titled drops (isolation)
+   [S8 iso A] ledger: [["Same title",1,"$10.00"]]  UI: [["Same title","1","$10.00"]]  API kept=$10.00
+   OK   [S8 iso A/desktop] Same title: UI Sold 1 / $10.00 == ledger 1 / $10.00
+   OK   [S8 iso A] Same title: ledger truth == expected 1 / $10.00
+   OK   [S8 iso A/desktop] row count 1 == drops 1
+   OK   [S8 iso A/desktop] sum of per-drop revenue == API gross - refunded - charged back ($10.00)
+   OK   [S8 iso A/mobile] Same title: UI Sold 1 / $10.00 == ledger 1 / $10.00
+   OK   [S8 iso A] Same title: ledger truth == expected 1 / $10.00
+   OK   [S8 iso A/mobile] row count 1 == drops 1
+   OK   [S8 iso A/mobile] sum of per-drop revenue == API gross - refunded - charged back ($10.00)
+   [S8 iso B] ledger: [["Same title",2,"$20.00"]]  UI: [["Same title","2","$20.00"]]  API kept=$20.00
+   OK   [S8 iso B/desktop] Same title: UI Sold 2 / $20.00 == ledger 2 / $20.00
+   OK   [S8 iso B] Same title: ledger truth == expected 2 / $20.00
+   OK   [S8 iso B/desktop] row count 1 == drops 1
+   OK   [S8 iso B/desktop] sum of per-drop revenue == API gross - refunded - charged back ($20.00)
+   OK   [S8 iso B/mobile] Same title: UI Sold 2 / $20.00 == ledger 2 / $20.00
+   OK   [S8 iso B] Same title: ledger truth == expected 2 / $20.00
+   OK   [S8 iso B/mobile] row count 1 == drops 1
+   OK   [S8 iso B/mobile] sum of per-drop revenue == API gross - refunded - charged back ($20.00)
+RESULT fails=0
