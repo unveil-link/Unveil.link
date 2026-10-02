@@ -1,0 +1,17 @@
+components/auth/AuthShell.tsx
+components/buyer/TrustPoints.tsx
+components/dashboard/DropList.tsx
+components/landing/BuyerTrust.tsx
+components/landing/Faq.tsx
+components/landing/Hero.tsx
+components/landing/HowItWorks.tsx
+components/landing/PaymentLinkMock.tsx
+docs/frontend-dashboard-notes.md
+scripts/e2e.ts
+scripts/screenshots-dashboard.mjs
+src/app/components/DropEditor.tsx
+src/app/dashboard/page.tsx
+src/app/layout.tsx
+src/app/u/[linkId]/BuyForm.tsx
+src/app/u/[linkId]/page.tsx
+tests/copy-guard.test.ts

@@ -1,0 +1,85 @@
+{
+ "pagesSeen": [
+  "landing",
+  "login",
+  "signup",
+  "forgot-password",
+  "reset-password",
+  "terms",
+  "privacy",
+  "dmca",
+  "contact",
+  "buyer /u/<published>",
+  "buyer /u/<unpublished> (unavailable)",
+  "buyer /u/<draft>",
+  "buyer /u/<unknown> (404)",
+  "404 page",
+  "design page",
+  "admin login",
+  "admin login2",
+  "buyer /u/<published> after empty submit (validation)",
+  "hosted mock checkout /pay/mock/<session>",
+  "hosted mock checkout after declined card",
+  "hosted mock checkout after successful payment (return/success state)",
+  "dashboard overview",
+  "dashboard drops",
+  "dashboard new drop",
+  "dashboard drop detail",
+  "dashboard draft drop detail",
+  "dashboard overview (pending seller 'jo')",
+  "dashboard overview (empty seller 'sam')",
+  "/manifest.webmanifest (200)",
+  "/robots.txt (200)",
+  "/sitemap.xml (404)"
+ ],
+ "hits": [
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Delivery options are coming soon."
+  },
+  {
+   "page": "forgot-password",
+   "url": "/forgot-password",
+   "kind": "visible",
+   "text": "unveil.link Reset your password Enter the email you signed up with and we’ll send you a reset link."
+  },
+  {
+   "page": "buyer /u/<published>",
+   "url": "/u/2wdYw2bqBt5I",
+   "kind": "visible",
+   "text": "Delivery options are coming soon."
+  },
+  {
+   "page": "buyer /u/<published> after empty submit (validation)",
+   "url": "/u/2wdYw2bqBt5I",
+   "kind": "visible",
+   "text": "Delivery options are coming soon."
+  },
+  {
+   "page": "dashboard drop detail",
+   "url": "/dashboard/drops/4401093c-b2b5-4b09-b41a-6f09cd6ab899",
+   "kind": "visible",
+   "text": "They’re added to this drop right away."
+  },
+  {
+   "page": "dashboard draft drop detail",
+   "url": "/dashboard/drops/7f1afbfe-80ea-4e8f-be97-bb1a3322a96b",
+   "kind": "visible",
+   "text": "They’re added to this drop right away."
+  },
+  {
+   "page": "dashboard overview (pending seller 'jo')",
+   "url": "/dashboard",
+   "kind": "visible",
+   "text": "Publishing unlocks once your identity is verified."
+  },
+  {
+   "page": "dashboard overview (empty seller 'sam')",
+   "url": "/dashboard",
+   "kind": "visible",
+   "text": "Publishing unlocks once your identity is verified."
+  }
+ ]
+}

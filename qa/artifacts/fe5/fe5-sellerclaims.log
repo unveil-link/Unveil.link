@@ -1,0 +1,10 @@
+## 1. 'sell photos and videos' (meta description, Hero, FAQ) vs upload of a real-looking MP4 (ftyp box)
+POST /api/drops/<draft>/files (video/mp4): HTTP 415
+{"error":"Not a valid image","code":"invalid_image"}
+## 2. payout request path for a seller ('Payouts straight to your bank', 'Ready for a payout')
+/api/payouts               GET 404  POST 404
+/api/payouts/request       GET 404  POST 404
+/api/earnings/payout       GET 404  POST 404
+/dashboard/payouts         GET 404  POST 404
+## 3. what /api/earnings says about payouts
+{"payoutEligible":true,"minPayoutCents":2500,"holdDays":7,"balance":{"pendingCents":15834,"availableCents":5764,"totalCents":21598},"lifetime":{"paidOutCents":18000,"requestedPayoutCents":6000}}

@@ -1,0 +1,29 @@
+== FE-03 buyer page title
+   <title>: Spring collection pack · Unveil
+   meta: description=Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and access to the files is shared once payment is confirmed. | og:title=Spring collection pack · Unveil | og:description=A payment link by Maya Lin on Unveil. | og:url=https://unveil.link/u/2wdYw2bqBt5I | og:site_name=Unveil | og:image=https://unveil.link/icons/icon-512.png | og:image:width=512 | og:image:height=512 | og:image:alt=Unveil | og:type=website | twitter:card=summary | twitter:title=Spring collection pack · Unveil | twitter:description=A payment link by Maya Lin on Unveil. | twitter:image=https://unveil.link/icons/icon-512.png
+   OK   published drop: <title> is '<drop title> · Unveil'
+   OK   no double 'Unveil' in <title>
+   OK   exactly one <title> tag
+   og:title = og:title=Spring collection pack · Unveil
+   OK   og:title has no double-Unveil (note: og:title/og:description/twitter:* are the generic site-wide ones, not drop-specific)
+   OK   unpublished: <title> = 'Link unavailable · Unveil'
+   OK   draft: <title> = 'Link unavailable · Unveil'
+   OK   nonexistent: <title> = 'Link unavailable · Unveil'
+   title in DB: "<script>alert(1)</script> & \"q\" 's'" => <title>: "&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot;q&quot; &#x27;s&#x27; · Unveil"
+   OK   special-char title is escaped in HTML (no raw tag injection)
+   title in DB: "</title><img src=x onerror=alert(1)>" => <title>: "&lt;/title&gt;&lt;img src=x onerror=alert(1)&gt; · Unveil"
+   OK   special-char title is escaped in HTML (no raw tag injection)
+   title in DB: "Unveil" => <title>: "Unveil · Unveil"
+   OK   special-char title is escaped in HTML (no raw tag injection)
+   OK   drop literally titled 'Unveil' => 'Unveil · Unveil' (expected by design; cosmetic)
+   title in DB: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" => <title>: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+   OK   special-char title is escaped in HTML (no raw tag injection)
+== FE-04 Verified badge vs verification_status
+   original status: verified
+   OK   status=pending: page renders=true; Verified badge shown=false (expected false)
+   OK   status=failed: page renders=true; Verified badge shown=false (expected false)
+   OK   status=manual_review: page renders=true; Verified badge shown=false (expected false)
+   OK   status=verified: page renders=true; Verified badge shown=true (expected true)
+   OK   restored: badge shown for verified seller
+   sam status: pending
+RESULT fails=0
