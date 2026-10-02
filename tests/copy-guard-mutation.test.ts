@@ -74,7 +74,7 @@ const MUTATIONS: M[] = [
 ];
 
 
-type Case = { id: string; label: string; file: string; from?: string | RegExp; to?: string; content?: string; kind: "must-catch" | "should-pass" | "loophole" };
+type Case = { id: string; label: string; file: string; pre?: string; from?: string | RegExp; to?: string; content?: string; kind: "must-catch" | "should-pass" | "loophole" };
 const X: Case[] = [
   // paraphrases (semantic rule groups)
   { id: "X1", label: "'We\u2019ll send you the link'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "we\u2019ll send you the link.", kind: "must-catch" },
@@ -90,7 +90,7 @@ const X: Case[] = [
   { id: "X11", label: "'A person is reviewing your verification'", file: "components/dashboard/types.ts", from: "Your verification is marked for review.", to: "A person is reviewing your documents.", kind: "must-catch" },
   { id: "X12", label: "'Our team will review it shortly'", file: "components/dashboard/types.ts", from: "Your verification is marked for review.", to: "Our team will review it shortly.", kind: "must-catch" },
   // FE-20 regressions
-  { id: "X14", label: "FE-20: dropzone hint advertises MP4 again", file: "lib/upload-limits.ts", from: '"JPG, PNG or WebP"', to: '"JPG, PNG, WebP or MP4"', kind: "must-catch" },
+  { id: "X14", label: "FE-20: dropzone hint advertises MP4 again", file: "lib/upload-limits.ts", from: ': "JPG, PNG or WebP";', to: ': "JPG, PNG, WebP or MP4";', kind: "must-catch" },
   { id: "X15", label: "FE-20: FileDropzone hard-codes video/mp4 into accept", file: "components/dashboard/FileDropzone.tsx", from: "const accept = acceptAttr(limits);", to: 'const accept = [acceptAttr(limits), "video/mp4", ".mp4"].join(",");', kind: "must-catch" },
   { id: "X16", label: "FE-20: contradictory 'MP4 coming soon' line is back", file: "components/dashboard/NewDropFlow.tsx", from: "{videoNote(limits)}", to: "MP4 video up to 500 MB is coming soon.", kind: "must-catch" },
   // structural
@@ -109,6 +109,38 @@ const X: Case[] = [
   { id: "X29", label: "svg <title> promise", file: "public/logo.svg", content: '<svg xmlns="http://www.w3.org/2000/svg"><title>Instant download</title></svg>', kind: "must-catch" },
   { id: "X30", label: "neutral new JSX passes (no false alarm)", file: "components/landing/NewSection.tsx", content: 'export const A = () => <p>Share your link anywhere. <b>Stay</b>in control.</p>;', kind: "should-pass" },
   { id: "X31", label: "plain Hero with the CTA 'Create your account' passes", file: "components/landing/Hero.tsx", from: "Create your account", to: "Create your account", kind: "should-pass" },
+
+  // FE-18c/d: money claims, hard-coded payout numbers, folding gaps, scan scope, honest-copy carve-outs
+  { id: "X32", label: "'Keep 90% of every sale' (the real fees are configurable)", file: "components/landing/Faq.tsx", from: "Payout requests and processing are coming soon.", to: "You keep 90% of every sale.", kind: "must-catch" },
+  { id: "X33", label: "'Zero fees' / 'No fees, ever'", file: "components/landing/SellerCta.tsx", from: "Payout requests coming soon", to: "No fees, ever", kind: "must-catch" },
+  { id: "X34", label: "'Funds arrive in 2 business days'", file: "components/landing/Faq.tsx", from: "Payout requests and processing are coming soon.", to: "Funds arrive in 2 business days.", kind: "must-catch" },
+  { id: "X35", label: "hold days hard-coded in the FAQ ('14-day hold') instead of PAYOUT_HOLD_DAYS", file: "components/landing/Faq.tsx", from: "${PAYOUT_HOLD_DAYS}-day hold", to: "14-day hold", kind: "must-catch" },
+  { id: "X36", label: "minimum payout hard-coded in the FAQ ('payouts start at $10')", file: "components/landing/Faq.tsx", from: "payouts start at $${MIN_PAYOUT_USD}", to: "payouts start at $10", kind: "must-catch" },
+  { id: "X37", pre: 'const T = { a: "In", b: "stantly" };', label: "object property lookup: T.a + T.b", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "{T.a + T.b}.", kind: "must-catch" },
+  { id: "X38", pre: 'const [da, db] = ["In", "stantly"];', label: "array destructuring: const [a, b] = [...]", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "{da + db}.", kind: "must-catch" },
+  { id: "X39", pre: 'let ls = "In"; ls += "stantly";', label: "let s = 'In'; s += 'stantly'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "{ls}.", kind: "must-catch" },
+  { id: "X40", label: ".replace(/x/g, '') spelling", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: '{"Ixnxstxantxly".replace(/x/g, "")}.', kind: "must-catch" },
+  { id: "X41", pre: 'const hh = () => "In";', label: "zero-argument helper: const h = () => 'In'; h() + 'stantly'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: '{hh() + "stantly"}.', kind: "must-catch" },
+  { id: "X42", label: "[...'yltnatsni'].reverse().join('')", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: '{[..."yltnatsni"].reverse().join("")}.', kind: "must-catch" },
+  { id: "X43", label: "env-driven flag: VIDEO_UPLOAD = process.env.X === '1' (no longer provably false)", file: "lib/features.ts", from: "export const VIDEO_UPLOAD = false;", to: 'export const VIDEO_UPLOAD = process.env.NEXT_PUBLIC_VIDEO === "1";', kind: "must-catch" },
+  { id: "X44", label: "new top-level folder content/copy.ts (scan by default)", file: "content/copy.ts", content: 'export const PROMO = "Instant download, receipt by email";', kind: "must-catch" },
+  { id: "X45", label: "new top-level messages/en.json", file: "messages/en.json", content: '{"hero":"Instant download"}', kind: "must-catch" },
+  { id: "X46", label: "mail template .hbs under src/server", file: "src/server/mail/receipt.hbs", content: "<p>Your receipt and download link are below.</p>", kind: "must-catch" },
+  { id: "X47", label: "public/promo.xml", file: "public/promo.xml", content: "<feed><entry><summary>Instant download</summary></entry></feed>", kind: "must-catch" },
+  { id: "X48", label: "SVG text split across <tspan>", file: "public/promo2.svg", content: '<svg xmlns="http://www.w3.org/2000/svg"><text>In<tspan>stant</tspan>ly</text></svg>', kind: "must-catch" },
+  { id: "X49", label: "CSS adjacent strings content: 'In' 'stantly'", file: "src/app/globals.css", from: '@import "tailwindcss";', to: '@import "tailwindcss";\n.x::after { content: "In" "stantly"; }', kind: "must-catch" },
+  { id: "X50", label: "speed claim 'Buyers check out in seconds' (FE-24) is flagged by the claim rules", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "buyers get access within minutes.", kind: "must-catch" },
+  { id: "X51", label: "'Lifetime access' / 'zero wait'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "lifetime access, zero wait.", kind: "must-catch" },
+  { id: "X52", label: "'Email help@unveil.link' (no such mailbox)", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "Questions? Email help@unveil.link.", kind: "must-catch" },
+  { id: "X53", label: "Chinese 付款后立即下载", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "付款后立即下载。", kind: "must-catch" },
+  { id: "X54", label: "symbol leet '!nstant'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: "!nstant access.", kind: "must-catch" },
+  // honest copy QA listed as false positives: must stay green WITHOUT an allowlist entry (rule-level carve-outs, one clause only)
+  { id: "X55", label: "honest: 'Your link is ready to share.'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: HERO_TAIL + " Your link is ready to share.", kind: "should-pass" },
+  { id: "X56", label: "honest: 'Your reset link expires in 60 seconds.'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: HERO_TAIL + " Your reset link expires in 60 seconds.", kind: "should-pass" },
+  { id: "X57", label: "honest: 'Receipts are not available yet.'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: HERO_TAIL + " Receipts are not available yet.", kind: "should-pass" },
+  { id: "X58", label: "honest: 'Download your sales as CSV'", file: "components/landing/Faq.tsx", from: "Your dashboard shows the exact breakdown.", to: "Your dashboard shows the exact breakdown. Download your sales as CSV.", kind: "should-pass" },
+  { id: "X59", label: "carve-out must not hide a continued promise: 'Receipts are not available yet, but we email them instantly.'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: HERO_TAIL + " Receipts are not available yet, but we email them instantly.", kind: "must-catch" },
+  { id: "X60", label: "carve-out must not hide a sibling sentence: 'Receipts are not available yet. We email a receipt.'", file: "components/landing/Hero.tsx", from: HERO_TAIL, to: HERO_TAIL + " Receipts are not available yet. We email a receipt.", kind: "must-catch" },
 ];
 
 type Spec = Case;
@@ -122,6 +154,7 @@ function caught(m: Spec): { applied: boolean; caught: boolean; detail: string } 
   else {
     if (orig === null || !(typeof m.from === "string" ? orig.includes(m.from) : m.from!.test(orig))) return { applied: false, caught: false, detail: `anchor not found in ${m.file}` };
     mutated = orig.replace(m.from!, m.to!);
+    if (m.pre) mutated = mutated.replace("export function Hero", `${m.pre}\nexport function Hero`);
     if (mutated === orig && m.kind !== "should-pass") return { applied: false, caught: false, detail: "no-op" };
   }
   const flags = readFlags((rel) => (rel === m.file ? mutated : existsSync(join(ROOT, rel)) ? read(rel) : null));

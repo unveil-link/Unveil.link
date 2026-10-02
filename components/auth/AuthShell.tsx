@@ -5,7 +5,7 @@ import { LegalLinks } from "@/components/LegalLinks";
 import { CardIcon, DownloadIcon, ShieldCheckIcon } from "@/components/landing/Icons";
 
 const points = [
-  { icon: CardIcon, title: "Get paid by card", body: "Buyers check out in seconds — no accounts, no friction." },
+  { icon: CardIcon, title: "Get paid by card", body: "Buyers pay by card — no account needed." },
   { icon: ShieldCheckIcon, title: "Private by design", body: "Originals are stored privately. Buyers only see blurred previews." },
   { icon: DownloadIcon, title: "One link, anywhere", body: "Share your payment link in a message, bio or email. Buyers check out with a card." },
 ];

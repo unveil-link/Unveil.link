@@ -37,9 +37,13 @@ const EXT_MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg"
 export function acceptAttr(l: UploadLimits): string {
   return [...l.allowedImageMimes, ".jpg", ".jpeg", ".png", ".webp", ...(l.videoUploadEnabled ? [MP4_MIME, MP4_EXT] : [])].join(",");
 }
+/** File types the dropzone accepts, as words ("JPG, PNG or WebP"; MP4 only when video upload is live). */
+export function fileTypesLabel(l: UploadLimits): string {
+  return l.videoUploadEnabled ? "JPG, PNG, WebP or MP4" : "JPG, PNG or WebP";
+}
 /** Dropzone hint, from the real limits: "JPG, PNG or WebP · up to 10 files · 2 GB per drop" (MP4 is added only when video upload is live). */
 export function dropzoneHint(l: UploadLimits): string {
-  const types = l.videoUploadEnabled ? "JPG, PNG, WebP or MP4" : "JPG, PNG or WebP";
+  const types = fileTypesLabel(l);
   return `${types} · up to ${l.maxFilesPerDrop} files · ${formatBytes(l.maxTotalBytesPerDrop)} per drop`;
 }
 /** The single note about video under the dropzone. */

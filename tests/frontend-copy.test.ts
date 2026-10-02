@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { VIDEO_UPLOAD } from "../lib/features";
-import { acceptAttr, DEFAULT_LIMITS, dropzoneHint, validateFile, videoNote } from "../lib/upload-limits";
+import { acceptAttr, DEFAULT_LIMITS, dropzoneHint, fileTypesLabel, validateFile, videoNote } from "../lib/upload-limits";
 import { VERIFICATION_META, type VerificationStatus } from "../components/dashboard/types";
 
 const read = (rel: string) => readFileSync(join(__dirname, "..", rel), "utf8");
@@ -77,5 +77,27 @@ describe("FE-22: signup / landing copy does not over-promise", () => {
       expect(read(f), f).toMatch(/Create your account/);
       expect(read(f), f).not.toMatch(/Start selling/);
     }
+  });
+});
+
+describe("FE-23/24/26", () => {
+  it("FE-23: header CTA has a short label below 640px (no overflow at 320-375px); Hero / SellerCta keep the full wording", () => {
+    const h = read("components/landing/SiteHeader.tsx");
+    expect(h).toMatch(/className="sm:hidden">Sign up</);
+    expect(h).toMatch(/className="hidden sm:inline">Create your account</);
+    for (const f of ["components/landing/Hero.tsx", "components/landing/SellerCta.tsx"]) expect(read(f), f).toMatch(/Create your account/);
+  });
+  it("FE-24: no speed claim in the auth side panel or elsewhere in user-facing frontend copy", () => {
+    expect(read("components/auth/AuthShell.tsx")).toContain("Buyers pay by card — no account needed.");
+    for (const f of ["components/auth/AuthShell.tsx", "components/landing/BuyerTrust.tsx", "components/landing/HowItWorks.tsx", "components/landing/Hero.tsx", "components/landing/Faq.tsx", "src/app/components/AuthForm.tsx"]) {
+      expect(read(f), f).not.toMatch(/in seconds|no friction|\bquick(ly)?\b|\bfast\b|in a minute/i);
+    }
+  });
+  it("FE-26: DropEditor derives the file-type words from the same helper as the dropzone", () => {
+    expect(read("src/app/components/DropEditor.tsx")).toMatch(/fileTypesLabel\(limits\)/);
+    expect(read("src/app/components/DropEditor.tsx")).not.toMatch(/JPG, PNG or WebP/);
+    expect(fileTypesLabel(OFF)).toBe("JPG, PNG or WebP");
+    expect(fileTypesLabel(ON)).toBe("JPG, PNG, WebP or MP4");
+    expect(dropzoneHint(ON).startsWith(fileTypesLabel(ON))).toBe(true);
   });
 });

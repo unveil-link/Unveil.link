@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 import { formatBytes, usd } from "@/lib/format";
 import { shareLabel } from "@/lib/share";
 import { uploadErrorMessage, uploadFile } from "@/lib/upload";
-import type { UploadLimits } from "@/lib/upload-limits";
+import { fileTypesLabel, type UploadLimits } from "@/lib/upload-limits";
 
 type FileItem = { id: string; filename: string; sizeBytes: number; mime: string };
 type Props = {
@@ -139,7 +139,7 @@ export default function DropEditor({ drop, files, verificationStatus, limits, un
 
       {canEdit && (
         <Card className="flex flex-col gap-4">
-          <div><CardTitle>Add files</CardTitle><CardDescription>JPG, PNG or WebP. They’re added to this drop right away.</CardDescription></div>
+          <div><CardTitle>Add files</CardTitle><CardDescription>{fileTypesLabel(limits)}. They’re added to this drop right away.</CardDescription></div>
           <FileDropzone id="more-files" queue={queue} limits={limits} existing={existing} disabled={uploading}
             onPick={(f) => setQueue((q) => addFilesToQueue(q, f, limits, existing))}
             onRemove={(k) => setQueue((q) => q.filter((x) => x.key !== k))}

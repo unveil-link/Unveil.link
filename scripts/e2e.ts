@@ -1899,6 +1899,8 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const land = txt(await (await anon.req("GET", "/")).text());
     assert(/Create your account/.test(land) && !/Start selling/.test(land), "landing CTA says 'Create your account'");
     assert(!/in seconds/i.test(land), "landing: no 'in seconds'");
+    for (const pg of ["/login", "/signup"]) { const t = txt(await (await anon.req("GET", pg)).text()); assert(!/in seconds|friction/i.test(t), `${pg}: no speed claim`); assert(t.includes("Buyers pay by card — no account needed."), `${pg}: side panel says buyers pay by card, no account needed`); }
+    assert(/Sign up/.test(land) && /Create your account/.test(land), "landing header has the short 'Sign up' label (small screens) and the full CTA labels");
     return `hint ok on 2 dropzones; verification states ${Object.keys(msgs).join("/")}/verified checked`;
   });
   await check("[FE-07/08] dashboard earnings == GET /api/earnings (ledger): fees separate, pending vs available, in-payout; no divergent math", async () => {

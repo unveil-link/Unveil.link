@@ -37,7 +37,7 @@ export function decodeEntities(s: string): string {
 const HOMO: Record<string, string> = {
   "а": "a", "в": "b", "е": "e", "ё": "e", "з": "3", "и": "u", "й": "u", "к": "k", "м": "m", "н": "h", "о": "o", "р": "p", "с": "c", "т": "t", "у": "y", "х": "x", "ѕ": "s", "і": "i", "ї": "i", "ј": "j", "ԁ": "d", "һ": "h", "ӏ": "l", "ԛ": "q", "ԝ": "w", "ь": "b", "ѵ": "v", "ү": "y", "ғ": "f",
   "α": "a", "β": "b", "γ": "y", "ε": "e", "ι": "i", "κ": "k", "μ": "u", "ν": "v", "ο": "o", "ρ": "p", "σ": "o", "τ": "t", "υ": "u", "χ": "x", "η": "n", "ω": "w", "ϲ": "c", "ϳ": "j",
-  "ı": "i", "ɩ": "i", "ɡ": "g", "ɑ": "a", "ᴅ": "d", "ʟ": "l", "ꞓ": "c", "ꓲ": "l", "ǀ": "l", "∣": "l",
+  "ı": "i", "ɪ": "i", "ʏ": "y", "ᴏ": "o", "ᴜ": "u", "ᴇ": "e", "ᴀ": "a", "ɴ": "n", "ꜱ": "s", "ᴛ": "t", "ʀ": "r", "ʜ": "h", "ᴍ": "m", "ᴋ": "k", "ᴡ": "w", "ɢ": "g", "ʙ": "b", "ᴄ": "c", "ᴊ": "j", "ᴘ": "p", "ᴠ": "v", "ᴢ": "z", "ꜰ": "f", "ɩ": "i", "ɡ": "g", "ɑ": "a", "ᴅ": "d", "ʟ": "l", "ꞓ": "c", "ꓲ": "l", "ǀ": "l", "∣": "l",
 };
 const ZERO_WIDTH = /[\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180b-\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff]/g;
 export function normalize(raw: string): string {
@@ -50,6 +50,7 @@ export function normalize(raw: string): string {
 const LEET: Record<string, string> = { "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s" };
 /** Leet-speak form: only tokens that mix letters with leet digits / symbols are rewritten ("1nstant" -> "instant"; "$25" and "7-day" are left alone unless they mix). */
 export function leet(norm: string): string {
+  norm = norm.replace(/(^|[^a-z0-9])[!|](?=[a-z])/g, "$1i"); // "!nstant", "|nstant"
   return norm.split(" ").map((t) => (/[a-z]/.test(t) && /[013457@$]/.test(t) && /[a-z][013457@$]|[013457@$][a-z]/.test(t) ? t.replace(/[013457@$]/g, (c) => LEET[c]) : t)).join(" ");
 }
 const squash = (norm: string) => norm.replace(/[^a-z]/g, "");
@@ -59,7 +60,7 @@ type Rule = [name: string, re: RegExp, when?: (f: Flags) => boolean];
 const NOUN = "(?:receipts?|confirmation|order|invoice|download|files?|links?|access|photos?|images?|content|purchase|videos?)";
 export const RULES: Rule[] = [
   // -- speed / immediacy
-  ["instant", /\binstant(?:ly|aneous(?:ly)?|ane|aneo|anea|aneamente)?\b/],
+  ["instant", /\binstant(?:ly|aneous(?:ly)?|ane|aneo|anea|aneamente)?\b|立即|马上|即时|立刻|付款后|即刻|すぐ|即座/],
   ["immediate", /\b(?:immediate(?:ly)?|immediat\w*|inmediat\w*|unverzueglich|sofort\w*|al instante|de inmediato)\b/],
   ["right-away", /\b(?:right|straight) ?away\b|\bat once\b|\bon the spot\b|\bno waiting\b|\bwithout (?:any )?(?:waiting|delay)\b|\bin no time\b|\bin an? (?:flash|snap|jiffy|heartbeat)\b|\bwait(?:ing)? (?:for )?nothing\b/],
   ["in-seconds", new RegExp(`\\bseconds? (?:after|of) (?:you |your |the )?(?:pay|purchase|checkout|buy|order)|\\b(?:land|arrive|appear|show up|reach|open|unlock|get|receive|ready)\\w*\\b.{0,40}\\b(?:in|within) (?:a )?(?:few |couple of |\\d+ )?seconds?\\b|\\b${NOUN}\\b.{0,30}\\b(?:in|within) (?:a )?(?:few |couple of |\\d+ )?seconds?\\b`)],
@@ -69,7 +70,7 @@ export const RULES: Rule[] = [
   ["email-promise", new RegExp(`\\bemailed\\b|\\bmailed\\b|\\be-?mail(?:s|ing)? (?:you|them|buyers?)\\b|\\b(?:send|sends|sending|sent|forward|forwards|deliver|delivers)\\b (?:you |buyers? |them |it |over )?(?:to (?:you|your|them) )?(?:a |an |the |your |their |that |all )?${NOUN}\\b|\\bsent to (?:your|their|the buyer's?) (?:e-?mail|inbox|address)|\\bcheck your (?:e-?mail|inbox|spam|mail)|\\b(?:in|to|into) your (?:e-?mail|inbox|mailbox)\\b|\\bconfirmation (?:e-?mail|message)\\b|\\be-?mail confirmation\\b|\\bwe will (?:e-?mail|mail|send|forward|deliver)\\b`)],
   ["inbox", /\binbox\b|\barrive in your\b|\bmailbox\b/],
   ["receive-promise", new RegExp(`\\byou (?:will )?(?:receive|get|have|find) (?:your |the |an? |all )?${NOUN}\\b|\\breceive (?:your|the|an?) ${NOUN}\\b`)],
-  ["files-ready", /\b(?:files?|photos?|downloads?|content|purchase|order|videos?|images?|access|links?)s? (?:(?:is|are|will be|be|now|already|all) )*ready\b|\bready (?:to|for) (?:download|open|view|use|access)\b/],
+  ["files-ready", /\b(?:files?|photos?|downloads?|content|purchase|order|videos?|images?|access|links?)s? (?:(?:is|are|will be|be|now|already|all) )*ready\b(?! (?:to|for) (?:share|sharing|copy|post|publish|send|use in))|\bready (?:to|for) (?:download|open|view|use|access)\b/],
   ["backup-link", /\bbackup (?:download )?links?\b/],
   ["auto-deliver", /\bautomatic(?:ally)?\b.{0,40}\b(?:deliver\w*|unlock\w*|(?:send\w*|sent)|e-?mail\w*|download\w*|receiv\w*|pay\w*|access\w*)|\b(?:deliver|unlock|send|sent|email|download|receive|pay|payout)\w*\b.{0,40}\bautomatic(?:ally)?\b|\bauto[- ]?(?:deliver|download|send|unlock|pay)/],
   ["deliver", /\bdeliver(?:y|ies|ed|s|ing)?\b|\bentrega\w*|\blivraison\b|\blieferung\b|\bzustell\w*/],
@@ -81,14 +82,20 @@ export const RULES: Rule[] = [
   ["paid-out", /\bpaid out\b|\bpay ?outs? (?:are |is |will be )?(?:sent|paid|deposited|made)\b/],
   ["payout-schedule", /\bpay ?outs?\b.{0,25}\b(?:straight|direct(?:ly)?|daily|weekly|monthly|every|each|same ?day|next ?day|instant\w*|automatic\w*|within \d)|\b(?:weekly|daily|monthly|bi-?weekly|fortnightly|instant|same-day|next-day|same day|next day|automatic) (?:pay ?outs?|payments?|pay|deposits?|transfers?)\b|\bget paid (?:instantly|daily|weekly|fast|quickly|automatically|directly|today)\b|\bevery (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|week|weekday|day|month)\b|\bregular schedule\b/],
   ["bank-promise", /\bbank (?:transfers?|deposits?|accounts?)\b|\bdirect deposit\b|\bwire transfer\b|\bstraight to your\b|\b(?:to|into) your (?:bank|account|paypal|iban)\b|\bwithdraw\w*\b|\bcash ?out\b|\bsame[- ]day\b|\bnext[- ]day\b|\bguarantee\w*\b/],
+  ["fee-claim", /\bkeep (?:up to |about |around |over |almost |nearly |all but )?\d{1,3} ?%|\b\d{1,3} ?% (?:of (?:every|each|all|your|the|each and every) (?:sale|sales|purchase|purchases|revenue|earnings|price)|(?:revenue )?(?:share|cut|commission|fee|fees)\b)|\b(?:zero|no|0|without any|never any) (?:platform |processing |hidden |transaction |extra |listing |seller |setup |set-up |monthly )*fees?\b|\bfee[- ]?free\b|\b(?:keep|retain|take home) (?:all|every (?:cent|penny|dollar)|everything|the full|100 ?%)\b|\bcommission[- ]free\b/],
+  ["payout-timing", /\b\d+(?:\s?(?:-|to)\s?\d+)? ?(?:business|working|banking|bank) days?\b|\b(?:funds?|money|earnings|balance|payouts?|payments?|cash)\b.{0,40}\b(?:arrive|arrives|arriving|land|lands|landing|reach|reaches|hit|hits|deposited|credited|available)\b.{0,25}\b(?:in|within|after|by|on|the next)\b.{0,12}\b(?:\d+|one|two|three|four|five|next|same|tomorrow|monday|friday|hours?|days?|minutes?)\b|\b(?:we|unveil) (?:will )?pay\w* (?:creators|sellers|you|out)\b.{0,40}\b(?:\d+|one|two|three|same|next|within)\b/],
+  ["hard-coded-payout-number", /\b\d+ ?- ?days? (?:hold|holding|delay|waiting)|\bhold(?:s|ing)? (?:period )?(?:of |for )?\d+ days?\b|\b(?:held|holds?|pending) (?:for )?\d+ days?\b|\b(?:minimum|min\.?) (?:payout|withdrawal|balance|cash ?out)\b.{0,25}\$ ?\d|\$ ?\d+(?:\.\d\d)? (?:minimum|min\b)|\bpayouts? (?:start|begin|open)s? (?:at|from) \$ ?\d|\bavailable (?:after|in) \d+ days?\b|\bbecomes? available (?:after|in) \d+ days?\b/],
   // -- trust & processing claims
+  ["ssl-claim", /\b(?:\d{2,4}[- ]?bit)\b|\b(?:ssl|tls)\b.{0,20}\b(?:secure[sd]?|protect\w*|encrypt\w*)|\b(?:secure[sd]?|protect\w*|encrypt\w*)\b.{0,20}\b(?:ssl|tls)\b|\bid[- ]checked\b|\bverified in (?:\d+|a few|minutes|seconds|an? (?:hour|day|minute))|\bget verified (?:in|within|today|now|instantly|fast)/],
   ["trusted-provider", /\btrusted (?:payment )?(?:provider|processor|partner|platform)\b|\bpayments? partner\b|\bbank[- ]?(?:level|grade|class)\b|\bmilitary[- ]grade\b|\bpci\b|\bcertified\b|\biso ?27001\b|\bsoc ?2\b|\bgdpr[- ]compliant\b|\bfully (?:secure|insured|protected)\b|\b100 ?% ?(?:secure|safe|private|anonymous)\b|\bend[- ]to[- ]end\b|\bencrypt\w*\b|\bfraud[- ]?(?:proof|free)\b|\brisk[- ]free\b|\bmoney[- ]back\b|\bsafe and secure\b|\bunhackable\b/],
   ["verified-claims", /\b(?:identity|age)[- ](?:and |& )?(?:age|identity)?[- ]?verif|\bage[- ]verified\b|\bidentity[- ]verified\b|\bid[- ]verified\b|\bkyc\b|\bbackground[- ]check\w*|\bfully verified\b|\b100 ?% ?verified\b|\b(?:all|every|each) (?:creators?|sellers?) (?:is |are )?(?:fully |100 ?% |identity |age |background )?(?:verified|vetted|screened|checked)\b/],
+  ["help-claim", /\b(?:24 ?\/ ?7|around[- ]the[- ]clock) (?:support|help|service|assistance)\b|\b(?:email|e-mail|mail|write|reach|message) (?:us )?(?:at )?[a-z0-9._-]+@[a-z0-9.-]+|\b(?:help|support|team|hello|contact|care|service|billing|payments|trust|safety|abuse|press|legal|privacy|dmca)@[a-z0-9-]+\.[a-z]{2,}\b|\bmoderation team\b|\bmanually (?:reviewed|checked|approved|verified)\b|\bcheck(?:s|ed)? (?:every|each|all) (?:drop|link|upload|file|listing|creator|seller)\b|\breview(?:s|ed)? (?:every|each|all) (?:drop|link|upload|file|listing)\b/],
   ["private-to-creator", /\bprivate to (?:the )?(?:creator|seller)\b/],
   // -- review / support claims (nothing behind them today)
   ["support-claim", /\bcontact (?:our |the |customer )?(?:support|team|us|help)\b|\b(?:customer|live|our) support\b|\bsupport (?:team|center|centre|email|chat)\b|\bhelp ?desk\b|\bwrite to us\b/, (f) => f.contactPlaceholder],
   ["human-review", /\ba (?:real )?(?:person|human|team member|specialist|agent|moderator)\b.{0,25}\b(?:review\w*|check\w*|verif\w*|look\w*)|\bour (?:team|staff|moderators?|reviewers?)\b.{0,25}\b(?:review\w*|check\w*|verif\w*|look\w*)|\b(?:reviewed|checked|verified|approved) by (?:a |our |an? )?(?:person|human|team|moderator|staff|specialist)|\bhuman review\b|\bwe will (?:review|verify|check) your\b|\b(?:usually|typically) (?:takes|within)\b/],
   // -- capability claims tied to flags
+  ["access-promise", /\blifetime access\b|\b(?:re-?access|access again|come back to|download again)\b.{0,30}\b(?:any ?time|whenever|forever|later)\b|\b(?:stay|stays|remain|remains|kept|keeps?)\b.{0,15}\bavailable (?:for|until|forever|permanently)\b|\bavailable for \d+ (?:days?|weeks?|months?|years?)\b|\bforever\b.{0,15}\b(?:yours|access)\b|\bzero wait\b|\b(?:open|unlock|arriv|appear|download|ready|available)\w*\b.{0,25}\bwhen (?:the )?(?:checkout|payment|purchase|order)\b|\b(?:access|files?|downloads?|originals?|delivery|arrive\w*|get|receive)\b.{0,25}\bwithin (?:a few |\d+ |some )?(?:minutes?|hours?)\b|\bas the payment (?:clears|goes through|completes|lands)\b|\bwhen (?:the )?(?:checkout|payment|purchase|order) (?:finishes|completes|clears|is (?:done|complete|confirmed))\b.{0,25}\b(?:open|unlock|arriv|sent|receiv|get|ready|access|download)|\b(?:order|receipt|summary|confirmation|files?|downloads?|purchase|access|photos?|originals?|content|invoice)\b.{0,25}\bon its way\b|\byou(?: will|'ll)? be sent\b|\bwill be sent to you\b|\b(?:access|accesso|acces|zugang)\b.{0,25}\b(?:des le paiement|al momento|na hora|sofort|ahora mismo|dès le paiement|tout de suite)\b|\bal momento\b|\bna hora\b|\bdes le paiement\b|\btout de suite\b|\bahora mismo\b|\bsubito\b|\bsogleich\b|\bzeitnah\b/],
   ["video-claim", /\bvideos?\b(?!\/)|\bmp4s?\b|\bclips?\b|\bmovies?\b|\bfootage\b|\bwebm\b|\bfilms?\b|\bstreaming\b/, (f) => !f.videoUpload],
 ];
 /** Letters-only stems (spacing / punctuation tricks: "in stant", "down-load"). [rule, stem] */
@@ -98,6 +105,24 @@ const SQUASHED: Array<[string, string]> = [
   ["unlock", "unlock"], ["deliver", "deliver"], ["paid-out", "paidout"],
 ];
 
+/**
+ * Honest-copy carve-outs (FE-18d): a SINGLE clause that merely says a thing is NOT available, or a seller CSV export, is not a promise. Applied per sentence and
+ * per rule, only to a short whitelist of rules, and never to a clause that continues ("... but we email a receipt", "... and download instantly").
+ */
+const ONE_CLAUSE = /^(?:(?!\b(?:but|and|then|also|plus|however|instead|though|while)\b)[^,;:])*$/;
+const BENIGN: Record<string, RegExp[]> = {
+  receipt: [/\b(?:receipts?|invoices?|e-?mails?) (?:are|is|will) not (?:yet |currently )?(?:be )?(?:available|supported|offered|sent|provided)\b/],
+  "email-promise": [/\b(?:receipts?|invoices?|e-?mails?|downloads?) (?:are|is|will) not (?:yet |currently )?(?:be )?(?:available|supported|offered|sent|provided)\b/],
+  download: [/\b(?:downloads?|downloading) (?:are|is|will) not (?:yet |currently )?(?:be )?(?:available|supported|offered)\b/, /\b(?:csv|spreadsheet)\b/],
+  "in-seconds": [/\b(?:expire[sd]?|valid for|lasts?|time ?out|retry|try again|cool ?down|wait(?:ing)? time|locked)\b/],
+};
+const sentences = (norm: string) => norm.split(/(?<=[.!?])\s+/);
+function applyBenign(rule: string, norm: string): string {
+  const b = BENIGN[rule.replace(/ \(.*$/, "")];
+  if (!b) return norm;
+  return sentences(norm).filter((sn) => !(ONE_CLAUSE.test(sn.replace(/[.!?]+$/, "")) && b.some((re) => re.test(sn)))).join(" ");
+}
+
 export function checkUnit(u: Unit, flags: Flags = { videoUpload: false, contactPlaceholder: true }): Hit[] {
   const norm = normalize(u.text);
   const forms = [norm, leet(norm)];
@@ -105,7 +130,7 @@ export function checkUnit(u: Unit, flags: Flags = { videoUpload: false, contactP
   const seen = new Set<string>();
   for (const [rule, re, when] of RULES) {
     if (when && !when(flags)) continue;
-    if (forms.some((f) => re.test(f))) { seen.add(rule); hits.push({ ...u, rule, norm }); }
+    if (forms.some((f) => re.test(applyBenign(rule, f)))) { seen.add(rule); hits.push({ ...u, rule, norm }); }
   }
   const sq = squash(norm);
   for (const [rule, stem] of SQUASHED) if (!seen.has(rule) && sq.includes(stem) && !norm.includes(stem)) { seen.add(rule); hits.push({ ...u, rule: rule + " (spacing trick)", norm }); }
@@ -113,18 +138,61 @@ export function checkUnit(u: Unit, flags: Flags = { videoUpload: false, contactP
 }
 
 // ------------------------------------------------------------------------------------------------------------------ constant folding
-type Val = string | number | string[] | number[] | undefined;
+type Obj = { [k: string]: Val };
+type Val = string | number | string[] | number[] | Obj | undefined;
+const isObj = (v: Val): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v);
 type Env = Map<string, Val>;
 const strOf = (v: Val): string | undefined => (typeof v === "string" ? v : typeof v === "number" ? String(v) : undefined);
 
 function buildEnv(sf: ts.SourceFile): Env {
   const env: Env = new Map(); const dup = new Set<string>();
   const decls: ts.VariableDeclaration[] = [];
-  const collect = (n: ts.Node) => { if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.initializer) decls.push(n); ts.forEachChild(n, collect); };
+  const plusAssigns: Array<{ name: string; right: ts.Expression }> = [];
+  const declare = (name: string) => { if (env.has(name) || dup.has(name)) { dup.add(name); env.delete(name); } else env.set(name, undefined); };
+  const namesOf = (b: ts.BindingName): string[] => (ts.isIdentifier(b) ? [b.text] : (b.elements as ReadonlyArray<ts.ArrayBindingElement>).flatMap((e) => (ts.isBindingElement(e) ? namesOf(e.name) : [])));
+  const collect = (n: ts.Node) => {
+    if (ts.isVariableDeclaration(n) && n.initializer) { decls.push(n); namesOf(n.name).forEach(declare); }
+    // `s += "x"` / `s = s + "x"` (statement level): folded in source order below
+    if (ts.isExpressionStatement(n) && ts.isBinaryExpression(n.expression) && ts.isIdentifier(n.expression.left)) {
+      const e = n.expression, name = (e.left as ts.Identifier).text;
+      if (e.operatorToken.kind === ts.SyntaxKind.PlusEqualsToken) plusAssigns.push({ name, right: e.right });
+      else if (e.operatorToken.kind === ts.SyntaxKind.EqualsToken && ts.isBinaryExpression(unwrap(e.right)) && (unwrap(e.right) as ts.BinaryExpression).operatorToken.kind === ts.SyntaxKind.PlusToken && ts.isIdentifier(unwrap((unwrap(e.right) as ts.BinaryExpression).left)) && (unwrap((unwrap(e.right) as ts.BinaryExpression).left) as ts.Identifier).text === name) plusAssigns.push({ name, right: (unwrap(e.right) as ts.BinaryExpression).right });
+    }
+    ts.forEachChild(n, collect);
+  };
   collect(sf);
-  for (const d of decls) { const name = (d.name as ts.Identifier).text; if (env.has(name) || dup.has(name)) { dup.add(name); env.delete(name); } else env.set(name, undefined); }
-  // fold in source order, a few passes so `const b = a + "x"` resolves
-  for (let pass = 0; pass < 3; pass++) for (const d of decls) { const name = (d.name as ts.Identifier).text; if (dup.has(name) || env.get(name) !== undefined) continue; const v = evalValue(d.initializer!, env); if (typeof v === "string" || Array.isArray(v) || typeof v === "number") env.set(name, v); }
+  const foldDecl = (d: ts.VariableDeclaration) => {
+    const init = unwrap(d.initializer!);
+    if (ts.isIdentifier(d.name)) {
+      const name = d.name.text;
+      // zero-argument helper: const a = () => "In"  ->  env["()a"]
+      if ((ts.isArrowFunction(init) || ts.isFunctionExpression(init)) && init.parameters.length === 0) {
+        const body = init.body; const e = ts.isBlock(body) ? (body.statements.length === 1 && ts.isReturnStatement(body.statements[0]) ? (body.statements[0] as ts.ReturnStatement).expression : undefined) : body;
+        if (e && !dup.has(name)) { const v = evalValue(e, env); if (typeof v === "string") env.set("()" + name, v); }
+        return;
+      }
+      if (dup.has(name) || env.get(name) !== undefined) return;
+      const v = evalValue(init, env);
+      if (v !== undefined) env.set(name, v);
+      return;
+    }
+    const v = evalValue(init, env);
+    const assign = (b: ts.BindingName, val: Val) => {
+      if (ts.isIdentifier(b)) { if (!dup.has(b.text) && val !== undefined && env.get(b.text) === undefined) env.set(b.text, val); return; }
+      if (ts.isArrayBindingPattern(b) && Array.isArray(val)) b.elements.forEach((e, i) => { if (ts.isBindingElement(e)) assign(e.name, (val as Array<string | number>)[i] as Val); });
+      if (ts.isObjectBindingPattern(b) && isObj(val)) b.elements.forEach((e) => { const key = e.propertyName ? (ts.isIdentifier(e.propertyName) || ts.isStringLiteral(e.propertyName) ? e.propertyName.text : undefined) : ts.isIdentifier(e.name) ? e.name.text : undefined; if (key !== undefined) assign(e.name, val[key]); });
+    };
+    assign(d.name, v);
+  };
+  for (let pass = 0; pass < 3; pass++) {
+    for (const d of decls) foldDecl(d);
+    if (pass === 0) for (const pa of plusAssigns) {
+      if (dup.has(pa.name)) continue;
+      const cur = strOf(env.get(pa.name)), add = strOf(evalValue(pa.right, env));
+      if (cur !== undefined && add !== undefined) env.set(pa.name, cur + add);
+      else { env.delete(pa.name); dup.add(pa.name); } // cannot be folded: stays opaque (never a partial string)
+    }
+  }
   return env;
 }
 const unwrap = (n: ts.Node): ts.Node => (ts.isParenthesizedExpression(n) || ts.isAsExpression(n) || ts.isSatisfiesExpression(n) || ts.isNonNullExpression(n) ? unwrap(n.expression) : n);
@@ -138,6 +206,19 @@ export function evalValue(node: ts.Node, env: Env, depth = 0): Val {
   if (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) return n.text;
   if (ts.isNumericLiteral(n)) return Number(n.text);
   if (ts.isIdentifier(n)) return env.get(n.text);
+  if (ts.isObjectLiteralExpression(n)) {
+    const o: Obj = {};
+    for (const pr of n.properties) if (ts.isPropertyAssignment(pr) && (ts.isIdentifier(pr.name) || ts.isStringLiteral(pr.name) || ts.isNumericLiteral(pr.name))) o[pr.name.text] = ev(pr.initializer);
+    return o;
+  }
+  if (ts.isPropertyAccessExpression(n) && !ts.isCallExpression(n.parent)) { const o = ev(n.expression); if (isObj(o)) return o[n.name.text]; if (Array.isArray(o) && n.name.text === "length") return o.length; return undefined; }
+  if (ts.isElementAccessExpression(n)) {
+    const o = ev(n.expression), k = ev(n.argumentExpression);
+    if (isObj(o) && (typeof k === "string" || typeof k === "number")) return o[String(k)];
+    if (Array.isArray(o) && typeof k === "number") return (o as Array<string | number>)[k] as Val;
+    return undefined;
+  }
+  if (ts.isConditionalExpression(n)) { const a = ev(n.whenTrue), b = ev(n.whenFalse); return typeof a === "string" && a === b ? a : undefined; }
   if (ts.isTemplateExpression(n)) return n.head.text + n.templateSpans.map((sp) => (strOf(ev(sp.expression)) ?? "{}") + sp.literal.text).join("");
   if (ts.isBinaryExpression(n) && n.operatorToken.kind === ts.SyntaxKind.PlusToken) {
     const l = ev(n.left), r = ev(n.right);
@@ -148,7 +229,7 @@ export function evalValue(node: ts.Node, env: Env, depth = 0): Val {
     return undefined;
   }
   if (ts.isArrayLiteralExpression(n)) {
-    const els = n.elements.map(ev);
+    const els = n.elements.flatMap((e): Val[] => { if (ts.isSpreadElement(e)) { const v = ev(e.expression); return typeof v === "string" ? Array.from(v) : Array.isArray(v) ? (v as Val[]) : [undefined]; } return [ev(e)]; });
     if (els.every((x) => typeof x === "string")) return els as string[];
     if (els.every((x) => typeof x === "number")) return els as number[];
     if (els.some((x) => typeof x === "string")) return els.map((x) => strOf(x) ?? "{}");
@@ -167,6 +248,8 @@ export function evalValue(node: ts.Node, env: Env, depth = 0): Val {
       return undefined;
     }
     const args = n.arguments.map(ev);
+    if (ts.isIdentifier(callee) && n.arguments.length === 0 && typeof env.get("()" + callee.text) === "string") return env.get("()" + callee.text);
+    if (ts.isPropertyAccessExpression(callee) && ts.isIdentifier(callee.expression) && callee.expression.text === "Array" && callee.name.text === "from" && typeof args[0] === "string") return Array.from(args[0]);
     if (ts.isIdentifier(callee)) {
       const a0 = strOf(args[0]);
       if (callee.text === "atob" && a0 !== undefined) { try { return Buffer.from(a0, "base64").toString("binary"); } catch { return undefined; } }
@@ -192,7 +275,11 @@ export function evalValue(node: ts.Node, env: Env, depth = 0): Val {
           case "trim": return obj.trim();
           case "repeat": return typeof args[0] === "number" ? obj.repeat(args[0]) : undefined;
           case "slice": case "substring": return obj.slice(typeof args[0] === "number" ? args[0] : 0, typeof args[1] === "number" ? args[1] : undefined);
-          case "replace": case "replaceAll": return a0 !== undefined && a1 !== undefined ? obj.split(a0).join(a1) : undefined;
+          case "replace": case "replaceAll": {
+            const rx = n.arguments[0] && ts.isRegularExpressionLiteral(unwrap(n.arguments[0])) ? unwrap(n.arguments[0]).getText() : undefined;
+            if (rx && a1 !== undefined) { const m = /^\/(.*)\/([a-z]*)$/s.exec(rx); try { return m ? obj.replace(new RegExp(m[1], m[2] + (name === "replaceAll" && !m[2].includes("g") ? "g" : "")), a1) : undefined; } catch { return undefined; } }
+            return a0 !== undefined && a1 !== undefined ? obj.split(a0).join(a1) : undefined;
+          }
           case "normalize": return obj.normalize();
           default: return undefined;
         }
@@ -313,7 +400,14 @@ function cssUnits(file: string, src: string): Unit[] {
   const t = src.replace(/\/\*[\s\S]*?\*\//g, " ");
   const out: Unit[] = [];
   const unesc = (s: string) => s.replace(/\\([0-9a-f]{1,6}) ?/gi, (_, h) => safeChr(parseInt(h, 16))).replace(/\\(.)/g, "$1");
-  for (const m of t.matchAll(/(["'])((?:\\.|(?!\1)[^\\\n])*)\1/g)) { const text = clean(unesc(m[2])); if (text) out.push({ file, text, line: t.slice(0, m.index).split("\n").length }); }
+  const ms = [...t.matchAll(/(["'])((?:\\.|(?!\1)[^\\\n])*)\1/g)];
+  for (const m of ms) { const text = clean(unesc(m[2])); if (text) out.push({ file, text, line: t.slice(0, m.index).split("\n").length }); }
+  // adjacent strings (content: "In" "stantly") read as one
+  for (let i = 0; i < ms.length; ) {
+    let j = i; while (j + 1 < ms.length && /^\s*$/.test(t.slice(ms[j].index! + ms[j][0].length, ms[j + 1].index))) j++;
+    if (j > i) { const text = clean(ms.slice(i, j + 1).map((m) => unesc(m[2])).join("")); if (text) out.push({ file, text, line: t.slice(0, ms[i].index).split("\n").length }); }
+    i = j + 1;
+  }
   return out;
 }
 function markupUnits(file: string, src: string): Unit[] {
@@ -322,6 +416,9 @@ function markupUnits(file: string, src: string): Unit[] {
   const noCode = t.replace(/<(script|style)[\b][\s\S]*?<\/\1>/gi, " ");
   for (const m of noCode.matchAll(/(?:aria-label|title|alt|content|value|placeholder|label|aria-description)\s*=\s*(["'])(.*?)\1/gi)) { const text = clean(m[2]); if (text) out.push({ file, text, line: noCode.slice(0, m.index).split("\n").length }); }
   for (const m of noCode.matchAll(/>([^<>]+)</g)) { const text = clean(m[1]); if (text) out.push({ file, text, line: noCode.slice(0, m.index).split("\n").length }); }
+  // inline tags (tspan, b, span ...) glue neighbouring text: In<tspan>stant</tspan>ly
+  const glued = noCode.replace(/<\/?(?:tspan|textpath|b|i|em|strong|span|a|u|s|small|sub|sup|mark|font|big|tt|label)\b[^>]*>/gi, "");
+  if (glued !== noCode) for (const m of glued.matchAll(/>([^<>]+)</g)) { const text = clean(m[1]); if (text) out.push({ file, text, line: glued.slice(0, m.index).split("\n").length }); }
   return out;
 }
 function jsonUnits(file: string, src: string): Unit[] {
@@ -333,13 +430,13 @@ function textUnits(file: string, src: string): Unit[] {
   return src.split(/\n\s*\n|\n/).map((l, i) => ({ file, text: clean(l.replace(/^[#>*\-\s`]+/, "")), line: i + 1 })).filter((u) => u.text);
 }
 
-export const SCANNED_EXT = /\.(tsx?|jsx?|mjs|cjs|css|svg|html?|json|webmanifest|md|mdx|txt)$/i;
+export const SCANNED_EXT = /\.(tsx?|mts|cts|jsx?|mjs|cjs|css|svg|html?|xml|hbs|handlebars|mjml|ejs|njk|liquid|mustache|json|webmanifest|md|mdx|txt)$/i;
 
 /** All units of one file, whatever its type. `issues` collects unresolved obfuscation. */
 export function unitsOf(file: string, source: string, issues: FoldIssue[] = []): Unit[] {
-  if (/\.(tsx?|jsx?|mjs|cjs)$/i.test(file)) return extractUnits(file, source, issues);
+  if (/\.(tsx?|mts|cts|jsx?|mjs|cjs)$/i.test(file)) return extractUnits(file, source, issues);
   if (/\.css$/i.test(file)) return cssUnits(file, source);
-  if (/\.(svg|html?)$/i.test(file)) return markupUnits(file, source);
+  if (/\.(svg|html?|xml|hbs|handlebars|mjml|ejs|njk|liquid|mustache)$/i.test(file)) return markupUnits(file, source);
   if (/\.(json|webmanifest)$/i.test(file)) return jsonUnits(file, source);
   return textUnits(file, source);
 }
@@ -349,10 +446,14 @@ export function scanSource(file: string, source: string, flags: Flags = { videoU
   const issues: FoldIssue[] = [];
   const units = unitsOf(file, source, issues);
   const hits: Hit[] = [];
+  const standalone = [...new Set(units.filter((u) => !u.parts).map((u) => u.text))];
+  const ruleCache = new Map<string, string[]>();
+  const rulesOf = (t: string) => { let r = ruleCache.get(t); if (!r) { r = checkUnit({ file, text: t, line: 0 }, flags).map((h) => h.rule); ruleCache.set(t, r); } return r; };
   for (const u of units) {
     let hs = checkUnit(u, flags);
     if (u.parts && hs.length) {
-      const partRules = new Set(u.parts.flatMap((p) => checkUnit({ file, text: p, line: u.line }, flags).map((h) => h.rule)));
+      // a rule is already reported by a piece only if a standalone unit inside that piece triggers it (a folded expression such as {s} has none)
+      const partRules = new Set(u.parts.flatMap((p) => standalone.filter((t) => p.includes(t)).flatMap(rulesOf)));
       hs = hs.filter((h) => !partRules.has(h.rule));
     }
     hits.push(...hs);
@@ -365,5 +466,5 @@ export function scanSource(file: string, source: string, flags: Flags = { videoU
 export function readFlags(read: (rel: string) => string | null): Flags {
   const features = read("lib/features.ts") ?? "";
   const contact = read("src/app/contact/page.tsx") ?? "";
-  return { videoUpload: /export const VIDEO_UPLOAD\s*=\s*true\b/.test(features), contactPlaceholder: /ComingSoon|Coming soon/i.test(contact) };
+  return { videoUpload: /export const VIDEO_UPLOAD\b/.test(features) && !/export const VIDEO_UPLOAD\s*(?::\s*\w+\s*)?=\s*false\s*(?:as const\s*)?[;\n]/.test(features), contactPlaceholder: /ComingSoon|Coming soon/i.test(contact) };
 }

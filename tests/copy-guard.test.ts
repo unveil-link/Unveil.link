@@ -25,7 +25,13 @@ const { ALLOW, BACKEND_BASELINE } = allowlist;
  * NOTE: this file must stay self-contained enough to run in a scratch copy that has tests/ components/ lib/ src/ public/ next.config.ts only (QA harness).
  */
 const ROOT = join(__dirname, "..");
-const SCAN_DIRS = ["components", "lib", "src", "public", "next.config.ts"];
+/**
+ * Scope is an EXCLUDE list, not an include list, so a new top-level folder (messages/, content/, emails/ ...) is scanned by default. Only these are skipped:
+ * dependencies/build output, tests, QA, docs and dev tooling, DB migrations, screenshots/proof artefacts and local data. Root-level files are scanned only if
+ * they are code/config (ts/js/mjs ...), never README/NOTES markdown.
+ */
+export const EXCLUDED_TOP = new Set(["node_modules", ".git", "tests", "qa", "docs", "scripts", "screenshots", "proof", "db", "storage-data", "coverage", "dist", "build", "out", "tmp"]);
+const ROOT_CODE = /\.(tsx?|mts|cts|jsx?|mjs|cjs)$/i;
 const BACKEND = ["src/server", "src/app/api"];
 const isBackend = (rel: string) => BACKEND.some((b) => rel === b || rel.startsWith(b + "/"));
 
@@ -38,7 +44,12 @@ function walk(p: string, out: string[] = []): string[] {
   }
   return out;
 }
-export const allFiles = () => SCAN_DIRS.flatMap((d) => walk(join(ROOT, d))).map((f) => relative(ROOT, f)).sort();
+export function scanRoots(): string[] {
+  return readdirSync(ROOT, { withFileTypes: true })
+    .filter((e) => (e.isDirectory() ? !e.name.startsWith(".") && !EXCLUDED_TOP.has(e.name) : ROOT_CODE.test(e.name)))
+    .map((e) => e.name).sort();
+}
+export const allFiles = () => scanRoots().flatMap((d) => walk(join(ROOT, d))).map((f) => relative(ROOT, f)).sort();
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 const readOpt = (rel: string) => (existsSync(join(ROOT, rel)) ? read(rel) : null);
 const flags = readFlags(readOpt);
@@ -72,6 +83,16 @@ describe("copy guard: user-facing source promises nothing that is not live", () 
     expect(tsUnits.length).toBeGreaterThan(1500);
     expect(tsUnits.some((u) => u.file === "components/landing/Faq.tsx" && /How do I get paid/.test(u.text))).toBe(true);
     expect(tsUnits.some((u) => u.file === "src/app/layout.tsx" && /shareable payment link/.test(u.text))).toBe(true);
+  });
+
+  it("scope is an exclude-list: every top-level folder / root code file is scanned except the explicit non-user-facing ones", () => {
+    const roots = scanRoots();
+    for (const must of ["components", "lib", "src", "public", "next.config.ts"]) expect(roots, must).toContain(must);
+    for (const never of ["tests", "docs", "qa", "scripts", "node_modules", "db", "screenshots", "proof"]) expect(roots, never).not.toContain(never);
+    expect(roots.every((r) => !r.startsWith(".")), "no hidden dirs").toBe(true);
+    // anything else at the top level (messages/, content/, emails/ ...) must therefore be scanned: nothing outside the exclude-list is silently skipped
+    const top = readdirSync(ROOT, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith(".") && !EXCLUDED_TOP.has(e.name)).map((e) => e.name);
+    for (const d of top) expect(roots, d).toContain(d);
   });
 
   it("FRONTEND: no forbidden promise outside the exact-string allowlist", () => {

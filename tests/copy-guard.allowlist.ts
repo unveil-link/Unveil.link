@@ -34,7 +34,7 @@ export const ALLOW: Allow[] = [
   { file: "lib/upload-limits.ts", text: "Video upload is coming soon.", reason: VIDEO_NOTE },
   { file: "lib/upload-limits.ts", text: "Video upload is coming soon — for now, add JPG, PNG or WebP images.", reason: VIDEO_NOTE + " (validation message for a picked .mp4)" },
   { file: "lib/upload-limits.ts", text: "Videos can be up to {} MB.", reason: VIDEO_FLAG + " (only reachable when videoUploadEnabled)" },
-  { file: "src/app/components/DropEditor.tsx", text: "JPG, PNG or WebP. They’re added to this drop right away.", reason: "Seller upload step: files are attached to the draft immediately (not buyer delivery)." },
+  { file: "src/app/components/DropEditor.tsx", text: ". They’re added to this drop right away.", reason: "Seller upload step: files are attached to the draft immediately (not buyer delivery)." },
   { file: "src/app/components/ForgotPasswordForm.tsx", text: "Check your email", reason: RESET_MAIL },
   { file: "src/app/components/ForgotPasswordForm.tsx", text: ", we’ve sent a link to reset your password. It’s valid for 1 hour.", reason: RESET_MAIL },
   { file: "src/app/components/ForgotPasswordForm.tsx", text: "Nothing in your inbox? Check your spam folder, or try again in a few minutes.", reason: RESET_MAIL },
