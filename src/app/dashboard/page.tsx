@@ -85,7 +85,7 @@ export default async function DashboardOverview() {
             tone={e.availableCents < 0 ? "danger" : "default"}
             hint={
               e.availableCents < 0
-                ? "A refund, chargeback or fee came in after a payout."
+                ? "Below zero. It will be deducted from future earnings."
                 : e.availableCents === 0
                   ? "Nothing to pay out yet"
                   : e.payoutEligible
@@ -101,8 +101,8 @@ export default async function DashboardOverview() {
             hint={e.paidOutCents ? "Sent to you so far" : "No payouts yet"} />
         </div>
         {e.availableCents < 0 && (
-          <Alert tone="warning" title={`You owe ${usd(-e.availableCents)}`} className="mt-4" data-testid="negative-balance">
-            Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.
+          <Alert tone="danger" role="alert" title={`You owe ${usd(-e.availableCents)}`} className="mt-4" data-testid="negative-balance">
+            Your available balance is below zero because a refund, chargeback or chargeback fee was larger than the money available to you. It will be deducted from your future earnings before your next payout.
           </Alert>
         )}
         <p className="mt-3 text-xs text-muted">
@@ -125,7 +125,7 @@ export default async function DashboardOverview() {
         <Card className="mt-8 border-primary/20 bg-primary-soft">
           <CardTitle>How it works</CardTitle>
           <CardDescription className="!text-ink/75">
-            1. Upload your files · 2. Set a price · 3. Share the link anywhere. Buyers pay by card — no account needed — and download instantly.
+            1. Upload your files · 2. Set a price · 3. Share the link anywhere. Buyers pay by card — no account needed.
           </CardDescription>
           <Badge tone="primary" className="mt-3 bg-white">Takes about a minute</Badge>
         </Card>

@@ -135,7 +135,7 @@ export function DropList({
                       <Td className="text-right tabular-nums">{usd(d.priceCents)}</Td>
                       <Td className="text-right tabular-nums">{d.fileCount}</Td>
                       <Td className="text-right tabular-nums">{d.units}</Td>
-                      <Td className="text-right font-semibold tabular-nums">{usd(d.revenueCents)}</Td>
+                      <Td className="text-right font-semibold tabular-nums" data-testid="drop-revenue">{usd(d.revenueCents)}</Td>
                       <Td>{actions(d)}</Td>
                     </Tr>
                   ))}
@@ -156,7 +156,7 @@ export function DropList({
                   <dl className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-surface-muted/70 p-2.5 text-center text-xs">
                     <div><dt className="text-muted">Files</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums">{d.fileCount}</dd></div>
                     <div><dt className="text-muted">Sold</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums">{d.units}</dd></div>
-                    <div><dt className="text-muted">Revenue</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums">{usd(d.revenueCents)}</dd></div>
+                    <div><dt className="text-muted">Revenue</dt><dd className="mt-0.5 text-sm font-semibold tabular-nums" data-testid="drop-revenue">{usd(d.revenueCents)}</dd></div>
                   </dl>
                   <div className="mt-3">{actions(d)}</div>
                 </li>

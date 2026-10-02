@@ -2,8 +2,8 @@ import { CardIcon, DownloadIcon, UserOffIcon } from "@/components/ui";
 
 const points = [
   { icon: CardIcon, title: "Secure checkout", body: "Card payments handled by a trusted provider." },
-  { icon: DownloadIcon, title: "Instant download", body: "Files unlock the moment you’ve paid." },
-  { icon: UserOffIcon, title: "No account needed", body: "Just pay and download — nothing to sign up for." },
+  { icon: DownloadIcon, title: "Access after payment", body: "Once your payment is confirmed, we’ll share how to access your files. Delivery options are coming soon." },
+  { icon: UserOffIcon, title: "No account needed", body: "Just pay — nothing to sign up for." },
 ];
 
 export function TrustPoints() {

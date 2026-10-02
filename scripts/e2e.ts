@@ -1067,7 +1067,7 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
   await check("[pay] public drop page has the buy form (email + 18+ checkbox), no client-supplied amount", async () => {
     const html = stripComments(await (await anon.req("GET", `/u/${payLink}`)).text());
     assert(html.includes('data-testid="buy-form"') && html.includes('data-testid="over18"') && html.includes('data-testid="buy-button"'), "buy form present");
-    assert(html.includes("Unlock for") && html.includes("$20.00"), "price shown");
+    assert(html.includes("Pay $20.00") && !html.includes("Unlock for") && !/for your receipt|Instant download/i.test(html), "price shown");
   });
 
   await check("[pay] checkout validation: email required, 18+ confirmation required, amount field ignored, unpublished/unknown drop, cross-origin blocked", async () => {
@@ -1809,6 +1809,13 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     }
     assert(html.includes("Platform fee") && html.includes("Processing fees") && html.includes("Your earnings (net)"), "separate labelled figures");
     assert(!/Your 90%/.test(html), "no hard-coded 90%");
+    // FE-15: per-drop revenue on /dashboard/drops sums to the ledger's gross kept (gross - refunded - charged back)
+    const kept = l.grossCents - l.refundedCents - l.chargebackCents;
+    const dropsHtml = stripComments(await (await sellerC.req("GET", "/dashboard/drops")).text());
+    const rowRev = [...dropsHtml.matchAll(/data-testid="drop-revenue"[^>]*>([^<]*)</g)].map((m) => Math.round(Number(m[1].replace(/[^0-9.-]/g, "")) * 100));
+    assert(rowRev.length > 0, "drop rows expose revenue");
+    eq(rowRev.reduce((a, b) => a + b, 0) / 2, kept, `per-drop revenue (desktop+mobile rows counted twice) == gross kept ${usdf(kept)}`);
+    // FE-12/13: the negative-balance copy never claims a payout happened; alert is danger + role=alert (checked on the seeded pages elsewhere)
     return `net ${usdf(net)} = ledger total ${usdf(api.balance.totalCents)} + paid ${usdf(l.paidOutCents)} + in payout ${usdf(l.requestedPayoutCents)}`;
   });
   await check("[pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404", async () => {

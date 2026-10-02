@@ -3,7 +3,7 @@
  * Raw processor/failure codes must never reach the buyer: always go through friendlyFailure().
  */
 export const SALES_FINAL_TEXT =
-  "All sales are final. Because this is a digital product delivered immediately, purchases can't be refunded or exchanged once completed.";
+  "All sales are final. Because this is a digital product, purchases can't be refunded or exchanged once completed.";
 
 const FAILURES: Record<string, string> = {
   card_declined: "Your card was declined. Please try a different card.",
