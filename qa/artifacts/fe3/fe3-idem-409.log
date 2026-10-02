@@ -1,0 +1,2 @@
+{"transactionId":"43caaa3e-5ee5-4a5b-86f5-e65ebbf954b5","provider":"mock","amountCents":1200,"currency":"USD","checkoutUrl":"http://localhost:4331/pay/mock/mocksess_2b421748a1c78599268263300785ed54","
+{"error":"Idempotency-Key was already used for a different purchase","code":"idempotency_key_reused"} [409]

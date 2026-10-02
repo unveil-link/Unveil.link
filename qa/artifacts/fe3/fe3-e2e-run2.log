@@ -28,15 +28,15 @@ PASS  tampered/forged session cookie is rejected
 PASS  logout clears the cookie; login with wrong password = 401; correct = 200
 PASS  cross-origin mutation blocked (CSRF guard)
 PASS  dashboard page renders verification status 'Pending'
-PASS  create drop; price bounds enforced ($1–$500) in API and DB  — public_link_id=OWy6H0uV3Iwe
+PASS  create drop; price bounds enforced ($1–$500) in API and DB  — public_link_id=btiwNDjR7fWm
 PASS  upload rejects: unauthenticated (401), non-image (415), GIF (415), spoofed MIME (415)
 PASS  upload size limit comes from platform_settings (413 when exceeded, editable without deploy)
-PASS  upload generated photo-like JPEG (with EXIF) → 201  — 1600x1067, 600078 bytes, key=originals/4583f9a1-1b3a-4365-a3f0-8c7f5034f78d/8d0cff44-9c1c-44d7-8704-9ea3ce4a2d56.jpg
-PASS  original stored PRIVATELY: byte-identical in storage dir outside public/ and outside the web root  — /workspace/qa-fe3/.e2e/storage/originals/4583f9a1-1b3a-4365-a3f0-8c7f5034f78d/8d0cff44-9c1c-44d7-8704-9ea3ce4a2d56.jpg (mode 600)
+PASS  upload generated photo-like JPEG (with EXIF) → 201  — 1600x1067, 600078 bytes, key=originals/640a3ba8-c8c0-4834-8dde-8ddf58c014cd/1f6c7b57-d387-4389-9097-5551bab47d26.jpg
+PASS  original stored PRIVATELY: byte-identical in storage dir outside public/ and outside the web root  — /workspace/qa-fe3/.e2e/storage/originals/640a3ba8-c8c0-4834-8dde-8ddf58c014cd/1f6c7b57-d387-4389-9097-5551bab47d26.jpg (mode 600)
 PASS  original NOT reachable at any public URL (guessable paths, storage key, unsigned API)  — 12 URLs × 2 clients → none returned the original
 PASS  blurred preview exists in storage under blurred_preview_key and is served (owner, while draft)  — 1607 bytes
 PASS  preview differs SUBSTANTIALLY from original (blur + downscale + EXIF stripped)  — detail ratio=0.116, upscaled-detail ratio=0.092, MAD=13.2/255, preview 320x213; wrote proof/compare.png
-PASS  owner can mint signed URL; others cannot  — expires 2026-10-03T01:49:36.000Z
+PASS  owner can mint signed URL; others cannot  — expires 2026-10-03T01:57:24.000Z
 PASS  VALID signed URL → 200 and returns the exact original bytes (works without a session)
 PASS  UNSIGNED / tampered / wrong-file signed URLs denied (403)
 PASS  EXPIRED signed URL denied (410): real 2s-TTL link after waiting, and a pre-expired link
@@ -54,15 +54,15 @@ PASS  [#5 M2-09] noindex: meta robots + X-Robots-Tag on link page / public API /
 PASS  [#6 M6-02] security headers on pages, API and files; no X-Powered-By  — CSP, HSTS, nosniff, XFO DENY, Referrer-Policy, Permissions-Policy present; X-Powered-By absent (strict-origin-when-cross-origin)
 PASS  [#6 M6-02] CSP does not break the app: pages still serve inline bootstrap scripts (browser-less check: policy allows 'unsafe-inline' scripts)
 PASS  [#7] bad / foreign / malformed Origin on mutating requests -> 403 JSON (never 500); same-origin still works
-PASS  [#8] signed URL default TTL = 24 h; platform_settings.download_ttl_seconds overrides; explicit short TTL still expires (410)  — default 86400s, override 120s ok
+PASS  [#8] signed URL default TTL = 24 h; platform_settings.download_ttl_seconds overrides; explicit short TTL still expires (410)  — default 86399s, override 120s ok
 PASS  [#9 M1-03] password policy: blocklist, email/local-part, repeated/sequential, length >= 10; clear messages; good password accepted  — 15 weak passwords + email/local-part rejected; e.g. "That password is too common. Choose something less predictable."
-PASS  [#10 M2-05] re-publishing keeps the FIRST attestation timestamp; re-attestations are appended to attestation_history  — attested_at=2026-10-02T01:49:40.110Z kept; history entries=3 (first attestation untouched)
+PASS  [#10 M2-05] re-publishing keeps the FIRST attestation timestamp; re-attestations are appended to attestation_history  — attested_at=2026-10-02T01:57:28.821Z kept; history entries=3 (first attestation untouched)
 PASS  [#11] /api/checkout keeps its rate limit: handled (400 validation here) until the (env-configured 3/60s) limit, then 429 + Retry-After; other IPs unaffected  — Retry-After=60
 PASS  [#11] download endpoint (/api/files/:id/original) rate limited per IP: 60 allowed/min then 429 + Retry-After
 PASS  [#11] preview, public-link API, signed-url mint, login (per IP), signup are rate limited
 PASS  [#12] password reset end-to-end via dev mail transport: no enumeration, hashed single-use token, 1h expiry, all sessions revoked, newest link only  — no enumeration; 2 sessions + captured cookie revoked; token hashed, single-use, 60 min, newest-only
 PASS  [#12] reset pages render; forgot-password is rate limited (per IP 429, per email silently capped)
-PASS  [#13] attacker spamming 20 wrong passwords: first few 401, then 429 with Retry-After in 1..cap (never above); correct password DURING the delay is also refused, not evaluated  — 4x401 + 16x429 in 1335 ms (Retry-After <= 4)
+PASS  [#13] attacker spamming 20 wrong passwords: first few 401, then 429 with Retry-After in 1..cap (never above); correct password DURING the delay is also refused, not evaluated  — 3x401 + 17x429 in 1023 ms (Retry-After <= 4)
 PASS  [#13] delays escalate exponentially (1,2,4 s) and are capped at the cap; a 429 never persists past Retry-After; no permanent lock  — Retry-After sequence: 1,2,4,4,4,4
 PASS  [#13] a correct login resets the counter: next wrong passwords are free again (401,401) and only the 3rd arms the delay
 PASS  [#13] no user enumeration: an unknown email gets the identical delay behaviour (401,401,401 then 429 + Retry-After <= cap)
@@ -99,7 +99,7 @@ PASS  [fu3] admin screens: flagged sellers + review transactions (page + API), n
 PASS  [ah] input hygiene over HTTP: NUL / lone surrogate / oversize / malformed ids never 500 (QA NEW-2 + audit of all text inputs)
 PASS  [ah] audit_log is append-only for the app's own DB role; admin with history cannot be deleted; disable is audited
 PASS  [ah] failed admin logins: audited (email, ip, reason), client responses identical, no existence leak, flooding bounded, no secrets in audit
-PASS  [r4] NEW-4 stress: old-password logins racing `--reset-password` leave NO usable session (every cookie minted for the old credentials is 401 afterwards)  — minted before reset: 7; codes {"200":7,"401":5,"429":84}
+PASS  [r4] NEW-4 stress: old-password logins racing `--reset-password` leave NO usable session (every cookie minted for the old credentials is 401 afterwards)  — minted before reset: 6; codes {"200":6,"401":6,"429":21}
 PASS  [r4] NEW-5: 30 parallel CORRECT logins for one email (seller and admin) never 500  — seller 13x200/17x429; admin 3x200
 PASS  [FE-07/08] dashboard earnings == GET /api/earnings (ledger): fees separate, pending vs available, in-payout; no divergent math  — net $78.00 = ledger total $78.00 + paid $0.00 + in payout $0.00
 PASS  [pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404

@@ -1,0 +1,9 @@
+◇ injected env (0) from .env
+   OK   tampered body (amount changed) -> 401
+   OK   missing signature -> 401
+   OK   still pending after rejected events
+   replay statuses: 200,200,200
+   OK   signed event x3 -> status succeeded, 1 sale_credit, all 200 (idempotent)
+   OK   buyer status endpoint follows the webhook (no simulator involved)
+   OK   second event id for the same sale (processor duplicate) -> 200, still 1 credit
+RESULT fails=0

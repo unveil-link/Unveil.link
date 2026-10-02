@@ -1,0 +1,8 @@
+hold 7: new $60 sale lands pending; balance still owed
+   {"pendingCents":4680,"availableCents":-4680,"totalCents":0} Balance owed | -$46.80 | A refund, chargeback or fee came in after a payout. | Pending | $46.80 | Becomes available 7 days after each sale | In payout | $0.00 |
+   OK   owed -$46.80 stays visible while the new sale is pending (+$46.80 pending)
+   OK   not payout-eligible while negative
+hold 0: next sale immediately available -> netted
+   {"pendingCents":4680,"availableCents":0,"totalCents":4680} Available | $0.00 | Nothing to pay out yet | Pending | $46.80 | Becomes available right away | In payout | $0.00 | None in progress | Paid out | $46.80 | Sent t
+   OK   available -$46.80 + $46.80 = $0.00: red card/alert gone, label back to 'Available'
+RESULT fails=0

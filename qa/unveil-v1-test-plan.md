@@ -13,10 +13,10 @@ Acceptance: Seller can sign up, upload files, see blurred previews.
 
 | ID | Owner | Steps | Expected | Result |
 |---|---|---|---|---|
-| M1-01 | BE/FE | Sign up with email + password (valid, new email) | Account created; redirected to dashboard; unverified status shown | NOT RUN |
-| M1-02 | BE/FE | Sign up / sign in with Google OAuth | Account created/logged in; same session behavior as email | NOT RUN |
-| M1-03 | BE | Sign up with already-used email; weak password; malformed email | Clear validation errors; no duplicate account | NOT RUN |
-| M1-04 | BE/FE | Log out, log back in, reset password | All work; old session invalid after logout | NOT RUN |
+| M1-01 | BE/FE | Sign up with email + password (valid, new email) | Account created; redirected to dashboard; unverified status shown | **PASS** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M1-02 | BE/FE | Sign up / sign in with Google OAuth | Account created/logged in; same session behavior as email | **PASS** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M1-03 | BE | Sign up with already-used email; weak password; malformed email | Clear validation errors; no duplicate account | **PASS** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M1-04 | BE/FE | Log out, log back in, reset password | All work; old session invalid after logout | **PASS** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
 | M1-05 | FE | Upload 1 JPG, then PNG, then WebP to a draft drop | Each uploads with progress bar; appears in file list | **PASS** (m2-media 6c3e8c0, image regression: JPG/PNG/WebP still 201, GIF/PDF/EXE 415) — see qa/results-backend-m2-media.md |
 | M1-06 | FE | Upload 1 MP4 | Uploads with progress; appears in list | **PASS** (BE, m2-media 6c3e8c0): valid MP4 201, byte-identical 0600 private original; UI upload progress not tested — see qa/results-backend-m2-media.md |
 | M1-07 | BE/FE | Upload unsupported types (GIF, PDF, EXE, renamed .exe as .jpg) | Rejected with clear message; server validates content, not just extension | **PASS** (BE, m2-media 6c3e8c0): GIF/PDF/EXE/renamed, MOV/WebM/MKV/AVI/3GP/M4A, fake ftyp, truncated all 415, nothing stored — see qa/results-backend-m2-media.md |
@@ -26,7 +26,7 @@ Acceptance: Seller can sign up, upload files, see blurred previews.
 | M1-11 | BE | After MP4 upload, view generated preview | Blurred thumbnail generated from video | **PASS** (BE, m2-media 6c3e8c0): 320 px JPEG from ~1 s frame, high-pass energy 0.14 of raw (limit 0.25), no metadata — see qa/results-backend-m2-media.md |
 | M1-12 | BE | Try to fetch a stored original by guessing the storage URL / public bucket path | Denied; files only reachable via signed URLs | **PASS** (BE, m2-media 6c3e8c0): video + image originals only via signed URL (Range/416/expiry/tamper verified) — see qa/results-backend-m2-media.md |
 | M1-13 | BE | Check another seller's draft/files via direct ID (IDOR test) | 403/404; no data leaked | **PASS** (BE, m2-media 6c3e8c0): IDOR on upload/PATCH/DELETE/signed-url all 404, no existence oracle — see qa/results-backend-m2-media.md |
-| M1-14 | BE | Confirm CI/CD, hosting, HTTPS, DB schema match section 11 entities | All entities/fields present; HTTP redirects to HTTPS | NOT RUN |
+| M1-14 | BE | Confirm CI/CD, hosting, HTTPS, DB schema match section 11 entities | All entities/fields present; HTTP redirects to HTTPS | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
 
 ## M2 Drops + links (wk 3-4)
 Acceptance: Full seller -> link -> buyer download path works end-to-end in test mode.
@@ -35,13 +35,13 @@ Acceptance: Full seller -> link -> buyer download path works end-to-end in test 
 |---|---|---|---|---|
 | M2-01 | FE/BE | Create drop: title, price $20, description, cover image | Saved as draft | **PASS** (BE, m2-media 6c3e8c0, PATCH price/title/description edit path; create path unchanged) — see qa/results-backend-m2-media.md |
 | M2-02 | BE | Price boundaries: $0.99, $1, $500, $500.01, negative, non-numeric | $1 and $500 accepted; others rejected | **PASS** (BE, m2-media 6c3e8c0): PATCH 99/50001/0/negative/float/string/null/huge rejected, 100 and 50000 accepted — see qa/results-backend-m2-media.md |
-| M2-03 | BE | Publish as unverified seller | Blocked: must verify 18+ first (see M4) | NOT RUN |
-| M2-04 | BE/FE | Publish as verified seller (test override acceptable before M4) | Link generated in form unveil.link/u/<12 chars> | NOT RUN |
-| M2-05 | BE | Publish without ticking all attestation boxes | Blocked; with all ticked, attestation stored per drop with timestamp | NOT RUN |
-| M2-06 | BE | Generate 100 links; check uniqueness and randomness; try sequential guessing | All unique, unguessable, exactly 12 chars | NOT RUN |
-| M2-07 | FE | Open link in logged-out browser | Page shows blurred preview, title, file count + types, price, seller display name; no originals exposed | NOT RUN |
-| M2-08 | BE/FE | Inspect link page source/network for original file URLs | None present | NOT RUN |
-| M2-09 | BE | Check link page for noindex (meta and X-Robots-Tag), no sitemap entry, no directory/search | noindex present; no public listing anywhere | NOT RUN |
+| M2-03 | BE | Publish as unverified seller | Blocked: must verify 18+ first (see M4) | **PASS** (FE, frontend/dashboard e4b5722 combined): Re-run: publish by pending-verification seller (Jo) → 403; checkout on that seller's draft → 404 (fe3-misc.log). — see qa/results-frontend-dashboard-3.md |
+| M2-04 | BE/FE | Publish as verified seller (test override acceptable before M4) | Link generated in form unveil.link/u/<12 chars> | **PASS** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M2-05 | BE | Publish without ticking all attestation boxes | Blocked; with all ticked, attestation stored per drop with timestamp | **PASS** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M2-06 | BE | Generate 100 links; check uniqueness and randomness; try sequential guessing | All unique, unguessable, exactly 12 chars | **PASS** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M2-07 | FE | Open link in logged-out browser | Page shows blurred preview, title, file count + types, price, seller display name; no originals exposed | **PASS** (FE, frontend/dashboard e4b5722 combined): Buyer page in the combined state (seed Maya): blurred hero/thumbs, title, seller name, price, file summary, Buy panel; legal footer. Screenshots fe3-buyer-390.png, fe3-bu… — see qa/results-frontend-dashboard-3.md |
+| M2-08 | BE/FE | Inspect link page source/network for original file URLs | None present | **PASS** (FE, frontend/dashboard e4b5722 combined): No storage key / filename / /original in page, RSC payload or public API; anonymous /original 403 (fe3-regress.log). — see qa/results-frontend-dashboard-3.md |
+| M2-09 | BE | Check link page for noindex (meta and X-Robots-Tag), no sitemap entry, no directory/search | noindex present; no public listing anywhere | **PASS** (FE, frontend/dashboard e4b5722 combined): X-Robots-Tag: noindex, nofollow + <meta robots noindex, nofollow, nocache> on /u/* (also unknown link); robots.txt Disallows /u/ /api/ /dashboard; /sitemap.xml 404. — see qa/results-frontend-dashboard-3.md |
 | M2-10 | FE/BE | Edit price and description of published drop | Changes reflected on link page | **PASS** (BE, m2-media 6c3e8c0): PATCH on published drop reflected on public API and /u page; existing sales/ledger unchanged; UI edit button absent — see qa/results-backend-m2-media.md |
 | M2-11 | FE/BE | Unpublish drop | Link shows unavailable page; buying disabled | **PASS** (BE, m2-media 6c3e8c0, unpublish/republish regression with edits) — see qa/results-backend-m2-media.md |
 | M2-12 | BE | Buy, then unpublish, then use buyer's download link | Existing buyer download still works | **BLOCKED** (no buyer download flow yet; DELETE of a drop with sales is refused 409, unpublish still works) — see qa/results-backend-m2-media.md |
@@ -50,109 +50,109 @@ Acceptance: Full seller -> link -> buyer download path works end-to-end in test 
 | M2-15 | BE | Download URL expiry (24h, configurable) — use time override or short config | Expired link rejected; receipt link generates a fresh one | **BLOCKED** (buyer receipt flow absent; signed-URL expiry itself PASS) — see qa/results-backend-m2-media.md |
 | M2-16 | BE | Exceed 5 download attempts | 6th attempt blocked with clear message | **BLOCKED** (download attempt counter not built) — see qa/results-backend-m2-media.md |
 | M2-17 | BE | Rate limiting on download endpoint (rapid repeat requests) | 429 after threshold | NOT RUN on this branch (download endpoint rate limit was verified earlier on main; original route now streams — test instance ran with limits off) — see qa/results-backend-m2-media.md |
-| M2-18 | FE | Link page on iOS Safari, Android Chrome (responsive, no layout breaks) | Usable, readable, Buy button reachable | NOT RUN |
-| M2-19 | FE | Link page load time on throttled 4G | Under 2s to usable | NOT RUN |
+| M2-18 | FE | Link page on iOS Safari, Android Chrome (responsive, no layout breaks) | Usable, readable, Buy button reachable | **PASS** (FE, frontend/dashboard e4b5722 combined): 390×844 and 360×800 (touch, DPR 2): landing, signup, login, forgot, terms, /u/<id>, unavailable page, dashboard, drops, new drop, and Ned's dashboard with the negative-ba… — see qa/results-frontend-dashboard-3.md |
+| M2-19 | FE | Link page load time on throttled 4G | Under 2s to usable | **PASS** (FE, frontend/dashboard e4b5722 combined): Throttled 4G (9 Mbit/s, 170 ms RTT, 4× CPU, cache off), 3 runs: Buy button visible 304–325 ms, FCP 708–772 ms, load ≈0.92–0.95 s (fe3-misc.log). — see qa/results-frontend-dashboard-3.md |
 
 ## M3 Payments (wk 4-6)
 Acceptance: Real $1 test charge flows through with correct fee split and seller balance update.
 
 | ID | Owner | Steps | Expected | Result |
 |---|---|---|---|---|
-| M3-01 | PAY/FE | Click Buy as guest, no account | Card form shown; no login demanded | NOT RUN |
-| M3-02 | PAY | Successful sandbox card payment | Transaction status succeeded; redirect to download page immediately | NOT RUN |
-| M3-03 | PAY | Declined card; insufficient funds; expired card | Clear error; no download access; no succeeded transaction | NOT RUN |
-| M3-04 | PAY | 3D Secure card flow (challenge pass and fail) | Pass completes purchase; fail leaves no access | NOT RUN |
-| M3-05 | PAY | Fee math at defaults: $20 sale | Processing ~$2.40, platform $2.00, seller net ~$15.60; stored in transactions in cents | NOT RUN |
-| M3-06 | PAY | Fee math on other amounts ($1, $9.99, $500) | Rounding consistent; processing + platform + net = gross exactly | NOT RUN |
-| M3-07 | PAY/BE | Change platform fee % in admin settings (e.g., 15%), make a sale | New fee applied with no code deploy; old transactions unchanged | NOT RUN |
-| M3-08 | PAY | Real $1 live charge (final acceptance) | Charge succeeds; fee split correct; seller pending balance increases by expected net | NOT RUN |
-| M3-09 | PAY | Seller balance update | Pending vs available funds correct; hold applied | NOT RUN |
-| M3-10 | PAY | Webhook with invalid/missing signature | Rejected; no state change | NOT RUN |
-| M3-11 | PAY | Replay same webhook 3 times | Idempotent: one transaction, one balance credit, one receipt | NOT RUN |
-| M3-12 | PAY | Webhook arrives out of order / endpoint down then retried | Queued with retry; final state correct | NOT RUN |
-| M3-13 | PAY/BE | Receipt email after purchase | Sent with transaction ID and re-download link; no marketing content; generic branding, no adult signaling | NOT RUN |
-| M3-14 | BE | Receipt link re-access later | Works within policy; new signed URLs issued | NOT RUN |
-| M3-15 | PAY/FE | Adult-flagged drop checkout | Self-declared 18+ checkbox required before pay | NOT RUN |
-| M3-16 | PAY | Rate limiting on checkout endpoint | 429 after threshold; legit single buyer unaffected | NOT RUN |
-| M3-17 | PAY | Confirm no Stripe/PayPal anywhere in code, network calls, or docs | None; CCBill or Segpay in use, choice and fee math documented | NOT RUN |
-| M3-18 | PAY/FE | Pre-purchase "all sales final" statement | Clearly visible before paying | NOT RUN |
-| M3-19 | PAY/FE | Card data handling | Card fields hosted by processor; no card data hits our servers/logs | NOT RUN |
-| M3-20 | PAY/FE | Full buyer flow timing on mobile | Open link to download under 60 seconds | NOT RUN |
+| M3-01 | PAY/FE | Click Buy as guest, no account | Card form shown; no login demanded | **PASS** (FE, frontend/dashboard e4b5722 combined): Guest checkout, no login/account prompt: Buy → email + 18+ → redirected to the hosted card page /pay/mock/<session> which shows the card form (UI desktop + 390 mobile, fe… — see qa/results-frontend-dashboard-3.md |
+| M3-02 | PAY | Successful sandbox card payment | Transaction status succeeded; redirect to download page immediately | **PARTIAL** (FE, frontend/dashboard e4b5722 combined): Payment → webhook-driven succeeded (status endpoint, 3 pending ledger lines = seller net) PASS; the 'redirect to download page immediately' half does not exist (see M2-14… — see qa/results-frontend-dashboard-3.md |
+| M3-03 | PAY | Declined card; insufficient funds; expired card | Clear error; no download access; no succeeded transaction | **PASS** (FE, frontend/dashboard e4b5722 combined): Declined / insufficient funds / expired / bad CVC / garbage card: friendly text only (no codes), no succeeded tx, 0 ledger lines, same session retryable with a good card… — see qa/results-frontend-dashboard-3.md |
+| M3-04 | PAY | 3D Secure card flow (challenge pass and fail) | Pass completes purchase; fail leaves no access | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): No 3-D Secure in the mock processor (5 card outcomes); needs a real sandbox. Owner: Payments. — see qa/results-frontend-dashboard-3.md |
+| M3-05 | PAY | Fee math at defaults: $20 sale | Processing ~$2.40, platform $2.00, seller net ~$15.60; stored in transactions in cents | **PASS** (FE, frontend/dashboard e4b5722 combined): $20.00 → platform $2.00, processing $2.40, net $15.60, integer cents; ledger sum = net (fe3-fees.log). — see qa/results-frontend-dashboard-3.md |
+| M3-06 | PAY | Fee math on other amounts ($1, $9.99, $500) | Rounding consistent; processing + platform + net = gross exactly | **PASS** (FE, frontend/dashboard e4b5722 combined): $1.00, $1.01, $9.99, $49.99, $123.45, $500.00: platform + processing + net = gross exactly; ledger sum = net. — see qa/results-frontend-dashboard-3.md |
+| M3-07 | PAY/BE | Change platform fee % in admin settings (e.g., 15%), make a sale | New fee applied with no code deploy; old transactions unchanged | **PASS** (FE, frontend/dashboard e4b5722 combined): platform_settings.fee_percent 10→15 via SQL: new sale platform $3.00, earlier sale unchanged $2.00, no deploy (no admin UI: M5-13). — see qa/results-frontend-dashboard-3.md |
+| M3-08 | PAY | Real $1 live charge (final acceptance) | Charge succeeds; fee split correct; seller pending balance increases by expected net | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): Needs a real processor account / live $1 charge. — see qa/results-frontend-dashboard-3.md |
+| M3-09 | PAY | Seller balance update | Pending vs available funds correct; hold applied | **PASS** (FE, frontend/dashboard e4b5722 combined): New sale pending (7 d), 3 ledger lines available_at = created_at + 7 days; boundary now±1 s/µs flips exactly; live flip observed at ≈3.3 s for a +3 s entry; refund inside… — see qa/results-frontend-dashboard-3.md |
+| M3-10 | PAY | Webhook with invalid/missing signature | Rejected; no state change | **PASS** (FE, frontend/dashboard e4b5722 combined): Unsigned, bad-signature and tampered-body webhooks → 401, transaction stays pending (fe3-webhook.log, fe3-buyerr.log §D). — see qa/results-frontend-dashboard-3.md |
+| M3-11 | PAY | Replay same webhook 3 times | Idempotent: one transaction, one balance credit, one receipt | **PASS** (FE, frontend/dashboard e4b5722 combined): Same signed sale.succeeded ×3 → 200/200/200, one sale_credit; second event id for the same sale → still one credit. — see qa/results-frontend-dashboard-3.md |
+| M3-12 | PAY | Webhook arrives out of order / endpoint down then retried | Queued with retry; final state correct | **NOT RUN** (FE, frontend/dashboard e4b5722 combined): Not re-run in this FE round (Payments R5: PASS). — see qa/results-frontend-dashboard-3.md |
+| M3-13 | PAY/BE | Receipt email after purchase | Sent with transaction ID and re-download link; no marketing content; generic branding, no adult signaling | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): No receipt email: dev mail dir has 0 files after 10+ purchases; yet the buyer form promises 'Email (for your receipt)' → FE-14. — see qa/results-frontend-dashboard-3.md |
+| M3-14 | BE | Receipt link re-access later | Works within policy; new signed URLs issued | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): No receipt link / re-access page. — see qa/results-frontend-dashboard-3.md |
+| M3-15 | PAY/FE | Adult-flagged drop checkout | Self-declared 18+ checkbox required before pay | **PASS** (FE, frontend/dashboard e4b5722 combined): confirmOver18 missing/false/"true"/1/null → 400 server-side (API, not just UI); UI blocks the submit and shows 'Please confirm to continue.'; buyer_confirmed_18_at stored… — see qa/results-frontend-dashboard-3.md |
+| M3-16 | PAY | Rate limiting on checkout endpoint | 429 after threshold; legit single buyer unaffected | **PASS** (FE, frontend/dashboard e4b5722 combined): Default limits: 10 checkouts then 429 Retry-After: 60 (4/4); UI shows disabled button with countdown 'Try again in 59s' + 'You can try again in 59 seconds.', re-enables w… — see qa/results-frontend-dashboard-3.md |
+| M3-17 | PAY | Confirm no Stripe/PayPal anywhere in code, network calls, or docs | None; CCBill or Segpay in use, choice and fee math documented | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): No Stripe/PayPal in src/scripts/lib/components/package.json/README (only a substring inside the common-passwords list) ✔; CCBill/Segpay not chosen/integrated (README docu… — see qa/results-frontend-dashboard-3.md |
+| M3-18 | PAY/FE | Pre-purchase "all sales final" statement | Clearly visible before paying | **PASS** (FE, frontend/dashboard e4b5722 combined): Re-run on the new BuyPanel: final-sale text + 18+/Terms checkbox before Buy, and again on the hosted page (fe3-buy-validation-desktop.png, fe3-hosted-page.png). — see qa/results-frontend-dashboard-3.md |
+| M3-19 | PAY/FE | Card data handling | Card fields hosted by processor; no card data hits our servers/logs | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): Hosted fields need a real processor. The 'no card data stored/logged' half PASSES: PAN/CVC absent from pg_dump --data-only and from server logs after declined + approved… — see qa/results-frontend-dashboard-3.md |
+| M3-20 | PAY/FE | Full buyer flow timing on mobile | Open link to download under 60 seconds | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): No download end of the flow. Scripted open-link→paid ≈0.4 s (mobile 390), human timing n/a. — see qa/results-frontend-dashboard-3.md |
 
 ## M4 Verification + payouts (wk 6-7)
 Acceptance: Verified seller completes a sale and receives a test payout.
 
 | ID | Owner | Steps | Expected | Result |
 |---|---|---|---|---|
-| M4-01 | BE/FE | New seller starts ID verification | Redirected to provider flow; status pending | NOT RUN |
-| M4-02 | BE | Provider returns verified | Status verified; provider ref + timestamp stored; email sent; publish unlocked | NOT RUN |
-| M4-03 | BE | Provider returns failed | Status failed; email sent; publish remains blocked; retry possible | NOT RUN |
-| M4-04 | BE | Provider returns manual_review | Status manual_review; email sent; publish blocked | NOT RUN |
-| M4-05 | BE | Verification webhook signature and replay | Invalid rejected; replay idempotent | NOT RUN |
-| M4-06 | BE | Unverified seller: draft OK, publish blocked, payments blocked (API and UI) | Enforced server-side, not just hidden in UI | NOT RUN |
-| M4-07 | BE | Raw ID images | Not stored beyond provider need; retention window documented and implemented | NOT RUN |
-| M4-08 | BE | 2257 data: legal name, DOB, provider ref, per-drop attestation stored; admin export | Complete export downloads for a seller/drop | NOT RUN |
-| M4-09 | FE | Dashboard earnings summary | Gross, platform fees, processing fees, net, pending vs available all correct vs transactions | NOT RUN |
-| M4-10 | FE | Per-drop stats | Views, conversion, units sold, revenue accurate after known test traffic | NOT RUN |
-| M4-11 | FE | Transaction history | Buyer country, amount, fee breakdown, status present and correct | NOT RUN |
-| M4-12 | PAY/FE | Connect bank account via payout provider | Connects; details stored via provider, not raw | NOT RUN |
-| M4-13 | PAY | Request payout below $25 | Blocked with message | NOT RUN |
-| M4-14 | PAY | Request payout at/above $25 with funds in hold | Only available (post-hold) funds payable; first-payout 7-day hold honored | NOT RUN |
-| M4-15 | PAY | Payout end to end (test mode) | Seller receives test payout; payout record and balance updated; history shows it | NOT RUN |
-| M4-16 | PAY | Payout failure | Status failed, funds returned, visible to admin | NOT RUN |
-| M4-17 | BE | Seller profile: display name, avatar, bio | Editable; no public profile page exists | NOT RUN |
-| M4-18 | FE | Seller: signup to first live link timing | Under 15 minutes excluding ID wait | NOT RUN |
+| M4-01 | BE/FE | New seller starts ID verification | Redirected to provider flow; status pending | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M4-02 | BE | Provider returns verified | Status verified; provider ref + timestamp stored; email sent; publish unlocked | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M4-03 | BE | Provider returns failed | Status failed; email sent; publish remains blocked; retry possible | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M4-04 | BE | Provider returns manual_review | Status manual_review; email sent; publish blocked | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M4-05 | BE | Verification webhook signature and replay | Invalid rejected; replay idempotent | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M4-06 | BE | Unverified seller: draft OK, publish blocked, payments blocked (API and UI) | Enforced server-side, not just hidden in UI | **PASS** (FE, frontend/dashboard e4b5722 combined): Re-run: pending seller publish 403, checkout on its draft 404, checkout when seller becomes manual_review after page load → 409 with friendly UI notice (fe3-buyerr.log §B… — see qa/results-frontend-dashboard-3.md |
+| M4-07 | BE | Raw ID images | Not stored beyond provider need; retention window documented and implemented | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M4-08 | BE | 2257 data: legal name, DOB, provider ref, per-drop attestation stored; admin export | Complete export downloads for a seller/drop | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M4-09 | FE | Dashboard earnings summary | Gross, platform fees, processing fees, net, pending vs available all correct vs transactions | **PASS** (FE, frontend/dashboard e4b5722 combined): FE-07/FE-08 FIXED & cross-checked in the combined state. Maya: 33 sales, gross $467.00, platform $42.40, processing $50.88, refunded $35.00 (full $25 + partial $10), char… — see qa/results-frontend-dashboard-3.md |
+| M4-10 | FE | Per-drop stats | Views, conversion, units sold, revenue accurate after known test traffic | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): Units/revenue correct vs succeeded rows (Spring 21/$252.00, Studio 6/$150.00, Travel 4/$32.00) but views/conversion still don't exist, and per-drop Revenue disagrees with… — see qa/results-frontend-dashboard-3.md |
+| M4-11 | FE | Transaction history | Buyer country, amount, fee breakdown, status present and correct | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): Still no transaction-history page (/dashboard/transactions/sales 404, no buyer country). GET /api/earnings.recent (20 rows) exists but isn't rendered. Frontend lists this… — see qa/results-frontend-dashboard-3.md |
+| M4-12 | PAY/FE | Connect bank account via payout provider | Connects; details stored via provider, not raw | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M4-13 | PAY | Request payout below $25 | Blocked with message | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): No seller payout route/UI (POST /api/payouts* 404). Service rejects <$25 (below_minimum_payout) and the dashboard hint says 'Payouts start at $25.00' (fe3-payout-ui.log);… — see qa/results-frontend-dashboard-3.md |
+| M4-14 | PAY | Request payout at/above $25 with funds in hold | Only available (post-hold) funds payable; first-payout 7-day hold honored | **PASS** (FE, frontend/dashboard e4b5722 combined): (service + dashboard) only post-hold funds are Available; entries inside the hold are Pending; eligibility flag follows min payout (fe3-boundary.log, fe3-payout-ui.log). — see qa/results-frontend-dashboard-3.md |
+| M4-15 | PAY | Payout end to end (test mode) | Seller receives test payout; payout record and balance updated; history shows it | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): No payout routes/screens. Through the service the dashboard follows requested→approved→paid correctly: In payout +$30, Available −$30, then Paid out +$30 (fe3-payout-ui.l… — see qa/results-frontend-dashboard-3.md |
+| M4-16 | PAY | Payout failure | Status failed, funds returned, visible to admin | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): Failed payout returns funds and the dashboard follows (Available restored); no admin screen to see it. — see qa/results-frontend-dashboard-3.md |
+| M4-17 | BE | Seller profile: display name, avatar, bio | Editable; no public profile page exists | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): Still blocked: PATCH/PUT /api/auth/me 405, no profile/settings UI (fe3-blocked-probes.log). Frontend lists this as still open. — see qa/results-frontend-dashboard-3.md |
+| M4-18 | FE | Seller: signup to first live link timing | Under 15 minutes excluding ID wait | **PASS** (FE, frontend/dashboard e4b5722 combined): Scripted signup → verification stand-in (DB) → new drop one-step upload+publish → live link in 1.3 s (fe3-journey.log); well under 15 min. — see qa/results-frontend-dashboard-3.md |
 
 ## M5 Trust + admin (wk 7-8)
 Acceptance: Flagged drop auto-unpublishes; admin can refund and suspend.
 
 | ID | Owner | Steps | Expected | Result |
 |---|---|---|---|---|
-| M5-01 | BE | Upload a moderation-API test image that triggers a banned category | Drop auto-unpublishes, status flagged, appears in moderation queue | NOT RUN |
-| M5-02 | BE | Upload clean content | Passes screening; not flagged | NOT RUN |
-| M5-03 | FE/BE | Buyer reports a drop | Report stored; appears in admin queue | NOT RUN |
-| M5-04 | FE | Admin reviews flagged drop: clear or confirm takedown | Status updates; seller notified as appropriate | NOT RUN |
-| M5-05 | BE | Admin full refund | Transaction status refunded; seller balance reduced | NOT RUN |
-| M5-06 | BE | Admin partial refund | Correct partial amount; fees handled consistently | NOT RUN |
-| M5-07 | BE | Refund with insufficient seller balance | Negative balance allowed; deducted from future earnings | NOT RUN |
-| M5-08 | PAY | Simulated chargeback webhook | Transaction charged_back; repeat chargebacks flag seller for review | NOT RUN |
-| M5-09 | BE | Suspend seller | Seller cannot log in/publish; links disabled per policy; reversible | NOT RUN |
-| M5-10 | BE | Ban seller | As suspend, permanent; history retained | NOT RUN |
-| M5-11 | BE | Admin views seller verification status and full transaction history | Accurate and complete | NOT RUN |
-| M5-12 | BE | Admin approves/releases payouts and views failures | Works; state changes recorded | NOT RUN |
-| M5-13 | BE | Change settings (fee %, price min/max, file limits, payout schedule, hold periods) | Take effect without deploy; validated | NOT RUN |
-| M5-14 | BE | Audit log | Every admin action logged with timestamp and admin identity; log not editable | NOT RUN |
-| M5-15 | BE | Privilege test: seller or anonymous hits admin routes/APIs | 401/403 everywhere | NOT RUN |
-| M5-16 | FE | Legal pages: ToS, Privacy, 2257 statement, DMCA form | Present, linked from footer and checkout; placeholders flagged if not lawyer-final | NOT RUN |
-| M5-17 | BE/FE | DMCA takedown intake form submitted | Stored; admin workflow handles it; repeat-infringer policy in ToS | NOT RUN |
-| M5-18 | BE | Seller data export and delete (GDPR/CCPA) | Export delivered; delete removes data subject to documented retention | NOT RUN |
-| M5-19 | FE | Cookie consent | Banner shown; non-essential cookies blocked until consent | NOT RUN |
-| M5-20 | FE/BE | Neutral branding audit: UI, emails, page titles, meta, error text, receipts | No adult-market signaling anywhere | NOT RUN |
+| M5-01 | BE | Upload a moderation-API test image that triggers a banned category | Drop auto-unpublishes, status flagged, appears in moderation queue | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-02 | BE | Upload clean content | Passes screening; not flagged | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-03 | FE/BE | Buyer reports a drop | Report stored; appears in admin queue | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-04 | FE | Admin reviews flagged drop: clear or confirm takedown | Status updates; seller notified as appropriate | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-05 | BE | Admin full refund | Transaction status refunded; seller balance reduced | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-06 | BE | Admin partial refund | Correct partial amount; fees handled consistently | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-07 | BE | Refund with insufficient seller balance | Negative balance allowed; deducted from future earnings | **PASS** (FE, frontend/dashboard e4b5722 combined): Ned: refund after a full payout → Balance owed −$46.80 on the dashboard; a new sale inside the hold leaves it visible (pending +$46.80); with hold 0 the next sale nets it… — see qa/results-frontend-dashboard-3.md |
+| M5-08 | PAY | Simulated chargeback webhook | Transaction charged_back; repeat chargebacks flag seller for review | **PASS** (FE, frontend/dashboard e4b5722 combined): Chargeback webhook (+$5 fee) shown on the dashboard as 'charged back' separate from refunds, fee named in the reconciliation line; also with the chargeback inside the hol… — see qa/results-frontend-dashboard-3.md |
+| M5-09 | BE | Suspend seller | Seller cannot log in/publish; links disabled per policy; reversible | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-10 | BE | Ban seller | As suspend, permanent; history retained | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-11 | BE | Admin views seller verification status and full transaction history | Accurate and complete | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-12 | BE | Admin approves/releases payouts and views failures | Works; state changes recorded | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-13 | BE | Change settings (fee %, price min/max, file limits, payout schedule, hold periods) | Take effect without deploy; validated | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-14 | BE | Audit log | Every admin action logged with timestamp and admin identity; log not editable | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-15 | BE | Privilege test: seller or anonymous hits admin routes/APIs | 401/403 everywhere | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-16 | FE | Legal pages: ToS, Privacy, 2257 statement, DMCA form | Present, linked from footer and checkout; placeholders flagged if not lawyer-final | **BLOCKED-ON-LEGAL** (FE, frontend/dashboard e4b5722 combined): Parked (legal copy pending), not counted as FAIL; stays BLOCKED-ON-LEGAL. Placeholders /terms /privacy /dmca /contact are still 'Coming soon' with no legal claims; FE-09… — see qa/results-frontend-dashboard-3.md |
+| M5-17 | BE/FE | DMCA takedown intake form submitted | Stored; admin workflow handles it; repeat-infringer policy in ToS | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-18 | BE | Seller data export and delete (GDPR/CCPA) | Export delivered; delete removes data subject to documented retention | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-19 | FE | Cookie consent | Banner shown; non-essential cookies blocked until consent | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M5-20 | FE/BE | Neutral branding audit: UI, emails, page titles, meta, error text, receipts | No adult-market signaling anywhere | **PASS** (FE, frontend/dashboard e4b5722 combined): Re-scan of landing, auth, legal placeholders, buyer page, unavailable page, hosted checkout page, og/twitter tags: no adult-market wording; the 18+ confirmation text is n… — see qa/results-frontend-dashboard-3.md |
 
 ## M6 Hardening + launch
 Acceptance: All acceptance criteria pass; go-live sign-off.
 
 | ID | Owner | Steps | Expected | Result |
 |---|---|---|---|---|
-| M6-01 | BE | Security review: OWASP baseline (injection, XSS, CSRF, auth, IDOR, SSRF, file upload) | No high/critical findings open | NOT RUN |
-| M6-02 | BE | Security headers, TLS config, no public buckets, secrets not in repo/client bundle | Clean | NOT RUN |
-| M6-03 | BE | Load test on link page, checkout, download | Holds target latency; no errors at agreed load | NOT RUN |
-| M6-04 | BE | Backup and restore drill | Daily encrypted backup restores successfully; files and DB consistent | NOT RUN |
-| M6-05 | BE | Monitoring: Sentry captures an induced error; uptime monitor alerts on induced outage | Alerts fire | NOT RUN |
-| M6-06 | FE | Status page or in-app incident banner | Can be toggled and shows to sellers | NOT RUN |
-| M6-07 | FE | PWA manifest, installability, mobile Safari/Chrome full pass | Installs; flows work flawlessly | NOT RUN |
-| M6-08 | BE | Webhook queue retry under processor outage | No lost or duplicated transactions | NOT RUN |
-| M6-09 | All | Re-run every case in M1 to M5 on production-like environment | All PASS | NOT RUN |
-| M6-10 | All | Launch checklist: processor approved, DMCA agent registered, legal pages counsel-reviewed, retention documented | All items checked | NOT RUN |
+| M6-01 | BE | Security review: OWASP baseline (injection, XSS, CSRF, auth, IDOR, SSRF, file upload) | No high/critical findings open | **NOT RUN** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M6-02 | BE | Security headers, TLS config, no public buckets, secrets not in repo/client bundle | Clean | **PASS** (FE, frontend/dashboard e4b5722 combined): All 6 security headers on /, /login, /terms, /u/*, /api/earnings, /dashboard; CSP without unsafe-eval; 5 secret values absent from the 27 client-bundle files and rendered… — see qa/results-frontend-dashboard-3.md |
+| M6-03 | BE | Load test on link page, checkout, download | Holds target latency; no errors at agreed load | **NOT RUN** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M6-04 | BE | Backup and restore drill | Daily encrypted backup restores successfully; files and DB consistent | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M6-05 | BE | Monitoring: Sentry captures an induced error; uptime monitor alerts on induced outage | Alerts fire | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M6-06 | FE | Status page or in-app incident banner | Can be toggled and shows to sellers | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M6-07 | FE | PWA manifest, installability, mobile Safari/Chrome full pass | Installs; flows work flawlessly | **PASS** (FE, frontend/dashboard e4b5722 combined): Manifest valid, /icons/icon-192.png and icon-512.png 200 image/png (the og/twitter image is the 512 icon). — see qa/results-frontend-dashboard-3.md |
+| M6-08 | BE | Webhook queue retry under processor outage | No lost or duplicated transactions | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M6-09 | All | Re-run every case in M1 to M5 on production-like environment | All PASS | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
+| M6-10 | All | Launch checklist: processor approved, DMCA agent registered, legal pages counsel-reviewed, retention documented | All items checked | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): carried over from round 2 (f3d9eb1), not re-run; no backend change in branch — see qa/results-frontend-dashboard-3.md |
 
 ## Section 2 success criteria (cross-cutting)
 | ID | Steps | Expected | Result |
 |---|---|---|---|
-| S2-01 | Timed run, new seller: landing page to live link | Under 15 min excluding ID wait (maps to M4-18) | NOT RUN |
-| S2-02 | Timed run, new buyer: open link to files downloaded, no account | Under 60 s (maps to M3-20) | NOT RUN |
-| S2-03 | Change fee to non-default, verify on sale | Platform cut configurable; seller gets remainder minus processing (M3-07) | NOT RUN |
-| S2-04 | Attempt publish without verified 18+ | Always blocked (M2-03, M4-06) | NOT RUN |
-| S2-05 | Pick 3 random transactions and trace | Full audit trail: txn, webhook, fee split, receipt, any refund (M3-05, M3-11, M5-14) | NOT RUN |
+| S2-01 | Timed run, new seller: landing page to live link | Under 15 min excluding ID wait (maps to M4-18) | **PASS** (FE, frontend/dashboard e4b5722 combined): = M4-18 (1.3 s scripted). — see qa/results-frontend-dashboard-3.md |
+| S2-02 | Timed run, new buyer: open link to files downloaded, no account | Under 60 s (maps to M3-20) | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): = M3-20. — see qa/results-frontend-dashboard-3.md |
+| S2-03 | Change fee to non-default, verify on sale | Platform cut configurable; seller gets remainder minus processing (M3-07) | **PASS** (FE, frontend/dashboard e4b5722 combined): = M3-07. — see qa/results-frontend-dashboard-3.md |
+| S2-04 | Attempt publish without verified 18+ | Always blocked (M2-03, M4-06) | **PASS** (FE, frontend/dashboard e4b5722 combined): = M2-03 / M4-06. — see qa/results-frontend-dashboard-3.md |
+| S2-05 | Pick 3 random transactions and trace | Full audit trail: txn, webhook, fee split, receipt, any refund (M3-05, M3-11, M5-14) | **BLOCKED** (FE, frontend/dashboard e4b5722 combined): Trace works up to the ledger (tx → webhook_events row sale_succeeded/processed → 3 ledger lines posted via that event → dashboard), but no receipt exists (fe3-journey.log… — see qa/results-frontend-dashboard-3.md |
 
 ## Open questions / assumptions
 1. Spec has no explicit download-all size limit; I will flag if zip generation fails on a 2 GB drop.
