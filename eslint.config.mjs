@@ -14,6 +14,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // QA test scripts and generated evidence are not app code.
+    "qa/**",
+    "proof/**",
+    "screenshots/**",
   ]),
 ]);
 

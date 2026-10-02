@@ -32,7 +32,7 @@ export default function BuyForm({ linkId, priceLabel }: { linkId: string; priceL
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-3" data-testid="buy-form">
-      <Field id="buyer-email" label="Email (for your receipt)">
+      <Field id="buyer-email" label="Email">
         {(a) => <Input {...a} type="email" required maxLength={254} autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />}
       </Field>
       <label className="flex items-start gap-2 text-sm">

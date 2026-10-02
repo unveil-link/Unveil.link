@@ -88,7 +88,7 @@ App components: `components/auth/*` (AuthShell, PasswordInput, PasswordStrength,
 | hint texts | `holdDays`, `minPayoutCents`, `payoutEligible` |
 
 Invariant (unit-tested and used in the e2e): Available + Pending + In payout + Paid out = Net.
-Per-drop *Sold / Revenue* in the drops table still come from two small `transactions` queries (succeeded sales, gross) because the summary has no per-drop data.
+Per-drop *Sold / Revenue* still come from one small read-only `transactions` query (`getDropStats`) because the summary has no per-drop data. Since round 3 **Revenue = gross kept**: `amount_cents − reversed_cents` over completed / refunded / charged-back sales (partial refunds and chargebacks deducted; fully reversed sales are not a unit). The per-drop totals therefore equal the earnings card's `gross − refunded − charged back`.
 
 ### Round 2 QA (`qa/results-frontend-dashboard-2.md`)
 | ID | What changed | How to verify |
@@ -105,6 +105,19 @@ Rebase note: 12 frontend commits replayed onto `origin/main` @ `10c4e65`; confli
 
 `seed-demo` now drives the **real** payments pipeline (mock processor: checkout → pay → refund/partial refund/chargeback webhooks → payout service) and needs `PAYMENT_WEBHOOK_SECRET` and `MOCK_PAYMENTS_ENABLED=1` in `.env`. Sellers: `maya` (available + pending + in-payout + paid-out, full and partial refund, chargeback with $5 fee), `ned` (negative balance), `sam`, `jo`.
 
+### Round 3 QA (`qa/results-frontend-dashboard-3.md`, branch `frontend/polish-1`)
+| ID | Change | How to verify |
+|---|---|---|
+| FE-14 | Buyer page / checkout no longer promise a receipt email or instant download (no receipt / order / download routes exist yet). Email label is just "Email"; button "Pay $X"; sub-line "Pay by card · No account needed"; trust point "Access after payment — once your payment is confirmed, we'll share how to access your files. Delivery options are coming soon."; `SALES_FINAL_TEXT` (`lib/purchase-copy.ts`, shared with the hosted mock page) drops "delivered immediately" but keeps "All sales are final". `DownloadPanel` untouched. **Not changed (marketing, out of the brief):** landing Hero / BuyerTrust / FAQ / PaymentLinkMock, auth shell ("Instant delivery"), site meta description. | `/u/<id>`: no "receipt" / "Instant download"; `tests/frontend-lib.test.ts` ("copy guards"); e2e `[FE-…] price shown`. |
+| FE-12 | "Balance owed" hint → "Below zero. It will be deducted from future earnings."; alert body no longer says "after a payout / already been paid out". | `/dashboard` as `ned` (negative balance); copy-guard unit test. |
+| FE-13 | Negative-balance alert is `tone="danger"` with `role="alert"` (red, matches the red card; it is an urgent, always-visible account state). Contrast: body text `#14121f` on `danger-soft` ≈ 16:1, icon / border `#c62828` on `#fdeaea` ≈ 4.9:1 (≥ 3:1 for non-text). | `dashboard-overview-negative-balance` screenshot; `[role=alert][data-testid=negative-balance]`. |
+| FE-15 | `getDropStats` is refund- and chargeback-aware (see "Earnings data source"). Maya: Spring 21 / $252 + Studio 6 / $140 + Travel 4 / $32 = **$424.00** = ledger gross kept ($467 − $35 − $8). | DB test `dashboard per-drop stats reconcile with the earnings summary` (`tests/db/payments.test.ts`); e2e "per-drop revenue == gross kept"; `/dashboard/drops` as `maya`. |
+| Lint | `eslint.config.mjs` ignores `qa/**`, `proof/**`, `screenshots/**` (QA / evidence output, not app code) — plain `npm run lint` is clean. | `npm run lint`. |
+| INFO no-store | `Cache-Control: no-store` for `GET /api/earnings` added as a header rule in `next.config.ts` (no backend file touched). `/dashboard*` pages were already `no-store` (dynamic). | `curl -si localhost:3400/api/earnings \| grep -i cache-control`. |
+| Test infra | New `vitest.config.mts` only mirrors the tsconfig `@/` alias so tests can import dashboard modules. | `npm test`. |
+
+Still open / not frontend: receipt, order and download routes (Backend / Payments); views & conversion (M4-10), M4-11, M4-17, M6-06; M5-16 (Legal).
+
 ## Screenshots
 `screenshots/dashboard/<name>-mobile-390x844.png` (2× DPR) and `<name>-desktop-1280x800.png`, full-page, produced by `scripts/screenshots-dashboard.mjs` (list in `screenshots/dashboard/INDEX.md`; horizontal-overflow audit at 360/390/1280 in `overflow-report.json` — all 0px).
 Notes: the signup 429 screenshot uses a mocked 429 response (same shape as the real `SIGNUP_IP` limiter: `429`, `Retry-After`, `{code:"rate_limited"}`); the sign-in lockout shots use the **real** progressive login delay.
@@ -112,3 +125,5 @@ Notes: the signup 429 screenshot uses a mocked 429 response (same shape as the r
 Retaken for the QA follow-up: `dashboard-overview`, `drop-unpublish-confirm`, `drop-publish-attestation-dialog`; new: `signup-429-long-wait`, `buyer-429-long-wait`, `placeholder-terms`, `placeholder-privacy`. `seed-demo` now also inserts one refunded and one charged-back sale for maya.
 
 Round-2 screenshot changes: `dashboard-overview` (ledger-backed: available / pending / in payout / paid out, partial refund + chargeback + chargeback fee), new `dashboard-overview-negative-balance`, `buyer-ready-to-buy` / `buyer-hosted-checkout` (real checkout flow), and every auth / buyer / dashboard page now shows the Terms · Privacy · DMCA · Contact footer. The remaining pages (landing, `/design`) are unchanged.
+
+Round-3 screenshot changes: all `buyer-*` (copy), `dashboard-overview`, `dashboard-overview-negative-balance` (red alert, new wording), `drop-list*` and `drop-detail-published` (refund-aware revenue).

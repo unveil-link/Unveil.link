@@ -80,3 +80,17 @@ describe("format helpers", () => {
     expect(fileSummaryLabel([{ mime: "image/png" }, { mime: "video/mp4" }])).toBe("2 files: 1 image, 1 video");
   });
 });
+
+// FE-14 / FE-12: copy must not promise things that don't exist yet (no receipt email / order / download routes; sellers may never have been paid out).
+import { readFileSync } from "node:fs";
+describe("copy guards (FE-12, FE-14)", () => {
+  const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+  it("buyer page copy makes no receipt-email or instant-download promise", () => {
+    for (const f of ["components/buyer/BuyPanel.tsx", "components/buyer/TrustPoints.tsx", "lib/purchase-copy.ts"]) {
+      expect(read(f), f).not.toMatch(/receipt|and download|instant download|delivered immediately|unlock the moment/i);
+    }
+  });
+  it("balance-owed copy does not claim a payout happened", () => {
+    expect(read("src/app/dashboard/page.tsx")).not.toMatch(/after a payout|already been paid out/i);
+  });
+});

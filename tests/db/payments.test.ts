@@ -1712,3 +1712,31 @@ describe.skipIf(!available)("R4 NEW-5: login throttle never throws under concurr
     expect(out.some((o) => o.status === "fulfilled" && o.value === "ok")).toBe(true);
   }, 120_000);
 });
+
+// FE-15: per-drop Sold/Revenue (dashboard data layer, read-only query on `transactions`) must reconcile with the ledger's gross kept.
+describe.skipIf(!available)("dashboard per-drop stats reconcile with the earnings summary (DB)", () => {
+  it("partial refunds, full refunds and chargebacks are deducted; totals == gross - refunded - charged back", async () => {
+    const dash = await import("../../src/app/dashboard/data");
+    const s = await seed({ price: 2500 });
+    const mk = async (price: number) => {
+      const { transactionId: id } = await checkout(s);
+      await deliver(sale(id, price));
+      return id;
+    };
+    const a = await mk(2500); // untouched          -> kept 2500, 1 unit
+    const b = await mk(2500); // partial $10 refund  -> kept 1500, 1 unit
+    const c = await mk(2500); // full refund         -> kept 0,    0 units
+    const d = await mk(2500); // chargeback          -> kept 0,    0 units
+    await deliver(m.ev.mockEvents.refund({ transactionId: b, refundId: "rf_fe15_b", amountCents: 1000 }));
+    await deliver(m.ev.mockEvents.refund({ transactionId: c, refundId: "rf_fe15_c", amountCents: 2500 }));
+    await deliver(m.ev.mockEvents.chargeback({ transactionId: d, amountCents: null }));
+    await checkout(s); // pending checkout: never counted
+    void a;
+    const stats = await dash.getDropStats(s.sellerId);
+    expect(stats[s.dropId]).toMatchObject({ units: 2, revenueCents: 4000 });
+    const e = await m.earn.getEarningsSummary(s.sellerId);
+    const kept = e.lifetime.grossCents - e.lifetime.refundedCents - e.lifetime.chargebackCents;
+    expect(kept).toBe(4000);
+    expect(Object.values(stats).reduce((x, y) => x + y.revenueCents, 0)).toBe(kept);
+  });
+});

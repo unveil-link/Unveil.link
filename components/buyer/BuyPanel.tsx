@@ -52,7 +52,7 @@ export function BuyPanel({ linkId, priceCents }: { linkId: string; priceCents: n
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-3" data-testid="buy-form">
-      <Field id="buyer-email" label="Email (for your receipt)" error={showErr && !emailOk ? "Enter a valid email address." : undefined}>
+      <Field id="buyer-email" label="Email" error={showErr && !emailOk ? "Enter a valid email address." : undefined}>
         {(a) => (
           <Input {...a} type="email" required maxLength={254} autoComplete="email" inputMode="email" placeholder="you@example.com"
             value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -70,9 +70,9 @@ export function BuyPanel({ linkId, priceCents }: { linkId: string; priceCents: n
       {showErr && !over18 && <p role="alert" className="-mt-1 text-sm font-medium text-danger">Please confirm to continue.</p>}
       <Button type="submit" size="lg" className="w-full" loading={busy} disabled={cd.active} data-testid="buy-button">
         <LockIcon className="size-5" />
-        {cd.active ? `Try again in ${formatDuration(cd.remaining)}` : `Unlock for ${usd(priceCents)}`}
+        {cd.active ? `Try again in ${formatDuration(cd.remaining)}` : `Pay ${usd(priceCents)}`}
       </Button>
-      <p className="text-center text-xs text-muted">Pay by card · No account needed · Instant download</p>
+      <p className="text-center text-xs text-muted">Pay by card · No account needed</p>
       <p className="rounded-md bg-surface-muted px-3 py-2 text-xs text-muted" data-testid="sales-final">{SALES_FINAL_TEXT}</p>
       {notice && (
         <div ref={noticeRef} tabIndex={-1} className="outline-none" data-testid="checkout-notice">

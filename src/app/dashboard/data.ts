@@ -4,7 +4,7 @@ import { getEarningsSummary } from "@/server/payments/earnings";
 
 /**
  * Read-only dashboard data. Earnings: payments layer (below). Per-drop units/revenue: there is still no per-drop stats API,
- * so these two small display queries read `transactions` directly (succeeded sales only; revenue = gross charged, before fees/refunds).
+ * so these two small display queries read `transactions` directly (see getDropStats: revenue = gross kept after refunds and chargebacks).
  */
 /**
  * Earnings come from the payments layer — the same `getEarningsSummary()` that backs `GET /api/earnings` (ledger balance with the
@@ -19,11 +19,21 @@ export async function getEarnings(sellerId: string): Promise<EarningsView> {
 
 export type DropStats = { units: number; revenueCents: number };
 
-/** drop_id -> units sold + gross revenue. NOTE: "views" are not tracked anywhere in the backend. */
+/**
+ * drop_id -> units sold + revenue KEPT. Read-only query on `transactions` (the same rows the ledger is built from).
+ * A completed sale counts with `amount_cents - reversed_cents`: `reversed_cents` is the gross handed back by refunds (partial ones
+ * included) AND chargebacks, so a partly refunded $25.00 sale counts as $15.00 and a fully refunded / charged-back one as $0.00 and is
+ * not a unit. Summed over all drops this equals the earnings summary's gross − refunded − charged back (the "kept" gross).
+ * Pending / failed checkouts never count. NOTE: "views" are not tracked anywhere in the backend.
+ */
 export async function getDropStats(sellerId: string): Promise<Record<string, DropStats>> {
   const rows = await query<{ drop_id: string; units: number; revenue: string }>(
-    `SELECT drop_id, COUNT(*)::int AS units, COALESCE(SUM(amount_cents), 0)::text AS revenue
-       FROM transactions WHERE seller_id = $1 AND status = 'succeeded' GROUP BY drop_id`,
+    `SELECT drop_id,
+            COUNT(*) FILTER (WHERE amount_cents > reversed_cents)::int AS units,
+            COALESCE(SUM(amount_cents - reversed_cents), 0)::text AS revenue
+       FROM transactions
+      WHERE seller_id = $1 AND status IN ('succeeded', 'refunded', 'charged_back')
+      GROUP BY drop_id`,
     [sellerId],
   );
   return Object.fromEntries(rows.map((r) => [r.drop_id, { units: r.units, revenueCents: Number(r.revenue) }]));
