@@ -1,0 +1,20 @@
+== M2-17 bad-signature download flood (default limits)
+   80 requests one IP: {"403":60,"429":20} other IP: 403
+   OK   403 then 429 for the flooding IP; other IP unaffected
+== M2-19 buyer page on throttled 4G (CDP), 3 runs
+   runs: [{"tBuy":315,"tLoad":915,"fcp":760},{"tBuy":294,"tLoad":931,"fcp":788},{"tBuy":303,"tLoad":902,"fcp":716}]
+   OK   Buy button visible < 2 s on 4G+4x CPU in all runs (315ms, 294ms, 303ms)
+== M6-02 secrets / server env not in client bundle or HTML
+   scanned 27 client files for 4 secret values: 0 hits
+   OK   no secret values in the client bundle
+   OK   no secret values in rendered HTML (/, /u, /login)
+== M5-20 neutral branding scan of rendered buyer-facing pages (adult-market terms)
+   adult-market words found in: []
+   OK   no adult-market wording on landing, auth, legal placeholders, buyer page, unavailable page, hosted checkout page (the 18+ confirmation itself is required and neutral: 'I confirm that I am 18 years of age or older')
+   OK   og/twitter tags neutral
+== dashboard + earnings still work on the instance with the mock processor DISABLED (ledger reads only)
+   OK   dashboard renders without the mock enabled: Balance owed | -$46.80 | A refund, chargeback or fee came in after a payout. | Pending | $
+== M4-06 / M2-03 server-side: unverified seller cannot publish or be bought from
+   OK   publish by pending seller -> 403
+   OK   checkout on pending seller's draft -> 404
+RESULT fails=0

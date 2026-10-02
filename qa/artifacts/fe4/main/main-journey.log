@@ -1,0 +1,14 @@
+   seller: signup 811 ms; live link after 1.3 s (excl. ID wait): /u/Q354NnVwcz0N
+   OK   signup -> live link well under 15 min (M4-18 / S2-01)
+   OK   hostile-ish title rendered as text: 'Journey drop <b>bold</b>'
+   buyer (mobile 390, scripted): open link -> paid in 454 ms (no download step exists)
+== S2-05 trace of the sale: txn -> webhook event -> fee split -> ledger -> receipt
+   tx: {"id":"2835035d-526d-42ef-863b-fd91a708c527","amount_cents":1200,"pf":120,"prf":144,"n":936,"status":"succeeded","provider_session_id":"mocksess_e3c1b966a69c538cbb6b5fd01db51448","buyer_confirmed_18_at":"2026-10-02T02:43:18.556Z"}
+   webhook events: [{"event_type":"sale_succeeded","outcome":"processed","signature_valid":true}]
+   ledger: [{"entry_type":"sale_credit","component":"gross","amount_cents":1200,"via_webhook":true},{"entry_type":"platform_fee","component":"platform_fee","amount_cents":-120,"via_webhook":true},{"entry_type":"processing_fee","component":"processing_fee","amount_cents":-144,"via_webhook":true}]
+   OK   txn succeeded, split exact, 3 ledger lines posted by a webhook event, 18+ timestamp stored
+   receipt: none (no receipt email/page exists) -> S2-05 partial
+   seller dashboard cards: Available | $0.00 | Nothing to pay out yet | Pending | $9.36 | Becomes available 7 days after each sale | In payout | $0.00 | None in progress | Paid out | $0.00 | No payouts yet
+   OK   seller sees pending $9.36
+   drops list row: Drops | Everything you’re selling, in one place. | New drop | All | 1 | Published | 1 | Drafts | 0 | Your drops | DROP	STATUS	PRICE	FILES	SOLD	REVENUE	 | ACTIONS | Journey drop <b>bold</b> | unveil.link/u/Q354NnVwcz0N | 	Published	$12.00	1	1	$12.00	 | Copy lin
+RESULT fails=0

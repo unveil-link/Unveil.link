@@ -1,0 +1,139 @@
+== A. Maya (refunds, partial refund, chargeback + $5 fee, payouts, pending)
+[maya] ledger truth: {"gross":49100,"plat":4480,"proc":5376,"refunded":3500,"cb":800,"cbfee":500,"sales":35,"paid":15000,"open":6000,"avail":8764,"pend":4680,"net":34444,"debits":21000}
+[maya] API: balance={"pendingCents":4680,"availableCents":8764,"totalCents":13444} lifetime={"salesCount":35,"grossCents":49100,"platformFeeCents":4480,"processingFeeCents":5376,"refundedCents":3500,"chargebackCents":800,"paidOutCents":15000,"requestedPayoutCents":6000} hold=7 eligible=true
+[maya] UI cards: {"Gross sales":"$491.00","Platform fee":"$44.80","Processing fees":"$53.76","Your earnings (net)":"$344.44","Available":"$87.64","Pending":"$46.80","In payout":"$60.00","Paid out":"$150.00"}
+[maya] UI line: $491.00 gross − $44.80 platform fee − $53.76 processing fees − $35.00 refunded − $8.00 charged back − $5.00 chargeback fees = $344.44 | reversals: Reversed sales: $35.00 refunded · $8.00 charged back. Fees on reversed sales are returned, so they are not counted above. | owe: null
+   OK   [maya] GET /api/earnings 200
+   FAIL [maya] API Cache-Control: null
+   OK   [maya] API lifetime gross/fees/refunded/chargebacks/sales == raw-ledger recompute
+   OK   [maya] API available $87.64 / pending $46.80 == ledger recompute $87.64 / $46.80
+   OK   [maya] payouts: paid $150.00 + open $60.00 == ledger payout debits $210.00
+   OK   [maya] UI Gross $491.00
+   OK   [maya] UI Platform fee $44.80
+   OK   [maya] UI Processing $53.76
+   OK   [maya] UI Net $344.44 == ledger net $344.44
+   OK   [maya] UI Available $87.64 == API $87.64
+   OK   [maya] UI Pending $46.80
+   OK   [maya] UI In payout $60.00
+   OK   [maya] UI Paid out $150.00
+   OK   [maya] available + pending + in payout + paid out = $344.44 == net $344.44
+   OK   [maya] gross − refunded − chargebacks − platform − processing − chargeback fees = net ($344.44, cb fees $5.00)
+   OK   [maya] reconciliation line reconciles to the cent ($491.00 gross − $44.80 platform fee − $53.76 processing fees − $35.00 refunded − $8.00 charged back − $5.00 chargeback fees = $344.44)
+   OK   [maya] line names the $5.00 chargeback fee
+   FAIL seed values: 33 sales $467.00 gross, refunded $25+$10=$35.00, chargeback $8.00 + $5.00 fee, paid $150, requested $60
+   OK   Maya (positive) shows 'Available' card, no red/alert
+   OK   Pending hint states 7-day hold
+   reversals line: Reversed sales: $35.00 refunded · $8.00 charged back. Fees on reversed sales are returned, so they are not counted above.
+   OK   refund (full+partial) and chargeback shown separately and amounts match
+== B. Ned (negative balance, FE-08)
+[ned] ledger truth: {"gross":6000,"plat":0,"proc":0,"refunded":6000,"cb":0,"cbfee":0,"sales":1,"paid":4680,"open":0,"avail":-4680,"pend":0,"net":0,"debits":4680}
+[ned] API: balance={"pendingCents":0,"availableCents":-4680,"totalCents":-4680} lifetime={"salesCount":1,"grossCents":6000,"platformFeeCents":0,"processingFeeCents":0,"refundedCents":6000,"chargebackCents":0,"paidOutCents":4680,"requestedPayoutCents":0} hold=7 eligible=false
+[ned] UI cards: {"Gross sales":"$60.00","Platform fee":"$0.00","Processing fees":"$0.00","Your earnings (net)":"$0.00","Balance owed":"-$46.80","Pending":"$0.00","In payout":"$0.00","Paid out":"$46.80"}
+[ned] UI line: $60.00 gross − $0.00 platform fee − $0.00 processing fees − $60.00 refunded = $0.00 | reversals: Reversed sales: $60.00 refunded. Fees on reversed sales are returned, so they are not counted above. | owe: You owe $46.80 Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.
+   OK   [ned] GET /api/earnings 200
+   FAIL [ned] API Cache-Control: null
+   OK   [ned] API lifetime gross/fees/refunded/chargebacks/sales == raw-ledger recompute
+   OK   [ned] API available -$46.80 / pending $0.00 == ledger recompute -$46.80 / $0.00
+   OK   [ned] payouts: paid $46.80 + open $0.00 == ledger payout debits $46.80
+   OK   [ned] UI Gross $60.00
+   OK   [ned] UI Platform fee $0.00
+   OK   [ned] UI Processing $0.00
+   OK   [ned] UI Net $0.00 == ledger net $0.00
+   OK   [ned] UI Balance owed -$46.80 == API -$46.80
+   OK   [ned] UI Pending $0.00
+   OK   [ned] UI In payout $0.00
+   OK   [ned] UI Paid out $46.80
+   OK   [ned] available + pending + in payout + paid out = $0.00 == net $0.00
+   OK   [ned] gross − refunded − chargebacks − platform − processing − chargeback fees = net ($0.00, cb fees $0.00)
+   OK   [ned] reconciliation line reconciles to the cent ($60.00 gross − $0.00 platform fee − $0.00 processing fees − $60.00 refunded = $0.00)
+   OK   ledger/API available = -$46.80
+   OK   red card is titled 'Balance owed' with value -$46.80 (no 'Available' card)
+   OK   card styled danger (border-danger, text-danger): border-danger/40
+   OK   alert present: You owe $46.80 Your available balance is negative because money was returned to a buyer (refund or chargeback) or a char
+   OK   paid out $46.80, pending $0, in payout $0
+   OK   net $0.00 after full refund; $60.00 refunded shown
+   OK   no alert for a non-negative seller
+== C. Sam (no sales) and Jo (pending verification)
+[sam] ledger truth: {"gross":0,"plat":0,"proc":0,"refunded":0,"cb":0,"cbfee":0,"sales":0,"paid":0,"open":0,"avail":0,"pend":0,"net":0,"debits":0}
+[sam] API: balance={"pendingCents":0,"availableCents":0,"totalCents":0} lifetime={"salesCount":0,"grossCents":0,"platformFeeCents":0,"processingFeeCents":0,"refundedCents":0,"chargebackCents":0,"paidOutCents":0,"requestedPayoutCents":0} hold=7 eligible=false
+[sam] UI cards: {"Gross sales":"$0.00","Platform fee":"$0.00","Processing fees":"$0.00","Your earnings (net)":"$0.00","Available":"$0.00","Pending":"$0.00","In payout":"$0.00","Paid out":"$0.00"}
+[sam] UI line: $0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00 | reversals: null | owe: null
+   OK   [sam] GET /api/earnings 200
+   FAIL [sam] API Cache-Control: null
+   OK   [sam] API lifetime gross/fees/refunded/chargebacks/sales == raw-ledger recompute
+   OK   [sam] API available $0.00 / pending $0.00 == ledger recompute $0.00 / $0.00
+   OK   [sam] payouts: paid $0.00 + open $0.00 == ledger payout debits $0.00
+   OK   [sam] UI Gross $0.00
+   OK   [sam] UI Platform fee $0.00
+   OK   [sam] UI Processing $0.00
+   OK   [sam] UI Net $0.00 == ledger net $0.00
+   OK   [sam] UI Available $0.00 == API $0.00
+   OK   [sam] UI Pending $0.00
+   OK   [sam] UI In payout $0.00
+   OK   [sam] UI Paid out $0.00
+   OK   [sam] available + pending + in payout + paid out = $0.00 == net $0.00
+   OK   [sam] gross − refunded − chargebacks − platform − processing − chargeback fees = net ($0.00, cb fees $0.00)
+   OK   [sam] reconciliation line reconciles to the cent ($0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00)
+   OK   sam: zeros, no NaN/undefined
+[jo] ledger truth: {"gross":0,"plat":0,"proc":0,"refunded":0,"cb":0,"cbfee":0,"sales":0,"paid":0,"open":0,"avail":0,"pend":0,"net":0,"debits":0}
+[jo] API: balance={"pendingCents":0,"availableCents":0,"totalCents":0} lifetime={"salesCount":0,"grossCents":0,"platformFeeCents":0,"processingFeeCents":0,"refundedCents":0,"chargebackCents":0,"paidOutCents":0,"requestedPayoutCents":0} hold=7 eligible=false
+[jo] UI cards: {"Gross sales":"$0.00","Platform fee":"$0.00","Processing fees":"$0.00","Your earnings (net)":"$0.00","Available":"$0.00","Pending":"$0.00","In payout":"$0.00","Paid out":"$0.00"}
+[jo] UI line: $0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00 | reversals: null | owe: null
+   OK   [jo] GET /api/earnings 200
+   FAIL [jo] API Cache-Control: null
+   OK   [jo] API lifetime gross/fees/refunded/chargebacks/sales == raw-ledger recompute
+   OK   [jo] API available $0.00 / pending $0.00 == ledger recompute $0.00 / $0.00
+   OK   [jo] payouts: paid $0.00 + open $0.00 == ledger payout debits $0.00
+   OK   [jo] UI Gross $0.00
+   OK   [jo] UI Platform fee $0.00
+   OK   [jo] UI Processing $0.00
+   OK   [jo] UI Net $0.00 == ledger net $0.00
+   OK   [jo] UI Available $0.00 == API $0.00
+   OK   [jo] UI Pending $0.00
+   OK   [jo] UI In payout $0.00
+   OK   [jo] UI Paid out $0.00
+   OK   [jo] available + pending + in payout + paid out = $0.00 == net $0.00
+   OK   [jo] gross − refunded − chargebacks − platform − processing − chargeback fees = net ($0.00, cb fees $0.00)
+   OK   [jo] reconciliation line reconciles to the cent ($0.00 gross − $0.00 platform fee − $0.00 processing fees = $0.00)
+   OK   jo: zeros, no NaN/undefined
+== D. isolation / auth
+   OK   GET /api/earnings anonymous -> 401
+   OK   GET /dashboard anonymous -> 307 /login
+   OK   Ned + ?sellerId=53… still sees only Ned (-4680)
+   OK   Ned + ?seller=5323… still sees only Ned (-4680)
+   OK   Ned + ?id=53233dfa… still sees only Ned (-4680)
+   OK   x-seller-id header ignored
+   OK   Ned's dashboard HTML has none of Maya's drops/name
+   OK   API /earnings has no buyer emails
+== E. FE-15 per-drop Sold/Revenue vs /api/earnings vs raw ledger
+[maya] ledger per-drop: [["Autumn preview (draft)",0,"$0.00"],["Pop-up reel",0,"$0.00"],["Spring collection pack",23,"$276.00"],["Studio colour study",6,"$140.00"],["Travel set, vol. 2",4,"$32.00"],["Winter archive",0,"$0.00"]]
+[maya] UI desktop rows: [["Pop-up reel","$0.00",null],["Winter archive","$0.00",null],["Autumn preview (draft)","$0.00",null],["Travel set, vol. 2","$32.00",null],["Studio colour study","$150.00",null],["Spring collection pack","$276.00",null]]
+   FAIL [maya] sum of per-drop UI revenue $0.00 == API gross - refunded - charged back $448.00 == ledger per-drop sum
+   FAIL [maya] Autumn preview (draft): UI revenue null == ledger $0.00; cells=["Autumn preview (draft)\nCreated Oct 1, 2026","Draft","$15.00","2","0","$0.00","Publish\nManage"]
+   OK   [maya] Autumn preview (draft): Sold 0 shown (numeric cells 2,0)
+   FAIL [maya] Pop-up reel: UI revenue null == ledger $0.00; cells=["Pop-up reel\nCreated Oct 1, 2026","Under review","$9.99","1","0","$0.00","View"]
+   OK   [maya] Pop-up reel: Sold 0 shown (numeric cells 1,0)
+   FAIL [maya] Spring collection pack: UI revenue null == ledger $276.00; cells=["Spring collection pack\nunveil.link/u/iux9Qx9tAOPX","Published","$12.00","6","23","$276.00","Copy link\nUnpublish\nManage"]
+   OK   [maya] Spring collection pack: Sold 23 shown (numeric cells 6,23)
+   FAIL [maya] Studio colour study: UI revenue null == ledger $140.00; cells=["Studio colour study\nunveil.link/u/DUPPof-CGivL","Published","$25.00","3","6","$150.00","Copy link\nUnpublish\nManage"]
+   OK   [maya] Studio colour study: Sold 6 shown (numeric cells 3,6)
+   FAIL [maya] Travel set, vol. 2: UI revenue null == ledger $32.00; cells=["Travel set, vol. 2\nunveil.link/u/MZOl2FUjI50R","Published","$8.00","4","4","$32.00","Copy link\nUnpublish\nManage"]
+   OK   [maya] Travel set, vol. 2: Sold 4 shown (numeric cells 4,4)
+   FAIL [maya] Winter archive: UI revenue null == ledger $0.00; cells=["Winter archive\nCreated Oct 1, 2026","Unpublished","$30.00","2","0","$0.00","Publish\nManage"]
+   OK   [maya] Winter archive: Sold 0 shown (numeric cells 2,0)
+[ned] ledger per-drop: [["Print pack",0,"$0.00"]]
+[ned] UI desktop rows: [["Print pack","$0.00",null]]
+   OK   [ned] sum of per-drop UI revenue $0.00 == API gross - refunded - charged back $0.00 == ledger per-drop sum
+   FAIL [ned] Print pack: UI revenue null == ledger $0.00; cells=["Print pack\nunveil.link/u/whl7NVmuXdMl","Published","$60.00","1","0","$0.00","Copy link\nUnpublish\nManage"]
+   OK   [ned] Print pack: Sold 0 shown (numeric cells 1,0)
+[sam] ledger per-drop: []
+[sam] UI desktop rows: []
+   OK   [sam] sum of per-drop UI revenue $0.00 == API gross - refunded - charged back $0.00 == ledger per-drop sum
+[jo] ledger per-drop: [["Portfolio sampler",0,"$0.00"]]
+[jo] UI desktop rows: [["Portfolio sampler","$0.00",null]]
+   OK   [jo] sum of per-drop UI revenue $0.00 == API gross - refunded - charged back $0.00 == ledger per-drop sum
+   FAIL [jo] Portfolio sampler: UI revenue null == ledger $0.00; cells=["Portfolio sampler\nCreated Oct 1, 2026","Draft","$10.00","1","0","$0.00","Publish\nManage"]
+   OK   [jo] Portfolio sampler: Sold 0 shown (numeric cells 1,0)
+   maya drops (ledger): [{"t":"Autumn preview (draft)","units":0,"kept":0},{"t":"Pop-up reel","units":0,"kept":0},{"t":"Spring collection pack","units":23,"kept":27600},{"t":"Studio colour study","units":6,"kept":14000},{"t":"Travel set, vol. 2","units":4,"kept":3200},{"t":"Winter archive","units":0,"kept":0}]
+   FAIL Maya's per-drop sum == $424.00 (467 - 35 refunded - 8 charged back)
+RESULT fails=15

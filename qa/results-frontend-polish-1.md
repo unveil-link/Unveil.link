@@ -10,3 +10,9 @@
 | FE-13 alert tone/role | FIXED | alert `role="alert"`, `border-danger/30 bg-danger-soft`, getByRole('alert') finds it; text contrast 16.0:1, icon 4.9:1 |
 | FE-15 per-drop Sold/Revenue | FIXED | Maya Spring 21/$252.00 + Studio 6/$140.00 + Travel 4/$32.00 = **$424.00** = API gross−refunded−charged back = raw-ledger per-drop recompute (`fe4-earnings.log`, 115 OK); edge cases `fe4-perdrop-edge.log` 69 OK |
 | `Cache-Control: no-store` on /api/earnings | OK | present on 200 for Maya/Ned/Sam/Jo; header matrix main vs branch `fe4-headers-matrix.txt`: only /api/earnings differs |
+
+## Checkpoint 2 (suites, FE-14 copy, regression vs main)
+- tsc clean; `npm run lint` clean (plain, with qa/ present — eslint ignore verified); `npm test` 242/242; `npm run e2e` 83/83 (`fe4-e2e-run1.log`).
+- FE-14 buyer/hosted/dashboard copy verified (`fe4-fe14.log`, 27 OK); residual promises in `fe4-copyaudit-polish.log` (vs main baseline `fe4-copyaudit-main.log`).
+- Regression suite (buy, buyerr, back, fees, journey, misc, regress, reg-modal, reg-duration, reg-meta, boundary, webhook, fixes): all 0 FAIL on the branch; same scripts on main 206320e in `main/`.
+- Header diff main vs branch over 41 routes: only `/api/earnings` gets `Cache-Control: no-store` (`fe4-headers-diff.txt`).

@@ -1,0 +1,30 @@
+   OK   [desktop] email label is exactly "Email" (got "Email")
+   OK   [desktop] button reads "Pay $12.00" (was "Unlock for $12.00")
+   OK   [desktop] sub-line: "...Pay by card · No account needed"
+   OK   [desktop] sales-final text has no "delivered immediately"
+   OK   [desktop] trust point "Access after payment ... Delivery options are coming soon."
+   OK   [desktop] "Just pay — nothing to sign up for."
+   OK   [desktop] no receipt/instant-download/unlock promise on buyer page (hits: [])
+   (residual) [desktop] buyer page preview note: "The full files unlock after purchase."
+   OK   [desktop] no horizontal overflow (0px)
+   OK   [desktop] validation state: no promise text
+   OK   [desktop] hosted mock page: SALES_FINAL_TEXT updated, no promise
+   OK   [desktop] after payment: "nds. Payment succeeded (mock). Pay (mock) Back to the drop" — no receipt/download promise; links: ["Unveil","Back to the drop"]
+   OK   [mobile] email label is exactly "Email" (got "Email")
+   OK   [mobile] button reads "Pay $12.00" (was "Unlock for $12.00")
+   OK   [mobile] sub-line: "...Pay by card · No account needed"
+   OK   [mobile] sales-final text has no "delivered immediately"
+   OK   [mobile] trust point "Access after payment ... Delivery options are coming soon."
+   OK   [mobile] "Just pay — nothing to sign up for."
+   OK   [mobile] no receipt/instant-download/unlock promise on buyer page (hits: [])
+   (residual) [mobile] buyer page preview note: "The full files unlock after purchase."
+   OK   [mobile] no horizontal overflow (0px)
+   OK   [mobile] validation state: no promise text
+   OK   [mobile] hosted mock page: SALES_FINAL_TEXT updated, no promise
+   OK   [mobile] after payment: "nds. Payment succeeded (mock). Pay (mock) Back to the drop" — no receipt/download promise; links: ["Unveil","Back to the drop"]
+   OK   dashboard "How it works": "1. Upload your files · 2. Set a price · 3. Share the link anywhere. Buyers pay by card — no account needed. "
+   OK   [dashboard /dashboard] no promise (-)
+   OK   [dashboard /dashboard/drops] no promise (-)
+   OK   [dashboard /dashboard/new] no promise (-)
+   OK   rate-limit state label "Try again in 19s"
+RESULT fails=0
