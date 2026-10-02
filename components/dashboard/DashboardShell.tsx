@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LegalLinks } from "@/components/LegalLinks";
 import { Logo } from "@/components/Logo";
 import { Button, GridIcon, HomeIcon, LogOutIcon, PlusIcon, ToastProvider } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -82,9 +83,12 @@ export default function DashboardShell({ seller, children }: { seller: { display
             </Button>
           </header>
 
-          <main id="dash-main" className="mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-10">
+          <main id="dash-main" className="mx-auto w-full max-w-5xl flex-1 px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-10">
             {children}
           </main>
+          <footer className="mx-auto w-full max-w-5xl px-4 pb-28 pt-4 sm:px-6 lg:px-10 lg:pb-8">
+            <LegalLinks className="border-t border-border pt-4" />
+          </footer>
 
           {/* Mobile bottom nav */}
           <nav aria-label="Dashboard" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">

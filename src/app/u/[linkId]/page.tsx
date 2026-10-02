@@ -19,7 +19,18 @@ export async function generateMetadata({ params }: { params: Promise<{ linkId: s
   const { linkId } = await params;
   const drop = await getDropByPublicLink(linkId);
   if (!drop || drop.status !== "published") return { title: "Link unavailable", robots };
-  return { title: drop.title, robots };
+  const seller = await queryOne<{ display_name: string }>("SELECT display_name FROM sellers WHERE id = $1", [drop.seller_id]);
+  // Social preview: ONLY what the page already shows publicly (drop title + seller name) and a generic brand image.
+  // Never the drop description, price, file names or any preview/original image.
+  const description = seller?.display_name ? `A payment link by ${seller.display_name} on Unveil.` : "A payment link on Unveil.";
+  const image = [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Unveil" }];
+  return {
+    title: drop.title,
+    robots,
+    openGraph: { type: "website", siteName: "Unveil", title: `${drop.title} · Unveil`, description, url: `/u/${drop.public_link_id}`, images: image },
+    twitter: { card: "summary", title: `${drop.title} · Unveil`, description, images: image.map((i) => i.url) },
+    alternates: { canonical: `/u/${drop.public_link_id}` },
+  };
 }
 
 // Public drop page: only blurred previews are ever rendered here.
@@ -90,9 +101,6 @@ export default async function PublicDrop({ params }: { params: Promise<{ linkId:
               <p className="pb-1 text-right text-sm text-muted">{summary.label}</p>
             </div>
             <BuyPanel linkId={drop.public_link_id} priceCents={drop.price_cents} />
-            <p className="mt-4 rounded-md bg-surface-muted px-3 py-2 text-xs text-muted" data-testid="final-sale">
-              <b className="text-text">All sales are final.</b> Because files are delivered digitally right away, purchases can’t be refunded.
-            </p>
           </div>
         </div>
       </Container>

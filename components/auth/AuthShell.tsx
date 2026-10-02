@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { LegalLinks } from "@/components/LegalLinks";
 import { CardIcon, DownloadIcon, ShieldCheckIcon } from "@/components/landing/Icons";
 
 const points = [
@@ -53,6 +54,7 @@ export function AuthShell({ children, title, subtitle, footer }: { children: Rea
             {subtitle && <p className="mt-2 text-muted">{subtitle}</p>}
             <div className="mt-6 rounded-xl border border-border bg-surface p-5 shadow-card sm:p-7">{children}</div>
             {footer && <div className="mt-5 text-center text-sm text-muted">{footer}</div>}
+            <LegalLinks className="mt-6 flex justify-center" />
           </div>
         </div>
       </main>

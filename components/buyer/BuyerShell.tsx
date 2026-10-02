@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Logo } from "@/components/Logo";
 import { Container } from "@/components/ui";
+import { LegalLinks } from "@/components/LegalLinks";
 
 /** Minimal chrome for buyer-facing pages: logo header, soft brand glow, small footer. */
 export function BuyerShell({ children }: { children: ReactNode }) {
@@ -20,6 +21,7 @@ export function BuyerShell({ children }: { children: ReactNode }) {
       <footer className="relative border-t border-border bg-surface/70">
         <Container size="narrow" className="flex flex-col items-center gap-1 py-6 text-center text-xs text-muted sm:flex-row sm:justify-between sm:text-left">
           <p>© {new Date().getFullYear()} Unveil · unveil.link</p>
+          <LegalLinks />
           <p>Payments by a trusted provider. We never store card numbers.</p>
         </Container>
       </footer>
