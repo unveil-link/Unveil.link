@@ -1,0 +1,67 @@
+== M2-18 mobile 390/360 + desktop: no horizontal scroll, buy form usable
+   OK   390px /: scrollWidth 390 <= 390
+   OK   390px /signup: scrollWidth 390 <= 390
+   OK   390px /login: scrollWidth 390 <= 390
+   OK   390px /forgot-password: scrollWidth 390 <= 390
+   OK   390px /terms: scrollWidth 390 <= 390
+   OK   390px /u/qsVd329jCqPj: scrollWidth 390 <= 390
+   OK   390px /u/zzzzzzzzzzzz: scrollWidth 390 <= 390
+   OK   390px Buy button 308x52 (touch target ≥44)
+   OK   390px /dashboard: scrollWidth 390 <= 390
+   OK   390px /dashboard/drops: scrollWidth 390 <= 390
+   OK   390px /dashboard/drops/new: scrollWidth 390 <= 390
+   OK   390px Ned dashboard (negative alert) no overflow
+   OK   360px /: scrollWidth 360 <= 360
+   OK   360px /signup: scrollWidth 360 <= 360
+   OK   360px /login: scrollWidth 360 <= 360
+   OK   360px /forgot-password: scrollWidth 360 <= 360
+   OK   360px /terms: scrollWidth 360 <= 360
+   OK   360px /u/qsVd329jCqPj: scrollWidth 360 <= 360
+   OK   360px /u/zzzzzzzzzzzz: scrollWidth 360 <= 360
+   OK   360px Buy button 278x52 (touch target ≥44)
+   OK   360px /dashboard: scrollWidth 360 <= 360
+   OK   360px /dashboard/drops: scrollWidth 360 <= 360
+   OK   360px /dashboard/drops/new: scrollWidth 360 <= 360
+   OK   360px Ned dashboard (negative alert) no overflow
+== M2-08 / M1-12 no originals on public surfaces (combined state)
+   OK   no storage_key / original filename in page, RSC payload, public API
+   OK   no /original URL in page or public API
+   OK   /api/files/65ed82f3-518f-4b41-9967-379bc anonymous -> 403
+   OK   /api/files/65ed82f3-518f-4b41-9967-379bc anonymous -> 403
+   OK   blurred preview 200 jpeg noindex
+== security headers on new/changed pages
+   OK   /: all 6 security headers present
+   OK   /login: all 6 security headers present
+   OK   /terms: all 6 security headers present
+   OK   /u/qsVd329jCqPj: all 6 security headers present
+   OK   /api/earnings: all 6 security headers present
+   OK   /dashboard: all 6 security headers present
+   CSP: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+   OK   CSP: no unsafe-eval, frame-ancestors none, object-src none (script 'unsafe-inline' noted as known)
+== M6-07 PWA / icons used by og tags
+   OK   manifest ok
+   OK   /icons/icon-192.png 200 png
+   OK   /icons/icon-512.png 200 png
+== M1-13 / M4 ownership: seller B cannot touch seller A's drops; dashboard drop page for foreign id
+   OK   Ned GET /api/drops/<mayaDrop> -> 404
+   OK   Ned POST /api/drops/<mayaDrop>/publish -> 404
+   OK   Ned POST /api/drops/<mayaDrop>/unpublish -> 404
+   OK   Ned POST /api/drops/<mayaDrop>/files -> 404
+   OK   Ned's drop list doesn't include Maya's drop
+   OK   Maya's drop still published
+   OK   Ned opening /dashboard/drops/<mayaDrop> sees no Maya data (status 200, text 'Skip to content Unveil Overview Drops New drop N Ned Okafor ned+muqe82pg@example')
+== M3-18 final-sale text, terms link, 18+ on buyer page
+   OK   18+ confirmation, final-sale text, Terms link visible before Buy
+== fuzz: new/changed routes never 5xx
+   requests: 48 5xx: ["/u/%zz→500","/pay/mock/%zz→500","/dashboard/drops/%zz→500"]
+   OK   no 5xx except the known framework %zz decode (NEW-6)
+   (known framework behaviour: /u/%zz→500, /pay/mock/%zz→500, /dashboard/drops/%zz→500 )
+   OK   checkout hostile body -> 400
+   OK   checkout hostile body -> 201
+   OK   checkout hostile body -> 400
+   OK   checkout hostile body -> 400
+== static pages: no inline email/secret/PII in HTML of buyer page
+   OK   no emails/secrets in buyer HTML
+   OK   seller email not exposed on buyer page
+   OK   public API: no seller email/id/storage key
+RESULT fails=0

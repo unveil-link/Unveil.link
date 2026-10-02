@@ -1,0 +1,373 @@
+{
+ "pagesSeen": [
+  "landing",
+  "login",
+  "signup",
+  "forgot-password",
+  "reset-password",
+  "terms",
+  "privacy",
+  "dmca",
+  "contact",
+  "buyer /u/<published>",
+  "buyer /u/<unpublished> (unavailable)",
+  "buyer /u/<draft>",
+  "buyer /u/<unknown> (404)",
+  "404 page",
+  "design page",
+  "admin login",
+  "admin login2",
+  "buyer /u/<published> after empty submit (validation)",
+  "hosted mock checkout /pay/mock/<session>",
+  "hosted mock checkout after declined card",
+  "hosted mock checkout after successful payment (return/success state)",
+  "dashboard overview",
+  "dashboard drops",
+  "dashboard new drop",
+  "dashboard drop detail",
+  "dashboard draft drop detail",
+  "dashboard overview (pending seller 'jo')",
+  "dashboard overview (empty seller 'sam')",
+  "/manifest.webmanifest (200)",
+  "/robots.txt (200)",
+  "/sitemap.xml (404)"
+ ],
+ "hits": [
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Buyers pay by card — no account needed — and download instantly."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "2 videos Spring collection pack M by Maya Lin $12 Instant download Secure checkout Pay & download Pay by card"
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Buyers pay by card and download right away."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Instant download Your files are ready the moment your payment goes through."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Private signed links Every download link is unique to your purchase and expires automatically."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Buyers pay with a card at checkout and download straight away."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "We only ask for an email address so we can send a receipt and a backup download link."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "visible",
+   "text": "Files are stored privately and are only delivered through signed links created after a successful purchase."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "landing",
+   "url": "/",
+   "kind": "attr",
+   "text": "Illustration of a payment link card with a blurred preview, a price of $12, and a Pay and download button"
+  },
+  {
+   "page": "login",
+   "url": "/login",
+   "kind": "visible",
+   "text": "Instant delivery Share one link anywhere."
+  },
+  {
+   "page": "login",
+   "url": "/login",
+   "kind": "visible",
+   "text": "Files are delivered automatically."
+  },
+  {
+   "page": "login",
+   "url": "/login",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "signup",
+   "url": "/signup",
+   "kind": "visible",
+   "text": "Instant delivery Share one link anywhere."
+  },
+  {
+   "page": "signup",
+   "url": "/signup",
+   "kind": "visible",
+   "text": "Files are delivered automatically."
+  },
+  {
+   "page": "signup",
+   "url": "/signup",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "forgot-password",
+   "url": "/forgot-password",
+   "kind": "visible",
+   "text": "Instant delivery Share one link anywhere."
+  },
+  {
+   "page": "forgot-password",
+   "url": "/forgot-password",
+   "kind": "visible",
+   "text": "Files are delivered automatically."
+  },
+  {
+   "page": "forgot-password",
+   "url": "/forgot-password",
+   "kind": "visible",
+   "text": "unveil.link Reset your password Enter the email you signed up with and we’ll send you a reset link."
+  },
+  {
+   "page": "forgot-password",
+   "url": "/forgot-password",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "reset-password",
+   "url": "/reset-password?token=x",
+   "kind": "visible",
+   "text": "Instant delivery Share one link anywhere."
+  },
+  {
+   "page": "reset-password",
+   "url": "/reset-password?token=x",
+   "kind": "visible",
+   "text": "Files are delivered automatically."
+  },
+  {
+   "page": "reset-password",
+   "url": "/reset-password?token=x",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "terms",
+   "url": "/terms",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "privacy",
+   "url": "/privacy",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "dmca",
+   "url": "/dmca",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "contact",
+   "url": "/contact",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "buyer /u/<published>",
+   "url": "/u/qsVd329jCqPj",
+   "kind": "visible",
+   "text": "The full files unlock after purchase."
+  },
+  {
+   "page": "buyer /u/<published>",
+   "url": "/u/qsVd329jCqPj",
+   "kind": "visible",
+   "text": "Access after payment Once your payment is confirmed, we’ll share how to access your files."
+  },
+  {
+   "page": "buyer /u/<published>",
+   "url": "/u/qsVd329jCqPj",
+   "kind": "visible",
+   "text": "Delivery options are coming soon."
+  },
+  {
+   "page": "buyer /u/<published>",
+   "url": "/u/qsVd329jCqPj",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "buyer /u/<unpublished> (unavailable)",
+   "url": "/u/pdi08Xuh1XeN",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "buyer /u/<draft>",
+   "url": "/u/1fZS70PLrCwS",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "buyer /u/<unknown> (404)",
+   "url": "/u/doesnotexist1",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "404 page",
+   "url": "/nope",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "design page",
+   "url": "/design",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "admin login",
+   "url": "/admin",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "admin login2",
+   "url": "/admin/login",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "buyer /u/<published> after empty submit (validation)",
+   "url": "/u/qsVd329jCqPj",
+   "kind": "visible",
+   "text": "The full files unlock after purchase."
+  },
+  {
+   "page": "buyer /u/<published> after empty submit (validation)",
+   "url": "/u/qsVd329jCqPj",
+   "kind": "visible",
+   "text": "Access after payment Once your payment is confirmed, we’ll share how to access your files."
+  },
+  {
+   "page": "buyer /u/<published> after empty submit (validation)",
+   "url": "/u/qsVd329jCqPj",
+   "kind": "visible",
+   "text": "Delivery options are coming soon."
+  },
+  {
+   "page": "buyer /u/<published> after empty submit (validation)",
+   "url": "/u/qsVd329jCqPj",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "hosted mock checkout /pay/mock/<session>",
+   "url": "/pay/mock/<session>",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "hosted mock checkout after declined card",
+   "url": "/pay/mock/<session>",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "hosted mock checkout after successful payment (return/success state)",
+   "url": "/pay/mock/mocksess_2d12c0e4a269b0d1f762560c2ae46d99",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "dashboard overview",
+   "url": "/dashboard",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "dashboard drops",
+   "url": "/dashboard/drops",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "dashboard new drop",
+   "url": "/dashboard/new",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "dashboard drop detail",
+   "url": "/dashboard/drops/065d46b8-a829-4be6-8c8b-6c3f210cf976",
+   "kind": "visible",
+   "text": "They’re added to this drop right away."
+  },
+  {
+   "page": "dashboard drop detail",
+   "url": "/dashboard/drops/065d46b8-a829-4be6-8c8b-6c3f210cf976",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "dashboard draft drop detail",
+   "url": "/dashboard/drops/677e5f58-8657-48ff-85ad-83da18b755c9",
+   "kind": "visible",
+   "text": "They’re added to this drop right away."
+  },
+  {
+   "page": "dashboard draft drop detail",
+   "url": "/dashboard/drops/677e5f58-8657-48ff-85ad-83da18b755c9",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "dashboard overview (pending seller 'jo')",
+   "url": "/dashboard",
+   "kind": "visible",
+   "text": "Publishing unlocks once your identity is verified."
+  },
+  {
+   "page": "dashboard overview (pending seller 'jo')",
+   "url": "/dashboard",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  },
+  {
+   "page": "dashboard overview (empty seller 'sam')",
+   "url": "/dashboard",
+   "kind": "visible",
+   "text": "Publishing unlocks once your identity is verified."
+  },
+  {
+   "page": "dashboard overview (empty seller 'sam')",
+   "url": "/dashboard",
+   "kind": "meta:description",
+   "text": "Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly."
+  }
+ ]
+}

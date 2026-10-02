@@ -1,0 +1,473 @@
+### \dt
+                   List of relations
+ Schema |            Name             | Type  | Owner  
+--------+-----------------------------+-------+--------
+ public | admin_login_failure_buckets | table | unveil
+ public | admin_sessions              | table | unveil
+ public | admins                      | table | unveil
+ public | audit_log                   | table | unveil
+ public | drop_files                  | table | unveil
+ public | drops                       | table | unveil
+ public | ledger_entries              | table | unveil
+ public | login_throttle              | table | unveil
+ public | password_reset_tokens       | table | unveil
+ public | payments_janitor_state      | table | unveil
+ public | payouts                     | table | unveil
+ public | platform_settings           | table | unveil
+ public | rate_limits                 | table | unveil
+ public | reports                     | table | unveil
+ public | schema_migrations           | table | unveil
+ public | sellers                     | table | unveil
+ public | sessions                    | table | unveil
+ public | transactions                | table | unveil
+ public | webhook_events              | table | unveil
+(19 rows)
+
+### sellers (no secrets: password_hash shown as prefix only)
+-[ RECORD 1 ]--------+-------------------------------------
+id                   | 71282366-cc33-4b0c-b0f2-8f91de169177
+email                | seller+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | E2E Seller
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:28.197391-04
+-[ RECORD 2 ]--------+-------------------------------------
+id                   | f884b1a3-0868-43f3-8af9-3502321ec9c5
+email                | mallory+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | Mallory
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:31.60705-04
+-[ RECORD 3 ]--------+-------------------------------------
+id                   | 8432adf3-58b1-47b2-9756-a9959f7c0564
+email                | logout+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User logout
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:35.604293-04
+-[ RECORD 4 ]--------+-------------------------------------
+id                   | 30641cf9-f9e9-419c-a150-9473c603a548
+email                | race+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User race
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:36.272141-04
+-[ RECORD 5 ]--------+-------------------------------------
+id                   | 456cb974-23b0-45e8-abd0-91e9b0e998f7
+email                | sizecap+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User sizecap
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:36.708096-04
+-[ RECORD 6 ]--------+-------------------------------------
+id                   | 251c9a8b-e077-45ac-9d40-f440fb03e589
+email                | multi+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User multi
+verification_status  | verified
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:37.223-04
+-[ RECORD 7 ]--------+-------------------------------------
+id                   | b76724ab-3370-45d3-8491-fa7b22bd68e8
+email                | pwdhr4bm+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | Pw Test
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:41.105021-04
+-[ RECORD 8 ]--------+-------------------------------------
+id                   | c3ec39d7-e2b7-4971-a974-67c6f9f41d03
+email                | reset+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User reset
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:51.403929-04
+-[ RECORD 9 ]--------+-------------------------------------
+id                   | edc50e4a-043e-4667-b044-17692a5d4eb1
+email                | race2+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User race2
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:54.303154-04
+-[ RECORD 10 ]-------+-------------------------------------
+id                   | 3fcde5ee-5916-4fb5-8289-670aa8ff4127
+email                | capmail+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User capmail
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:55.777768-04
+-[ RECORD 11 ]-------+-------------------------------------
+id                   | 02a2e6f6-b6cd-426d-8a71-17aabbe37c15
+email                | owner13+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User owner13
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:28:57.169986-04
+-[ RECORD 12 ]-------+-------------------------------------
+id                   | 509476c2-3eca-4d12-b198-75297443d58f
+email                | esc13+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User esc13
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:29:03.119169-04
+-[ RECORD 13 ]-------+-------------------------------------
+id                   | c9c0aa73-bb26-47af-9628-eaabb6d20af2
+email                | reset13+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User reset13
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:29:31.456841-04
+-[ RECORD 14 ]-------+-------------------------------------
+id                   | 98d3965f-778d-4e20-81b5-b0088cd7a97b
+email                | pwreset13+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User pwreset13
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:29:41.506082-04
+-[ RECORD 15 ]-------+-------------------------------------
+id                   | 6406ff6e-b8da-4026-94d8-7695d297c709
+email                | other13+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User other13
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:29:41.822908-04
+-[ RECORD 16 ]-------+-------------------------------------
+id                   | eeb766f3-b039-4552-b5b5-769b8b6c156d
+email                | payseller+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | Pay Seller
+verification_status  | verified
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:29:44.201364-04
+-[ RECORD 17 ]-------+-------------------------------------
+id                   | 4e650395-9114-4dc2-a130-a6a6e6333e04
+email                | conc30+1790911707811@example.test
+password_hash_prefix | $2b$12$…
+google_id            | 
+display_name         | User conc30
+verification_status  | pending
+verification_ref     | 
+legal_name           | 
+dob                  | 
+payout_details       | 
+created_at           | 2026-10-01 23:30:26.43627-04
+
+### drops
+                  id                  |              seller_id               | public_link_id |      title       | price_cents |  status   |                                            attestation                                            
+--------------------------------------+--------------------------------------+----------------+------------------+-------------+-----------+---------------------------------------------------------------------------------------------------
+ 5c8dc70f-f4e9-4388-9457-cacaedd4aad0 | 71282366-cc33-4b0c-b0f2-8f91de169177 | QBrJNUTl4_Uw   | Sunset set       |        1500 | published | {"at": "2026-10-02T03:28:35.251Z", "over18": true, "ownsRights": true, "consentOfSubjects": true}
+ ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | 30641cf9-f9e9-419c-a150-9473c603a548 | Ud7jWeq1JGor   | race             |         500 | draft     | 
+ 0620259e-84d9-4d9b-9a70-35e9cc290972 | 456cb974-23b0-45e8-abd0-91e9b0e998f7 | 8I1Wc-9mWzan   | cap              |         500 | draft     | 
+ 66dfe788-1a3d-4e78-a4d9-c4e65b04d32d | 456cb974-23b0-45e8-abd0-91e9b0e998f7 | pzUC2cZKJNsZ   | cap              |         500 | draft     | 
+ 497f4cf9-64c3-4a25-bb08-6cfb7ab747b8 | 251c9a8b-e077-45ac-9d40-f440fb03e589 | x2hUuMATPniR   | Trio             |         700 | published | {"at": "2026-10-02T03:28:37.276Z", "over18": true, "ownsRights": true, "consentOfSubjects": true}
+ 54ee5d46-90ae-4986-826b-e391ce72b58d | eeb766f3-b039-4552-b5b5-769b8b6c156d | VqJprSjmwfPT   | Paid drop        |        2000 | published | {"at": "2026-10-02T03:29:44.235Z", "over18": true, "ownsRights": true, "consentOfSubjects": true}
+ 15fd0199-e114-4191-8942-6afc3e5bb57b | eeb766f3-b039-4552-b5b5-769b8b6c156d | h6j0b4A_T5Kp   | Draft            |         500 | draft     | 
+ 2af82c86-8bc1-43bb-b64c-a18f411017f7 | eeb766f3-b039-4552-b5b5-769b8b6c156d | DzsLRcU1SAoM   | Second paid drop |        1500 | published | {"at": "2026-10-02T03:29:44.749Z", "over18": true, "ownsRights": true, "consentOfSubjects": true}
+(8 rows)
+
+### drop_files
+                  id                  |               drop_id                |                                       storage_key                                       |  filename  |    mime    | size_bytes |                                  blurred_preview_key                                   | sort_order 
+--------------------------------------+--------------------------------------+-----------------------------------------------------------------------------------------+------------+------------+------------+----------------------------------------------------------------------------------------+------------
+ d4435b10-d877-4336-b204-3f005cab1bf8 | 5c8dc70f-f4e9-4388-9457-cacaedd4aad0 | originals/5c8dc70f-f4e9-4388-9457-cacaedd4aad0/d4435b10-d877-4336-b204-3f005cab1bf8.jpg | sunset.jpg | image/jpeg |     600078 | previews/5c8dc70f-f4e9-4388-9457-cacaedd4aad0/d4435b10-d877-4336-b204-3f005cab1bf8.jpg |          0
+ 053e2087-e1b2-4180-bce5-51dd4ec235fb | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/053e2087-e1b2-4180-bce5-51dd4ec235fb.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/053e2087-e1b2-4180-bce5-51dd4ec235fb.jpg |          0
+ e7d8e1a2-8fac-4bf5-a055-0299c1ad45a4 | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/e7d8e1a2-8fac-4bf5-a055-0299c1ad45a4.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/e7d8e1a2-8fac-4bf5-a055-0299c1ad45a4.jpg |          1
+ 168c9843-96fe-4015-86b3-53b884f6e612 | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/168c9843-96fe-4015-86b3-53b884f6e612.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/168c9843-96fe-4015-86b3-53b884f6e612.jpg |          2
+ 60d121db-8ce3-4770-8b23-c332e7bfe604 | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/60d121db-8ce3-4770-8b23-c332e7bfe604.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/60d121db-8ce3-4770-8b23-c332e7bfe604.jpg |          3
+ a596fd44-37fb-4226-8590-d0238a324d71 | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/a596fd44-37fb-4226-8590-d0238a324d71.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/a596fd44-37fb-4226-8590-d0238a324d71.jpg |          4
+ 041d2130-056b-4230-af08-599acb79332b | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/041d2130-056b-4230-af08-599acb79332b.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/041d2130-056b-4230-af08-599acb79332b.jpg |          5
+ f5e1f089-3aa4-407e-a664-2caeba7c4ba4 | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/f5e1f089-3aa4-407e-a664-2caeba7c4ba4.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/f5e1f089-3aa4-407e-a664-2caeba7c4ba4.jpg |          6
+ dbeed5f0-28a5-4956-936b-7952013663fb | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/dbeed5f0-28a5-4956-936b-7952013663fb.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/dbeed5f0-28a5-4956-936b-7952013663fb.jpg |          7
+ 54268c59-929c-498f-8939-9b482fe02df4 | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/54268c59-929c-498f-8939-9b482fe02df4.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/54268c59-929c-498f-8939-9b482fe02df4.jpg |          8
+ 0f1c558c-647e-411a-919c-bbae4931e7f2 | ebdc09b4-bf4b-4a12-a170-0e2614e3b373 | originals/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/0f1c558c-647e-411a-919c-bbae4931e7f2.png | t.png      | image/png  |        174 | previews/ebdc09b4-bf4b-4a12-a170-0e2614e3b373/0f1c558c-647e-411a-919c-bbae4931e7f2.jpg |          9
+ 7489b083-f5eb-4fd3-a4d3-21fff95cc00b | 0620259e-84d9-4d9b-9a70-35e9cc290972 | originals/0620259e-84d9-4d9b-9a70-35e9cc290972/7489b083-f5eb-4fd3-a4d3-21fff95cc00b.png | t.png      | image/png  |        237 | previews/0620259e-84d9-4d9b-9a70-35e9cc290972/7489b083-f5eb-4fd3-a4d3-21fff95cc00b.jpg |          0
+ 7bbb48b6-2590-4a6c-bcb3-5ab09753cb46 | 0620259e-84d9-4d9b-9a70-35e9cc290972 | originals/0620259e-84d9-4d9b-9a70-35e9cc290972/7bbb48b6-2590-4a6c-bcb3-5ab09753cb46.png | t.png      | image/png  |        237 | previews/0620259e-84d9-4d9b-9a70-35e9cc290972/7bbb48b6-2590-4a6c-bcb3-5ab09753cb46.jpg |          1
+ 18b4ad1c-80ed-49d4-b56d-0c995d32c58d | 0620259e-84d9-4d9b-9a70-35e9cc290972 | originals/0620259e-84d9-4d9b-9a70-35e9cc290972/18b4ad1c-80ed-49d4-b56d-0c995d32c58d.png | t.png      | image/png  |        237 | previews/0620259e-84d9-4d9b-9a70-35e9cc290972/18b4ad1c-80ed-49d4-b56d-0c995d32c58d.jpg |          2
+ 782fd36f-0c06-46f3-b8d3-e02683045eaa | 66dfe788-1a3d-4e78-a4d9-c4e65b04d32d | originals/66dfe788-1a3d-4e78-a4d9-c4e65b04d32d/782fd36f-0c06-46f3-b8d3-e02683045eaa.png | t.png      | image/png  |        237 | previews/66dfe788-1a3d-4e78-a4d9-c4e65b04d32d/782fd36f-0c06-46f3-b8d3-e02683045eaa.jpg |          0
+ 5e819af9-0e88-45a4-ba32-7d7a662f1c7f | 66dfe788-1a3d-4e78-a4d9-c4e65b04d32d | originals/66dfe788-1a3d-4e78-a4d9-c4e65b04d32d/5e819af9-0e88-45a4-ba32-7d7a662f1c7f.png | t.png      | image/png  |        237 | previews/66dfe788-1a3d-4e78-a4d9-c4e65b04d32d/5e819af9-0e88-45a4-ba32-7d7a662f1c7f.jpg |          1
+ d4eefa32-fc43-4ac1-b402-2d6bb341335e | 66dfe788-1a3d-4e78-a4d9-c4e65b04d32d | originals/66dfe788-1a3d-4e78-a4d9-c4e65b04d32d/d4eefa32-fc43-4ac1-b402-2d6bb341335e.png | t.png      | image/png  |        237 | previews/66dfe788-1a3d-4e78-a4d9-c4e65b04d32d/d4eefa32-fc43-4ac1-b402-2d6bb341335e.jpg |          2
+ c7a5b85c-f558-4069-9ac2-bf9df72dc28c | 497f4cf9-64c3-4a25-bb08-6cfb7ab747b8 | originals/497f4cf9-64c3-4a25-bb08-6cfb7ab747b8/c7a5b85c-f558-4069-9ac2-bf9df72dc28c.png | t.png      | image/png  |        169 | previews/497f4cf9-64c3-4a25-bb08-6cfb7ab747b8/c7a5b85c-f558-4069-9ac2-bf9df72dc28c.jpg |          0
+ b1001b76-556b-4046-b895-98da9a394b28 | 497f4cf9-64c3-4a25-bb08-6cfb7ab747b8 | originals/497f4cf9-64c3-4a25-bb08-6cfb7ab747b8/b1001b76-556b-4046-b895-98da9a394b28.png | t.png      | image/png  |        169 | previews/497f4cf9-64c3-4a25-bb08-6cfb7ab747b8/b1001b76-556b-4046-b895-98da9a394b28.jpg |          1
+ 4463ad56-4d1f-4c25-b2d7-b5aee6cc94e6 | 497f4cf9-64c3-4a25-bb08-6cfb7ab747b8 | originals/497f4cf9-64c3-4a25-bb08-6cfb7ab747b8/4463ad56-4d1f-4c25-b2d7-b5aee6cc94e6.png | t.png      | image/png  |        169 | previews/497f4cf9-64c3-4a25-bb08-6cfb7ab747b8/4463ad56-4d1f-4c25-b2d7-b5aee6cc94e6.jpg |          2
+ e3205c2a-73d4-4f56-a08e-8b8e4c133190 | 54ee5d46-90ae-4986-826b-e391ce72b58d | originals/54ee5d46-90ae-4986-826b-e391ce72b58d/e3205c2a-73d4-4f56-a08e-8b8e4c133190.png | t.png      | image/png  |        171 | previews/54ee5d46-90ae-4986-826b-e391ce72b58d/e3205c2a-73d4-4f56-a08e-8b8e4c133190.jpg |          0
+ 3241b7e4-805d-4ec7-8a39-7701da1eb21b | 2af82c86-8bc1-43bb-b64c-a18f411017f7 | originals/2af82c86-8bc1-43bb-b64c-a18f411017f7/3241b7e4-805d-4ec7-8a39-7701da1eb21b.png | t.png      | image/png  |        174 | previews/2af82c86-8bc1-43bb-b64c-a18f411017f7/3241b7e4-805d-4ec7-8a39-7701da1eb21b.jpg |          0
+(22 rows)
+
+### transactions
+                  id                  |    status    | provider | amount_cents | platform_fee_cents | processing_fee_cents | seller_net_cents | reversed_cents |    failure_code    
+--------------------------------------+--------------+----------+--------------+--------------------+----------------------+------------------+----------------+--------------------
+ 12bc5a1c-1607-4418-b4ad-94bf4545b233 | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | session_expired
+ 773c4473-7cb8-40b4-b8ef-f15f78993a6e | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | session_expired
+ df2a691f-1d7a-4b0a-90cf-a30bbf54d30a | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | session_expired
+ b4fab7d0-37ab-412c-b916-40f59d5c9215 | refunded     | mock     |         2000 |                200 |                  240 |             1560 |           2000 | 
+ 8fde6d9a-5223-44f5-a040-658ef1dec6d0 | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | card_declined
+ 653088ee-e0fe-4fca-aba6-9d234904613b | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | insufficient_funds
+ 68db1774-1e8a-4b7f-a102-e21a1eb73878 | succeeded    | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | refunded     | mock     |         2000 |                200 |                  240 |             1560 |           2000 | 
+ 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refunded     | mock     |         2000 |                200 |                  240 |             1560 |           2000 | 
+ 74473fed-3133-46a0-96f8-1b50ddca461d | charged_back | mock     |         2000 |                200 |                  240 |             1560 |           2000 | 
+ 39d2515c-4e88-47ce-b09a-c2c270d012d1 | pending      | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ e4fecc4c-2877-47d7-a53b-51796cf25f05 | pending      | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 05615509-ae0f-4b2b-91f3-2c7ca502345e | succeeded    | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ b0b10816-f31a-47e4-b5cd-480a01ca7d7f | pending      | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ c3362bb5-172d-4b66-b2c2-a27cc430dd01 | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | superseded
+ 49e360bc-b99a-4d7d-8849-ffab1caac453 | pending      | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 38dbeee3-4f1f-4854-a4a8-67606bed5574 | pending      | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 700e1b64-8e5a-4f34-bfd8-663e7a2c4fe2 | pending      | mock     |         2500 |                250 |                  300 |             1950 |              0 | 
+ b3b5008f-5b1a-4c9f-9da2-c71f04276019 | succeeded    | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ eb2e44e8-2064-4624-8cc2-dbdf88110617 | succeeded    | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 64940a89-8e23-492a-80ca-6344d23af727 | charged_back | mock     |         2000 |                200 |                  240 |             1560 |           2000 | 
+ df4cff50-3995-4c21-b828-42dd39ed301d | charged_back | mock     |         2000 |                200 |                  240 |             1560 |           2000 | 
+ 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | charged_back | mock     |         2000 |                200 |                  240 |             1560 |           2000 | 
+ 529d2572-d2ed-4b70-9ada-07dc0a5c7e67 | pending      | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 9a3f5b4b-84ff-4b40-8fac-b114b63dc5a8 | succeeded    | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 26416d8f-3d7e-445e-888b-2ed66f65d130 | pending      | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 0aaac3fd-74b2-49dd-a864-7ee9d6513735 | pending      | mock     |         2000 |                200 |                  240 |             1560 |              0 | 
+ 2eb1ca03-21fd-4a02-b400-4834e62b37b5 | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | unavailable
+ 93cdb08a-f8a3-422d-81a1-0c1763f3a4b7 | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | invalid_at_capture
+ f170aa90-9af6-47b6-9deb-6aed1ee53fd1 | failed       | mock     |         2000 |                200 |                  240 |             1560 |              0 | unavailable
+(30 rows)
+
+### ledger_entries
+ id |            transaction_id            |     entry_type      |   component    | amount_cents 
+----+--------------------------------------+---------------------+----------------+--------------
+  1 | b4fab7d0-37ab-412c-b916-40f59d5c9215 | sale_credit         | gross          |         2000
+  2 | b4fab7d0-37ab-412c-b916-40f59d5c9215 | platform_fee        | platform_fee   |         -200
+  3 | b4fab7d0-37ab-412c-b916-40f59d5c9215 | processing_fee      | processing_fee |         -240
+  4 | 68db1774-1e8a-4b7f-a102-e21a1eb73878 | sale_credit         | gross          |         2000
+  5 | 68db1774-1e8a-4b7f-a102-e21a1eb73878 | platform_fee        | platform_fee   |         -200
+  6 | 68db1774-1e8a-4b7f-a102-e21a1eb73878 | processing_fee      | processing_fee |         -240
+  7 | 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | sale_credit         | gross          |         2000
+  8 | 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | platform_fee        | platform_fee   |         -200
+  9 | 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | processing_fee      | processing_fee |         -240
+ 10 | 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | refund_reversal     | gross          |        -2000
+ 11 | 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | refund_reversal     | platform_fee   |          200
+ 12 | 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | refund_reversal     | processing_fee |          240
+ 13 | b4fab7d0-37ab-412c-b916-40f59d5c9215 | refund_reversal     | gross          |        -2000
+ 14 | b4fab7d0-37ab-412c-b916-40f59d5c9215 | refund_reversal     | platform_fee   |          200
+ 15 | b4fab7d0-37ab-412c-b916-40f59d5c9215 | refund_reversal     | processing_fee |          240
+ 16 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | sale_credit         | gross          |         2000
+ 17 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | platform_fee        | platform_fee   |         -200
+ 18 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | processing_fee      | processing_fee |         -240
+ 19 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | gross          |         -666
+ 20 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | platform_fee   |           67
+ 21 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | processing_fee |           80
+ 22 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | gross          |           -1
+ 23 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | gross          |           -1
+ 24 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | gross          |         -332
+ 25 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | platform_fee   |           33
+ 26 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | processing_fee |           40
+ 27 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | gross          |        -1000
+ 28 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | platform_fee   |          100
+ 29 | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | refund_reversal     | processing_fee |          120
+ 30 | 74473fed-3133-46a0-96f8-1b50ddca461d | sale_credit         | gross          |         2000
+ 31 | 74473fed-3133-46a0-96f8-1b50ddca461d | platform_fee        | platform_fee   |         -200
+ 32 | 74473fed-3133-46a0-96f8-1b50ddca461d | processing_fee      | processing_fee |         -240
+ 33 | 74473fed-3133-46a0-96f8-1b50ddca461d | chargeback_reversal | gross          |        -2000
+ 34 | 74473fed-3133-46a0-96f8-1b50ddca461d | chargeback_reversal | platform_fee   |          200
+ 35 | 74473fed-3133-46a0-96f8-1b50ddca461d | chargeback_reversal | processing_fee |          240
+ 36 | 05615509-ae0f-4b2b-91f3-2c7ca502345e | sale_credit         | gross          |         2000
+ 37 | 05615509-ae0f-4b2b-91f3-2c7ca502345e | platform_fee        | platform_fee   |         -200
+ 38 | 05615509-ae0f-4b2b-91f3-2c7ca502345e | processing_fee      | processing_fee |         -240
+ 39 | b3b5008f-5b1a-4c9f-9da2-c71f04276019 | sale_credit         | gross          |         2000
+ 40 | b3b5008f-5b1a-4c9f-9da2-c71f04276019 | platform_fee        | platform_fee   |         -200
+ 41 | b3b5008f-5b1a-4c9f-9da2-c71f04276019 | processing_fee      | processing_fee |         -240
+ 42 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | sale_credit         | gross          |         2000
+ 43 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | platform_fee        | platform_fee   |         -200
+ 44 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | processing_fee      | processing_fee |         -240
+ 45 | 64940a89-8e23-492a-80ca-6344d23af727 | sale_credit         | gross          |         2000
+ 46 | 64940a89-8e23-492a-80ca-6344d23af727 | platform_fee        | platform_fee   |         -200
+ 47 | 64940a89-8e23-492a-80ca-6344d23af727 | processing_fee      | processing_fee |         -240
+ 48 | 64940a89-8e23-492a-80ca-6344d23af727 | chargeback_reversal | gross          |        -2000
+ 49 | 64940a89-8e23-492a-80ca-6344d23af727 | chargeback_reversal | platform_fee   |          200
+ 50 | 64940a89-8e23-492a-80ca-6344d23af727 | chargeback_reversal | processing_fee |          240
+ 51 | df4cff50-3995-4c21-b828-42dd39ed301d | sale_credit         | gross          |         2000
+ 52 | df4cff50-3995-4c21-b828-42dd39ed301d | platform_fee        | platform_fee   |         -200
+ 53 | df4cff50-3995-4c21-b828-42dd39ed301d | processing_fee      | processing_fee |         -240
+ 54 | df4cff50-3995-4c21-b828-42dd39ed301d | chargeback_reversal | gross          |        -2000
+ 55 | df4cff50-3995-4c21-b828-42dd39ed301d | chargeback_reversal | platform_fee   |          200
+ 56 | df4cff50-3995-4c21-b828-42dd39ed301d | chargeback_reversal | processing_fee |          240
+ 57 | 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | sale_credit         | gross          |         2000
+ 58 | 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | platform_fee        | platform_fee   |         -200
+ 59 | 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | processing_fee      | processing_fee |         -240
+ 60 | 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | chargeback_reversal | gross          |        -2000
+ 61 | 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | chargeback_reversal | platform_fee   |          200
+ 62 | 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | chargeback_reversal | processing_fee |          240
+ 63 | 9a3f5b4b-84ff-4b40-8fac-b114b63dc5a8 | sale_credit         | gross          |         2000
+ 64 | 9a3f5b4b-84ff-4b40-8fac-b114b63dc5a8 | platform_fee        | platform_fee   |         -200
+ 65 | 9a3f5b4b-84ff-4b40-8fac-b114b63dc5a8 | processing_fee      | processing_fee |         -240
+(65 rows)
+
+### webhook_events (reconciliation log)
+ provider |          provider_event_id           |   event_type   | signature_valid |  outcome  |                  outcome_detail                   |            transaction_id            |     sha      
+----------+--------------------------------------+----------------+-----------------+-----------+---------------------------------------------------+--------------------------------------+--------------
+ mock     |                                      |                | f               | rejected  | signature_bad_signature                           |                                      | 97069eebbddd
+ mock     |                                      |                | f               | rejected  | signature_stale                                   |                                      | 97069eebbddd
+ mock     |                                      |                | f               | rejected  | signature_bad_signature                           |                                      | bd3f2db697d5
+ mock     |                                      |                | f               | rejected  | signature_missing                                 |                                      | dc91a197e808
+ mock     |                                      |                | f               | rejected  | signature_missing                                 |                                      | 2d711642b726
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | processed |                                                   | b4fab7d0-37ab-412c-b916-40f59d5c9215 | b18a9b9962de
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 8e9403428020
+ mock     | evt_e2e_sale_1_replayed_under_new_id | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | e16fa3885588
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_e2e_sale_1                       | sale_succeeded | t               | duplicate | duplicate of 229567c1-e0cf-493e-9606-195ac06bafde | b4fab7d0-37ab-412c-b916-40f59d5c9215 | 1bd5fedc4ee8
+ mock     | evt_880c122b848bba7b731a7d27         | sale_succeeded | t               | ignored   | unknown_transaction                               |                                      | 7297ca841a76
+ mock     | evt_ae5ae45e47f85d3cbe10820c         | sale_failed    | t               | processed |                                                   | 8fde6d9a-5223-44f5-a040-658ef1dec6d0 | f67e7d25ba58
+ mock     | evt_b03e41c3c305c38bf79d51f1         | sale_failed    | t               | processed |                                                   | 653088ee-e0fe-4fca-aba6-9d234904613b | 8497441f99d4
+ mock     | evt_9ea3432bfc8147efc69612d2         | sale_succeeded | t               | processed |                                                   | 68db1774-1e8a-4b7f-a102-e21a1eb73878 | 4198b25bae32
+ mock     | evt_6040b26b1108eafb15a549d0         | refunded       | t               | processed | applied_after_sale                                | 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | 18ddc62c5ba7
+ mock     | evt_889b6aa1ce170d1a152d8e89         | sale_succeeded | t               | processed |                                                   | 0d7fb22c-cd12-4aa6-bf71-f2d081580dfa | 1ea716212894
+ mock     | evt_477f0a0f690a9573074f4bca         | refunded       | t               | processed |                                                   | b4fab7d0-37ab-412c-b916-40f59d5c9215 | cfdcda9b5e44
+ mock     | evt_a717b17ad7a6e07e2ccf2b27         | refunded       | t               | rejected  | over_refund                                       | b4fab7d0-37ab-412c-b916-40f59d5c9215 | ce132ca38541
+ mock     | evt_910ef1978eec852d0018e7b8         | sale_succeeded | t               | processed |                                                   | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | e935747f581b
+ mock     | evt_60abd368da1925c9f551e59f         | refunded       | t               | processed |                                                   | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | 473723baeb2a
+ mock     | evt_d4aae2a671a0fd938b126b2c         | refunded       | t               | processed |                                                   | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | 583c36227ee0
+ mock     | evt_d75fb218a95b6b3e21087949         | refunded       | t               | processed |                                                   | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | 90236f931460
+ mock     | evt_6631c20637d1879e6633e915         | refunded       | t               | processed |                                                   | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | 032b07ddea17
+ mock     | evt_f1cc81a51dcdb23a12c0c5f8         | refunded       | t               | processed |                                                   | 7046fcb1-f46a-4d9e-b177-25b7fbe0906f | 82a11edb2970
+ mock     | evt_87459e5ef992b859a0505ce5         | sale_succeeded | t               | processed |                                                   | 74473fed-3133-46a0-96f8-1b50ddca461d | dc414b9cbd0b
+ mock     | evt_fc8655fbc0bc0cc82268360c         | chargeback     | t               | processed |                                                   | 74473fed-3133-46a0-96f8-1b50ddca461d | fac916401c88
+ mock     | evt_b66f7fb590e64240050d0977         | sale_succeeded | t               | processed |                                                   | 05615509-ae0f-4b2b-91f3-2c7ca502345e | 798d0d630fee
+ mock     |                                      |                | t               | rejected  | invalid_eventId                                   |                                      | ebd8bda33f2d
+ mock     |                                      |                | t               | rejected  | invalid_merchantReference                         |                                      | 2c0c9297971a
+ mock     | evt_fffc29a6f9112423a5352576         | sale_succeeded | t               | processed |                                                   | b3b5008f-5b1a-4c9f-9da2-c71f04276019 | 96306bae1b06
+ mock     | evt_e2e_wrong_amt                    | sale_succeeded | t               | rejected  | amount_mismatch                                   | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 9ba6d561f1fe
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | processed |                                                   | eb2e44e8-2064-4624-8cc2-dbdf88110617 | a880d2562522
+ mock     | evt_e2e_right_amt_2                  | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 718e1d3925b0
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 32994b8b7e93
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 32994b8b7e93
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2eeeb1ff3308
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2eeeb1ff3308
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2eeeb1ff3308
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2eeeb1ff3308
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2eeeb1ff3308
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2eeeb1ff3308
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2d864c394fad
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2d864c394fad
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2d864c394fad
+ mock     | evt_e2e_right_amt                    | sale_succeeded | t               | duplicate | duplicate of db99f2bc-b42a-46fc-92b7-3322f1ea16e4 | eb2e44e8-2064-4624-8cc2-dbdf88110617 | 2d864c394fad
+ mock     | evt_e2e_ghost                        | sale_succeeded | t               | ignored   | unknown_transaction                               |                                      | 46d62657ad16
+ mock     | evt_d9896d7d9b6e412d6c2c4f82         | sale_succeeded | t               | processed |                                                   | 64940a89-8e23-492a-80ca-6344d23af727 | a0c155f2ceba
+ mock     | evt_b57d312a6934eac82dec769a         | chargeback     | t               | processed |                                                   | 64940a89-8e23-492a-80ca-6344d23af727 | 15e057af6c67
+ mock     | evt_3ed37e2421d2461ac468b7b8         | sale_succeeded | t               | processed |                                                   | df4cff50-3995-4c21-b828-42dd39ed301d | 2c3db2c3f542
+ mock     | evt_180972f749b9f70936b65079         | chargeback     | t               | processed | seller_flagged_for_review                         | df4cff50-3995-4c21-b828-42dd39ed301d | fbbb6905ac98
+ mock     | evt_62f5855cd48e3c72c8b5939e         | sale_succeeded | t               | processed |                                                   | 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | c359b990333e
+ mock     | evt_d76a21e8e46d06a4e1823604         | chargeback     | t               | processed |                                                   | 8c24a8ec-7c20-41d6-a8d5-03b0b1124c4a | a22ec9e4a0f6
+ mock     | evt_7cb921dc7daed2170b1c98df         | sale_failed    | t               | processed |                                                   | 9a3f5b4b-84ff-4b40-8fac-b114b63dc5a8 | 652cd4d61fe6
+ mock     | evt_3cbf1dacb1b9f7125d29909b         | sale_succeeded | t               | processed |                                                   | 9a3f5b4b-84ff-4b40-8fac-b114b63dc5a8 | 20cf8ad1a9e4
+ mock     | evt_15a4c6e3d7854c750bfb3174         | sale_succeeded | t               | processed | voided:seller_not_verified                        | 93cdb08a-f8a3-422d-81a1-0c1763f3a4b7 | f253dfc1ef2e
+(63 rows)
+
+### platform_settings
+-[ RECORD 1 ]-----------------------+----------------------------------
+id                                  | 1
+fee_percent                         | 10.00
+price_min_cents                     | 100
+price_max_cents                     | 50000
+max_image_size_bytes                | 15728640
+max_video_size_bytes                | 524288000
+max_files_per_drop                  | 10
+allowed_image_mimes                 | {image/jpeg,image/png,image/webp}
+updated_at                          | 2026-10-01 23:28:11.430714-04
+max_total_bytes_per_drop            | 2147483648
+download_ttl_seconds                | 
+login_delay_threshold               | 
+login_delay_base_seconds            | 
+login_delay_cap_seconds             | 
+login_delay_decay_seconds           | 
+processing_fee_percent              | 
+payout_hold_days                    | 7
+min_payout_cents                    | 2500
+chargeback_fee_cents                | 0
+checkout_session_ttl_minutes        | 30
+checkout_late_success_grace_minutes | 1440
+chargeback_flag_threshold           | 3
+chargeback_flag_window_days         | 90
+void_refund_max_attempts            | 5
+void_refund_backoff_minutes         | 5
+parked_event_stale_hours            | 72
+

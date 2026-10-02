@@ -63,3 +63,47 @@ PASS  [#11] preview, public-link API, signed-url mint, login (per IP), signup ar
 PASS  [#12] password reset end-to-end via dev mail transport: no enumeration, hashed single-use token, 1h expiry, all sessions revoked, newest link only  — no enumeration; 2 sessions + captured cookie revoked; token hashed, single-use, 60 min, newest-only
 PASS  [#12] reset pages render; forgot-password is rate limited (per IP 429, per email silently capped)
 PASS  [#13] attacker spamming 20 wrong passwords: first few 401, then 429 with Retry-After in 1..cap (never above); correct password DURING the delay is also refused, not evaluated  — 3x401 + 17x429 in 1001 ms (Retry-After <= 4)
+PASS  [#13] delays escalate exponentially (1,2,4 s) and are capped at the cap; a 429 never persists past Retry-After; no permanent lock  — Retry-After sequence: 1,2,4,4,4,4
+PASS  [#13] a correct login resets the counter: next wrong passwords are free again (401,401) and only the 3rd arms the delay
+PASS  [#13] no user enumeration: an unknown email gets the identical delay behaviour (401,401,401 then 429 + Retry-After <= cap)
+PASS  [#13] password reset clears the login delay; delayed state is per email (other emails unaffected); DB bound: next_allowed_at <= last_attempt_at + 1 h
+PASS  [pay] setup: seller signs up, is verified, creates a $20.00 drop with a file, publishes it
+PASS  [pay] public drop page has the buy form (email + 18+ checkbox), no client-supplied amount
+PASS  [pay] checkout validation: email required, 18+ confirmation required, amount field ignored, unpublished/unknown drop, cross-origin blocked
+PASS  [pay] valid checkout: 201, PENDING transaction priced from the DB ($20 -> 2.40 / 2.00 / 15.60) even if the client sends an amount; nothing on the ledger
+PASS  [pay] hosted mock checkout page renders (e2e runs the production build on loopback with the local-build flag)
+PASS  [pay] bad signature is rejected (401) with NO state change; tampered body, wrong secret, stale timestamp, missing header all 401
+PASS  [pay] unknown provider segment -> 404
+PASS  [pay] signed sale webhook -> transaction succeeded, ledger = +20.00 / -2.00 / -2.40 (sums to 15.60), balance pending 15.60
+PASS  [pay] duplicate webhook (same event, and same sale under a new event id) -> 200 'duplicate', still exactly one ledger posting and one succeeded charge
+PASS  [pay] unknown transaction -> 200 ignored, nothing created
+PASS  [pay] declined card: hosted-page 'pay' with the decline test card -> transaction failed (card_declined), no ledger; the approve card then works on a new checkout
+PASS  [pay] out-of-order: refund webhook BEFORE the sale is parked (200), then applied when the sale arrives -> refunded, ledger nets to 0
+PASS  [pay] refund: full refund of the $20 sale (via request + signed refund webhook) reverses the ledger exactly; double refund is rejected; partial refund on another sale is cents-exact
+PASS  [pay] chargeback: webhook reverses the sale, status charged_back, and a negative balance is allowed
+PASS  [pay] reconciliation log: every delivery above is recorded (processed/duplicate/rejected/ignored/parked) with hashes; ledger entries are append-only  — outcomes: {"duplicate":12,"ignored":1,"rejected":6,"processed":15}
+PASS  [pay#1] concurrent identical POST /api/checkout (x8, same drop+email) -> ONE pending transaction/session; Idempotency-Key honoured (same key = same txn, other drop = 409)
+PASS  [pay#1b] privacy (QA NEW-1): another client with the victim's email + drop gets its OWN session and never the victim's checkoutUrl/txn id; stale price supersedes
+PASS  [pay#3] NUL byte / invalid strings in the event id or data.reference -> 400 (never 500) with a 'rejected' reconciliation row; garbage JSON -> 400; handler still healthy after
+PASS  [pay#2] wrong-amount sale is rejected, then the correct sale (same processor txn id, NEW event id) is PROCESSED (not 'duplicate'); ignored/unknown outcomes don't burn the claim; replays still dedupe
+PASS  [pay#4] repeat chargebacks flag the seller for review (threshold 3 in 90 days), exactly once, with an audit row; seller is NOT banned
+PASS  [pay#5] 'all sales final' notice is on /u/<link> (next to the buy form) and on the hosted mock checkout page
+PASS  [pay#7] decline -> friendly message (no raw code anywhere buyer-facing); retry with a good card on the SAME session succeeds
+PASS  [pay#6] pending sessions expire (30 min TTL) and cannot be paid; seller un-verified / drop unpublished after checkout -> payment refused, webhook success voided (no ledger) and refund requested
+PASS  [fu2] janitor route: 401 without/with a wrong bearer (no work done); 200 + counts with the right one; GET works too; wrong-token guessing is rate limited (429)
+PASS  [fu2] janitor route is DISABLED (503, even with a bearer) when CRON_SECRET is unset
+PASS  [fu3] admin CLI: refuses weak/short passwords, refuses to run without a password source, creates an admin (no default admin exists); duplicate refused
+PASS  [fu3] NO admin route/page is reachable anonymously (401 / redirect) or with a SELLER session (403); nothing leaks
+PASS  [fu3] admin login: uniform 401 (wrong pw / unknown email), cross-origin 403, progressive delay (429 + Retry-After) per email, success sets httpOnly+SameSite=Strict cookie, me works, logout revokes
+PASS  [fu3] admin screens: flagged sellers + review transactions (page + API), noindex, robots disallow, no hashes; 'clear flag' is audited with the admin id, validated, once only
+PASS  [ah] input hygiene over HTTP: NUL / lone surrogate / oversize / malformed ids never 500 (QA NEW-2 + audit of all text inputs)
+PASS  [ah] audit_log is append-only for the app's own DB role; admin with history cannot be deleted; disable is audited
+PASS  [ah] failed admin logins: audited (email, ip, reason), client responses identical, no existence leak, flooding bounded, no secrets in audit
+PASS  [r4] NEW-4 stress: old-password logins racing `--reset-password` leave NO usable session (every cookie minted for the old credentials is 401 afterwards)  — minted before reset: 7; codes {"200":7,"401":4,"429":163}
+PASS  [r4] NEW-5: 30 parallel CORRECT logins for one email (seller and admin) never 500  — seller 5x200/25x429; admin 3x200
+PASS  [copy-sweep] landing (incl. collapsed FAQ), auth pages, buyer page and site/og meta promise no instant delivery / receipt / download / signed links
+PASS  [FE-07/08] dashboard earnings == GET /api/earnings (ledger): fees separate, pending vs available, in-payout; no divergent math  — net $78.00 = ledger total $78.00 + paid $0.00 + in payout $0.00
+PASS  [pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404
+
+84/84 checks passed
+== DB evidence written to proof/db.txt

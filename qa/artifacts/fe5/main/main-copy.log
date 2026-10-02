@@ -1,0 +1,98 @@
+== 1. Landing (incl. collapsed FAQ), auth pages, buyer page, hosted page
+   FAIL [desktop landing] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card — no account needed — and download instantly.","Start selling See how it works No subscriptions Keep most of every sale Paid by card 12 photos · 2 videos Spring collect","Buyers pay by card and download right away.","Instant download Your files are ready the moment your payment goes through.","Private signed links Every download link is unique to your purchase and expires automatically.","Buyers pay with a card at checkout and download straight away.","We only ask for an email address so we can send a receipt and a backup download link.","Files are stored privately and are only delivered through signed links created after a successful purchase.","Unveil home | Primary | Illustration of a payment link card with a blurred preview, a price of $12, and a Pay and downlo","Buyers pay by card, no account needed, and download instantly."])
+   FAIL [desktop] landing contains "access to the files is shared once payment is confirmed"
+   OK   [desktop] landing contains "Verified creator"
+   FAIL [desktop] landing contains "Pay $12"
+   FAIL [desktop] landing contains "Access after payment"
+   FAIL [desktop] FAQ answers (payouts, fees) present
+   OK   faq collapsed by default
+   FAIL [desktop /login] no delivery/receipt/download/unlock wording (hits: ["Instant delivery Share one link anywhere.","Files are delivered automatically.","Buyers pay by card, no account needed, and download instantly."])
+   FAIL [desktop] auth shell: "One link, anywhere"
+   FAIL [desktop /signup] no delivery/receipt/download/unlock wording (hits: ["Instant delivery Share one link anywhere.","Files are delivered automatically.","Buyers pay by card, no account needed, and download instantly."])
+   FAIL [desktop /forgot-password] no delivery/receipt/download/unlock wording (hits: ["Instant delivery Share one link anywhere.","Files are delivered automatically.","Buyers pay by card, no account needed, and download instantly."])
+   FAIL [desktop /reset-password?token=x] no delivery/receipt/download/unlock wording (hits: ["Instant delivery Share one link anywhere.","Files are delivered automatically.","Buyers pay by card, no account needed, and download instantly."])
+   FAIL [desktop buyer page] no delivery/receipt/download/unlock wording (hits: ["The full files unlock after purchase.","Buyers pay by card, no account needed, and download instantly."])
+   FAIL [desktop] buyer preview line reworded
+   FAIL [desktop] TrustPoints reworded
+   OK   [desktop] buy form: Pay $12.00, no promise
+   FAIL [desktop hosted checkout] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card, no account needed, and download instantly."])
+   FAIL [desktop hosted after paying] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card, no account needed, and download instantly."])
+   OK   [desktop] payment succeeded (mock)
+   FAIL [mobile landing] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card — no account needed — and download instantly.","Start selling See how it works No subscriptions Keep most of every sale Paid by card 12 photos · 2 videos Spring collect","Buyers pay by card and download right away.","Instant download Your files are ready the moment your payment goes through.","Private signed links Every download link is unique to your purchase and expires automatically.","Buyers pay with a card at checkout and download straight away.","We only ask for an email address so we can send a receipt and a backup download link.","Files are stored privately and are only delivered through signed links created after a successful purchase.","Unveil home | Primary | Illustration of a payment link card with a blurred preview, a price of $12, and a Pay and downlo","Buyers pay by card, no account needed, and download instantly."])
+   FAIL [mobile] landing contains "access to the files is shared once payment is confirmed"
+   OK   [mobile] landing contains "Verified creator"
+   FAIL [mobile] landing contains "Pay $12"
+   FAIL [mobile] landing contains "Access after payment"
+   FAIL [mobile] FAQ answers (payouts, fees) present
+   OK   faq collapsed by default
+   FAIL [mobile /login] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card, no account needed, and download instantly."])
+   FAIL [mobile /signup] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card, no account needed, and download instantly."])
+   FAIL [mobile /forgot-password] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card, no account needed, and download instantly."])
+   FAIL [mobile /reset-password?token=x] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card, no account needed, and download instantly."])
+   FAIL [mobile buyer page] no delivery/receipt/download/unlock wording (hits: ["The full files unlock after purchase.","Buyers pay by card, no account needed, and download instantly."])
+   FAIL [mobile] buyer preview line reworded
+   FAIL [mobile] TrustPoints reworded
+   OK   [mobile] buy form: Pay $12.00, no promise
+   FAIL [mobile hosted checkout] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card, no account needed, and download instantly."])
+   FAIL [mobile hosted after paying] no delivery/receipt/download/unlock wording (hits: ["Buyers pay by card, no account needed, and download instantly."])
+   OK   [mobile] payment succeeded (mock)
+== 2. FE-16 labels, notes, numbers (desktop + 390px) for Maya, Ned, Sam and the never-paid seller
+   FAIL [maya/desktop] Gross card: "Gross sales $598.00 41 sales" (API salesCount 41, gross $598.00)
+   FAIL [maya/desktop] overview reversals line quotes kept $555.00: "les: $35.00 refunded · $8.00 charged back. Fees on reversed sales are returned, so they are not counted above."
+   OK   [maya/desktop] dashboard overview has no delivery/receipt wording
+   FAIL [maya/desktop] drops note: "null"
+   FAIL [maya] table headers "Sold (net)" / "Revenue (kept)" with tooltips: [{"t":"SOLD","title":""},{"t":"REVENUE","title":""}]
+   OK   [maya/desktop] sum of per-drop Revenue (kept) $555.00 == API gross − refunded − charged back $555.00 == ledger
+   OK   [maya] Autumn preview (draft): 0 sold (net) / $0.00 kept == ledger 0 / $0.00
+   OK   [maya] Pop-up reel: 0 sold (net) / $0.00 kept == ledger 0 / $0.00
+   OK   [maya] Spring collection pack: 25 sold (net) / $300.00 kept == ledger 25 / $300.00
+   OK   [maya] Studio colour study: 9 sold (net) / $215.00 kept == ledger 9 / $215.00
+   OK   [maya] Travel set, vol. 2: 5 sold (net) / $40.00 kept == ledger 5 / $40.00
+   OK   [maya] Winter archive: 0 sold (net) / $0.00 kept == ledger 0 / $0.00
+   FAIL [maya/desktop] drop detail "Spring collection pack": Sold (net) 25 / Revenue (kept) $300.00
+   FAIL [maya/390px] Gross card: "Gross sales $598.00 41 sales" (API salesCount 41, gross $598.00)
+   FAIL [maya/390px] overview reversals line quotes kept $555.00: "les: $35.00 refunded · $8.00 charged back. Fees on reversed sales are returned, so they are not counted above."
+   OK   [maya/390px] dashboard overview has no delivery/receipt wording
+   FAIL [maya/390px] drops note: "null"
+   FAIL [maya/390px] mobile card labels: ["Files","Sold","Revenue"]
+   OK   [maya/390px] sum of per-drop Revenue (kept) $555.00 == API gross − refunded − charged back $555.00 == ledger
+   FAIL [maya/390px] drop detail "Spring collection pack": Sold (net) 25 / Revenue (kept) $300.00
+   FAIL [ned/desktop] Gross card: "Gross sales $60.00 1 sale" (API salesCount 1, gross $60.00)
+   FAIL [ned/desktop] overview reversals line quotes kept $0.00: "Reversed sales: $60.00 refunded. Fees on reversed sales are returned, so they are not counted above."
+   OK   [ned/desktop] dashboard overview has no delivery/receipt wording
+   FAIL [ned/desktop] drops note: "null"
+   FAIL [ned] table headers "Sold (net)" / "Revenue (kept)" with tooltips: [{"t":"SOLD","title":""},{"t":"REVENUE","title":""}]
+   OK   [ned/desktop] sum of per-drop Revenue (kept) $0.00 == API gross − refunded − charged back $0.00 == ledger
+   OK   [ned] Print pack: 0 sold (net) / $0.00 kept == ledger 0 / $0.00
+   FAIL [ned/desktop] drop detail "Print pack": Sold (net) 0 / Revenue (kept) $0.00
+   FAIL [ned/390px] Gross card: "Gross sales $60.00 1 sale" (API salesCount 1, gross $60.00)
+   FAIL [ned/390px] overview reversals line quotes kept $0.00: "Reversed sales: $60.00 refunded. Fees on reversed sales are returned, so they are not counted above."
+   OK   [ned/390px] dashboard overview has no delivery/receipt wording
+   FAIL [ned/390px] drops note: "null"
+   FAIL [ned/390px] mobile card labels: ["Files","Sold","Revenue"]
+   OK   [ned/390px] sum of per-drop Revenue (kept) $0.00 == API gross − refunded − charged back $0.00 == ledger
+   FAIL [ned/390px] drop detail "Print pack": Sold (net) 0 / Revenue (kept) $0.00
+   FAIL [sam/desktop] Gross card: "Gross sales $0.00 0 sales" (API salesCount 0, gross $0.00)
+   OK   [sam/desktop] no reversals line when nothing reversed
+   OK   [sam/desktop] dashboard overview has no delivery/receipt wording
+   OK   [sam/desktop] no drops -> empty state, no note
+   FAIL [sam/390px] Gross card: "Gross sales $0.00 0 sales" (API salesCount 0, gross $0.00)
+   OK   [sam/390px] no reversals line when nothing reversed
+   OK   [sam/390px] dashboard overview has no delivery/receipt wording
+   OK   [sam/390px] no drops -> empty state, no note
+   FAIL [never-paid cb seller/desktop] Gross card: "Gross sales $40.00 2 sales" (API salesCount 2, gross $40.00)
+   FAIL [never-paid cb seller/desktop] overview reversals line quotes kept $20.00: "Reversed sales: $20.00 charged back. Fees on reversed sales are returned, so they are not counted above."
+   OK   [never-paid cb seller/desktop] dashboard overview has no delivery/receipt wording
+   FAIL [never-paid cb seller/desktop] drops note: "null"
+   FAIL [never-paid cb seller] table headers "Sold (net)" / "Revenue (kept)" with tooltips: [{"t":"SOLD","title":""},{"t":"REVENUE","title":""}]
+   OK   [never-paid cb seller/desktop] sum of per-drop Revenue (kept) $20.00 == API gross − refunded − charged back $20.00 == ledger
+   OK   [never-paid cb seller] CB drop: 1 sold (net) / $20.00 kept == ledger 1 / $20.00
+   FAIL [never-paid cb seller/desktop] drop detail "CB drop": Sold (net) 1 / Revenue (kept) $20.00
+   FAIL [never-paid cb seller/390px] Gross card: "Gross sales $40.00 2 sales" (API salesCount 2, gross $40.00)
+   FAIL [never-paid cb seller/390px] overview reversals line quotes kept $20.00: "Reversed sales: $20.00 charged back. Fees on reversed sales are returned, so they are not counted above."
+   OK   [never-paid cb seller/390px] dashboard overview has no delivery/receipt wording
+   FAIL [never-paid cb seller/390px] drops note: "null"
+   FAIL [never-paid cb seller/390px] mobile card labels: ["Files","Sold","Revenue"]
+   OK   [never-paid cb seller/390px] sum of per-drop Revenue (kept) $20.00 == API gross − refunded − charged back $20.00 == ledger
+   FAIL [never-paid cb seller/390px] drop detail "CB drop": Sold (net) 1 / Revenue (kept) $20.00
+RESULT fails=61

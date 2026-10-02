@@ -1,0 +1,85 @@
+pages audited (31): landing | login | signup | forgot-password | reset-password | terms | privacy | dmca | contact | buyer /u/<published> | buyer /u/<unpublished> (unavailable) | buyer /u/<draft> | buyer /u/<unknown> (404) | 404 page | design page | admin login | admin login2 | buyer /u/<published> after empty submit (validation) | hosted mock checkout /pay/mock/<session> | hosted mock checkout after declined card | hosted mock checkout after successful payment (return/success state) | dashboard overview | dashboard drops | dashboard new drop | dashboard drop detail | dashboard draft drop detail | dashboard overview (pending seller 'jo') | dashboard overview (empty seller 'sam') | /manifest.webmanifest (200) | /robots.txt (200) | /sitemap.xml (404); mail files: 0
+## landing
+   - [visible] Buyers pay by card — no account needed — and download instantly.
+   - [visible] 2 videos Spring collection pack M by Maya Lin $12 Instant download Secure checkout Pay & download Pay by card
+   - [visible] Buyers pay by card and download right away.
+   - [visible] Instant download Your files are ready the moment your payment goes through.
+   - [visible] Private signed links Every download link is unique to your purchase and expires automatically.
+   - [visible] Buyers pay with a card at checkout and download straight away.
+   - [visible] We only ask for an email address so we can send a receipt and a backup download link.
+   - [visible] Files are stored privately and are only delivered through signed links created after a successful purchase.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+   - [attr] Illustration of a payment link card with a blurred preview, a price of $12, and a Pay and download button
+## login
+   - [visible] Instant delivery Share one link anywhere.
+   - [visible] Files are delivered automatically.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## signup
+   - [visible] Instant delivery Share one link anywhere.
+   - [visible] Files are delivered automatically.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## forgot-password
+   - [visible] Instant delivery Share one link anywhere.
+   - [visible] Files are delivered automatically.
+   - [visible] unveil.link Reset your password Enter the email you signed up with and we’ll send you a reset link.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## reset-password
+   - [visible] Instant delivery Share one link anywhere.
+   - [visible] Files are delivered automatically.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## terms
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## privacy
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## dmca
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## contact
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## buyer /u/<published>
+   - [visible] The full files unlock after purchase.
+   - [visible] Access after payment Once your payment is confirmed, we’ll share how to access your files.
+   - [visible] Delivery options are coming soon.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## buyer /u/<unpublished> (unavailable)
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## buyer /u/<draft>
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## buyer /u/<unknown> (404)
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## 404 page
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## design page
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## admin login
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## admin login2
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## buyer /u/<published> after empty submit (validation)
+   - [visible] The full files unlock after purchase.
+   - [visible] Access after payment Once your payment is confirmed, we’ll share how to access your files.
+   - [visible] Delivery options are coming soon.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## hosted mock checkout /pay/mock/<session>
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## hosted mock checkout after declined card
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## hosted mock checkout after successful payment (return/success state)
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## dashboard overview
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## dashboard drops
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## dashboard new drop
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## dashboard drop detail
+   - [visible] They’re added to this drop right away.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## dashboard draft drop detail
+   - [visible] They’re added to this drop right away.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## dashboard overview (pending seller 'jo')
+   - [visible] Publishing unlocks once your identity is verified.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
+## dashboard overview (empty seller 'sam')
+   - [visible] Publishing unlocks once your identity is verified.
+   - [meta:description] Unveil lets creators sell photos and videos with a shareable payment link. Buyers pay by card, no account needed, and download instantly.
