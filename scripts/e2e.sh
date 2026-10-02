@@ -17,6 +17,8 @@ export E2E_STORAGE_DIR="$PWD/.e2e/storage"
 export E2E_BASE_URL="http://localhost:$PORT"
 export NEXT_DIST_DIR=".next-e2e"
 export E2E_MAIL_DIR="$PWD/.e2e/mail"
+# Video uploads are spooled here (never held in memory); the e2e asserts it is empty again after every request.
+export UPLOAD_TMP_DIR="$PWD/.e2e/uploads-tmp"
 # Payments (mock processor). The app runs as a production build on loopback, which is the ONE case MOCK_PAYMENTS_ENABLED allows.
 # Throwaway secret, generated per run (never committed).
 export PAYMENT_PROVIDER=mock
@@ -24,7 +26,8 @@ export PAYMENT_WEBHOOK_SECRET="${PAYMENT_WEBHOOK_SECRET_E2E:-$(openssl rand -hex
 # Cron trigger secret for the payments janitor route (throwaway, per run, never committed).
 export CRON_SECRET="${CRON_SECRET_E2E:-$(openssl rand -hex 32)}"
 mkdir -p .e2e proof
-rm -rf "$E2E_STORAGE_DIR" "$E2E_MAIL_DIR"
+rm -rf "$E2E_STORAGE_DIR" "$E2E_MAIL_DIR" "$UPLOAD_TMP_DIR"
+command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null || { echo "ffmpeg/ffprobe not found: the video checks need them (apt-get install ffmpeg)" >&2; exit 1; }
 
 echo "== resetting e2e database"
 npx tsx scripts/e2e-setup.ts
@@ -38,7 +41,7 @@ if (exec 3<>/dev/tcp/127.0.0.1/"$PORT") 2>/dev/null; then
 fi
 echo "== starting app on :$PORT"
 DATABASE_URL="$E2E_DATABASE_URL" STORAGE_DRIVER=local STORAGE_LOCAL_DIR="$E2E_STORAGE_DIR" APP_URL="$E2E_BASE_URL" \
-  MAIL_TRANSPORT=file MAIL_DEV_DIR="$E2E_MAIL_DIR" RATE_LIMIT_CHECKOUT="3/60" MOCK_PAYMENTS_ENABLED=1 \
+  MAIL_TRANSPORT=file MAIL_DEV_DIR="$E2E_MAIL_DIR" UPLOAD_TMP_DIR="$UPLOAD_TMP_DIR" RATE_LIMIT_CHECKOUT="3/60" MOCK_PAYMENTS_ENABLED=1 \
   LOGIN_DELAY_THRESHOLD=3 LOGIN_DELAY_BASE_SECONDS=1 LOGIN_DELAY_CAP_SECONDS=4 LOGIN_DELAY_DECAY_SECONDS=600 \
   NODE_ENV=production setsid npx next start -p "$PORT" > .e2e/server.log 2>&1 &
 SERVER_PID=$!
@@ -51,7 +54,7 @@ for i in $(seq 1 60); do
 done
 
 set +e
-DATABASE_URL="$E2E_DATABASE_URL" STORAGE_LOCAL_DIR="$E2E_STORAGE_DIR" APP_URL="$E2E_BASE_URL" MAIL_DEV_DIR="$E2E_MAIL_DIR" npx tsx scripts/e2e.ts
+DATABASE_URL="$E2E_DATABASE_URL" STORAGE_LOCAL_DIR="$E2E_STORAGE_DIR" APP_URL="$E2E_BASE_URL" MAIL_DEV_DIR="$E2E_MAIL_DIR" UPLOAD_TMP_DIR="$UPLOAD_TMP_DIR" npx tsx scripts/e2e.ts
 RC=$?
 set -e
 

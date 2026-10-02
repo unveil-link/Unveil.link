@@ -4,6 +4,7 @@
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
 import { Client } from "pg";
@@ -17,6 +18,8 @@ const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3100";
 const STORAGE_DIR = path.resolve(process.env.STORAGE_LOCAL_DIR!);
 const PROOF_DIR = path.resolve("proof");
 fs.mkdirSync(PROOF_DIR, { recursive: true });
+
+const os_tmpdir = () => process.env.UPLOAD_TMP_DIR ?? path.join(os.tmpdir(), "unveil-uploads");
 
 // ---------- tiny test harness ----------
 const results: { name: string; ok: boolean; detail?: string }[] = [];
@@ -1759,6 +1762,442 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     assert(as.every((s) => s === 200 || s === 429 || s === 401), `admin: no 5xx, got ${as.join(",")}`);
     assert(as.includes(200), "admin: at least one login succeeded");
     return `seller ${ss.filter((s) => s === 200).length}x200/${ss.filter((s) => s === 429).length}x429; admin ${as.filter((s) => s === 200).length}x200`;
+  });
+
+  // =====================================================================================
+  // backend/m2-media: MP4 upload, blurred video previews, drop PATCH / DELETE
+  // =====================================================================================
+  const { execFileSync } = await import("node:child_process");
+  const m2Dir = path.resolve(".e2e/m2media");
+  fs.rmSync(m2Dir, { recursive: true, force: true });
+  fs.mkdirSync(m2Dir, { recursive: true });
+  const mp4Path = path.join(m2Dir, "clip.mp4");
+  const rawFramePath = path.join(m2Dir, "raw-frame.png");
+  const videoForm = (buf: Buffer, name = "clip.mp4", type = "video/mp4") => { const f = new FormData(); f.append("file", new Blob([new Uint8Array(buf)], { type }), name); return f; };
+  const mkVerified = async (label: string) => {
+    const { c, email: em } = await signupClient(label);
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [em]);
+    return c;
+  };
+  const newDrop = async (c: Client_, title = "m2 drop", priceCents = 900, description?: string) =>
+    (await (await c.req("POST", "/api/drops", { json: { title, priceCents, description } })).json()).drop as { id: string; public_link_id: string };
+  const fileRow = async (id: string) => (await db.query("SELECT * FROM drop_files WHERE id=$1", [id])).rows[0];
+  const fexists = (k: string) => fs.existsSync(path.join(STORAGE_DIR, k));
+  // shared state for the video checks below
+  let vSeller!: Client_, vDrop!: { id: string; public_link_id: string }, vFileId = "", vStorageKey = "", vPreviewKey = "", mp4!: Buffer;
+
+  await check("[m2] ffmpeg is installed on the e2e host; generated 4 s MP4 (lavfi testsrc, with title/comment metadata)", async () => {
+    execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=duration=4:size=1280x720:rate=25", "-f", "lavfi", "-i", "sine=frequency=440:duration=4",
+      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", "-metadata", "title=SECRET-VIDEO-TITLE", "-metadata", "comment=gps+40.7128-74.0060",
+      "-movflags", "+faststart", mp4Path]);
+    // the same frame the server extracts (t = 1 s), full-res, for the "differs from a raw frame" check
+    execFileSync("ffmpeg", ["-v", "error", "-y", "-ss", "1", "-i", mp4Path, "-frames:v", "1", rawFramePath]);
+    mp4 = fs.readFileSync(mp4Path);
+    assert(mp4.subarray(4, 8).toString("latin1") === "ftyp", "has ftyp box");
+    assert(mp4.includes(Buffer.from("SECRET-VIDEO-TITLE")), "source MP4 carries metadata that must not leak");
+    return `${mp4.length} bytes`;
+  });
+
+  await check("[m2] MP4 upload: 401 anon; 201 for owner; DB mime=video/mp4, size_bytes exact; response has no storage key", async () => {
+    vSeller = await mkVerified("vid");
+    vDrop = await newDrop(vSeller, "Video drop", 1200);
+    eq((await anon.req("POST", `/api/drops/${vDrop.id}/files`, { form: videoForm(mp4) })).status, 401, "anon");
+    const r = await vSeller.req("POST", `/api/drops/${vDrop.id}/files`, { form: videoForm(mp4) });
+    eq(r.status, 201, `upload (${r.status})`);
+    const { file } = await r.json();
+    vFileId = file.id;
+    eq(file.mime, "video/mp4", "response mime");
+    assert(!JSON.stringify(file).includes("originals/"), "no storage key in response");
+    const row = await fileRow(vFileId);
+    eq(row.mime, "video/mp4", "db mime"); eq(Number(row.size_bytes), mp4.length, "db size_bytes");
+    vStorageKey = row.storage_key; vPreviewKey = row.blurred_preview_key;
+    assert(/^originals\/.+\.mp4$/.test(vStorageKey) && /^previews\/.+\.jpg$/.test(vPreviewKey), `keys ${vStorageKey} ${vPreviewKey}`);
+    return `${vStorageKey}`;
+  });
+
+  await check("[m2] original MP4 stored PRIVATELY: byte-identical in the storage dir (mode 0600), no copy under public/ or built static assets, temp upload file removed", async () => {
+    const p = path.join(STORAGE_DIR, vStorageKey);
+    assert(sha(fs.readFileSync(p)) === sha(mp4), "stored bytes identical");
+    assert((fs.statSync(p).mode & 0o077) === 0, "owner-only mode");
+    const leaked = walk(path.resolve("public")).concat(walk(path.resolve(".next-e2e/static"))).filter((f) => fs.statSync(f).size === mp4.length && sha(fs.readFileSync(f)) === sha(mp4));
+    eq(leaked.length, 0, "copies under public/static");
+    const tmpDir = os_tmpdir();
+    const left = fs.existsSync(tmpDir) ? fs.readdirSync(tmpDir).length : 0;
+    eq(left, 0, "no leftover temp upload parts");
+  });
+
+  await check("[m2] blurred preview exists, is a small JPEG served by the preview endpoint (owner while draft), hidden from anon; it is NOT the video", async () => {
+    assert(fexists(vPreviewKey), "preview file on disk");
+    const r = await vSeller.req("GET", `/api/files/${vFileId}/preview`);
+    eq(r.status, 200, "owner preview"); eq(r.headers.get("content-type"), "image/jpeg", "content-type");
+    const b = Buffer.from(await r.arrayBuffer());
+    assert(b.equals(fs.readFileSync(path.join(STORAGE_DIR, vPreviewKey))), "served == stored");
+    assert(b[0] === 0xff && b[1] === 0xd8, "JPEG magic");
+    eq((await anon.req("GET", `/api/files/${vFileId}/preview`)).status, 404, "anon draft preview");
+    return `${b.length} bytes`;
+  });
+
+  await check("[m2] video preview is genuinely blurred: <=320px, far less high-frequency detail than the raw frame (<25%), pixels differ substantially, NO metadata", async () => {
+    const pv = fs.readFileSync(path.join(STORAGE_DIR, vPreviewKey));
+    const meta = await sharp(pv).metadata();
+    assert(Math.max(meta.width!, meta.height!) <= 320, `dims ${meta.width}x${meta.height}`);
+    assert(!meta.exif && !meta.icc && !meta.xmp && !meta.iptc, "no EXIF/ICC/XMP/IPTC");
+    assert(!pv.includes(Buffer.from("SECRET-VIDEO-TITLE")) && !pv.includes(Buffer.from("gps+40")), "video metadata strings absent");
+    assert(!pv.includes(Buffer.from("Exif")) && !pv.includes(Buffer.from("http://ns.adobe.com/xap")), "no Exif/XMP segment bytes");
+    const raw = fs.readFileSync(rawFramePath);
+    // High-pass energy (mean |img - gaussianBlur(img)|) at a common 320x180: how much fine detail survives. (Total variation, as used for
+    // photos above, is not blur-sensitive on a synthetic test pattern made of flat areas and hard edges.)
+    const hp = async (b: Buffer) => {
+      const base = await sharp(b).resize(320, 180, { fit: "fill" }).greyscale().raw().toBuffer();
+      const soft = await sharp(base, { raw: { width: 320, height: 180, channels: 1 } }).blur(1.5).toColourspace("b-w").raw().toBuffer();
+      let t = 0; for (let i = 0; i < base.length; i++) t += Math.abs(base[i] - soft[i]);
+      return t / base.length;
+    };
+    const dRaw = await hp(raw), dPrev = await hp(pv);
+    assert(dPrev < dRaw * 0.25, `detail ratio ${(dPrev / dRaw).toFixed(3)} (preview ${dPrev.toFixed(2)} vs raw ${dRaw.toFixed(2)})`);
+    const diff = await meanAbsDiff(pv, raw, 160, 90);
+    assert(diff > 5, `mean abs pixel diff vs raw frame ${diff.toFixed(1)}`);
+    assert(pv.length < mp4.length * 0.2, "preview much smaller than the video");
+    fs.copyFileSync(rawFramePath, path.join(PROOF_DIR, "video-raw-frame.png"));
+    fs.writeFileSync(path.join(PROOF_DIR, "video-blurred-preview.jpg"), pv);
+    return `${meta.width}x${meta.height}, detail ratio ${(dPrev / dRaw).toFixed(3)}, mean|diff| ${diff.toFixed(1)}`;
+  });
+
+  await check("[m2] original VIDEO unreachable without a signed URL (guessable paths, owner session, unsigned/tampered), preview route never returns it", async () => {
+    const name = path.basename(vStorageKey);
+    const urls = [`/${vStorageKey}`, `/storage-data/${vStorageKey}`, `/originals/${vDrop.id}/${name}`, `/api/files/${vFileId}`, `/api/files/${vFileId}/original`,
+      `/api/files/${vFileId}/original?exp=9999999999`, `/api/files/${vFileId}/original?sig=abc`, `/api/files/${vFileId}/preview`];
+    for (const u of urls) for (const c of [anon, vSeller]) {
+      const r = await c.req("GET", u, { headers: { range: "bytes=0-1023" } });
+      const b = Buffer.from(await r.arrayBuffer());
+      assert(!(b.length >= 8 && b.subarray(4, 8).toString("latin1") === "ftyp"), `VIDEO BYTES LEAKED at ${u}`);
+      assert(r.status !== 206 && !(u.endsWith("/original") && r.status === 200), `${u} -> ${r.status}`);
+    }
+    const mint = await vSeller.req("POST", `/api/files/${vFileId}/signed-url`);
+    const sp = (await mint.json()).path as string;
+    const u = new URL(BASE + sp); const bad = `/api/files/${vFileId}/original?exp=${u.searchParams.get("exp")}&sig=${u.searchParams.get("sig")!.slice(0, -2)}AA`;
+    eq((await anon.req("GET", bad)).status, 403, "tampered sig");
+    return `${urls.length} URLs × 2 clients denied`;
+  });
+
+  await check("[m2] signed URL (no session) streams the exact video: 200 + video/mp4 + Accept-Ranges; Range 206 (start, middle, suffix), 416 past the end, expired -> 410", async () => {
+    const sp = (await (await vSeller.req("POST", `/api/files/${vFileId}/signed-url`)).json()).path as string;
+    const full = await anon.req("GET", sp);
+    eq(full.status, 200, "full");
+    eq(full.headers.get("content-type"), "video/mp4", "content-type"); eq(full.headers.get("accept-ranges"), "bytes", "accept-ranges");
+    eq(full.headers.get("content-length"), String(mp4.length), "content-length");
+    assert(/no-store/.test(full.headers.get("cache-control") ?? "") && /attachment/.test(full.headers.get("content-disposition") ?? ""), "no-store + attachment");
+    assert(sha(Buffer.from(await full.arrayBuffer())) === sha(mp4), "full bytes identical");
+    const mid = Math.floor(mp4.length / 2);
+    for (const [hdr, s, e] of [["bytes=0-99", 0, 99], [`bytes=${mid}-${mid + 4999}`, mid, mid + 4999], ["bytes=-1000", mp4.length - 1000, mp4.length - 1], [`bytes=${mp4.length - 10}-`, mp4.length - 10, mp4.length - 1]] as const) {
+      const r = await anon.req("GET", sp, { headers: { range: hdr } });
+      eq(r.status, 206, `${hdr} status`);
+      eq(r.headers.get("content-range"), `bytes ${s}-${e}/${mp4.length}`, `${hdr} content-range`);
+      assert(Buffer.from(await r.arrayBuffer()).equals(mp4.subarray(s, e + 1)), `${hdr} bytes`);
+    }
+    const past = await anon.req("GET", sp, { headers: { range: `bytes=${mp4.length + 5}-` } });
+    eq(past.status, 416, "416"); eq(past.headers.get("content-range"), `bytes */${mp4.length}`, "416 content-range");
+    eq((await anon.req("GET", signOriginalUrl(vFileId, -30).path)).status, 410, "expired");
+    return "full + 4 ranges byte-exact";
+  });
+
+  await check("[m2] spoofed MP4s rejected (415, nothing stored): text as video/mp4, JPEG named .mp4, PNG as video/mp4, ftyp header + garbage body, QuickTime/HEIC brand, truncated MP4", async () => {
+    const d = await newDrop(vSeller, "spoof", 500);
+    const jpg = await sharp({ create: { width: 40, height: 40, channels: 3, background: "#f00" } }).jpeg().toBuffer();
+    const png = await sharp({ create: { width: 40, height: 40, channels: 3, background: "#0f0" } }).png().toBuffer();
+    const box = (brand: string, n = 3000) => { const h = Buffer.alloc(24); h.writeUInt32BE(24, 0); h.write("ftyp" + brand, 4, "latin1"); return Buffer.concat([h, Buffer.alloc(n, 0x41)]); };
+    const cases: [string, Buffer, string, string][] = [
+      ["text/video-mime", Buffer.from("hello, definitely a video"), "a.mp4", "video/mp4"],
+      ["jpeg/.mp4", jpg, "evil.mp4", "image/jpeg"],
+      ["jpeg/video-mime", jpg, "evil.jpg", "video/mp4"],
+      ["png/video-mime", png, "x.png", "video/mp4"],
+      ["ftyp+garbage", box("isom"), "g.mp4", "video/mp4"],
+      ["qt brand", box("qt  "), "q.mp4", "video/mp4"],
+      ["heic brand", box("heic"), "h.mp4", "video/mp4"],
+      ["truncated", mp4.subarray(0, 600), "t.mp4", "video/mp4"],
+      ["mkv-ish", Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), Buffer.alloc(2000)]), "m.mp4", "video/mp4"],
+    ];
+    const got: string[] = [];
+    for (const [label, buf, name, type] of cases) {
+      const r = await vSeller.req("POST", `/api/drops/${d.id}/files`, { form: videoForm(buf, name, type) });
+      got.push(`${label}:${r.status}`);
+      assert(r.status === 415, `${label} -> ${r.status} ${await r.text()}`);
+    }
+    eq(Number((await db.query("SELECT count(*) FROM drop_files WHERE drop_id=$1", [d.id])).rows[0].count), 0, "rows");
+    eq(walk(path.join(STORAGE_DIR, "originals", d.id)).length + walk(path.join(STORAGE_DIR, "previews", d.id)).length, 0, "stray files");
+    return got.join(" ");
+  });
+
+  await check("[m2] 11th file rejected with a mix of images + videos (400 too_many_files), both when the 11th is a video and when it is an image; no orphan files; parallel mixed burst -> exactly 10", async () => {
+    const c = await mkVerified("mix");
+    const d = await newDrop(c, "mix", 500);
+    const img = await tinyPng("#2288aa");
+    for (let i = 0; i < 10; i++) {
+      const r = await c.req("POST", `/api/drops/${d.id}/files`, { form: i % 3 === 0 ? videoForm(mp4) : uploadForm(img) });
+      eq(r.status, 201, `file ${i + 1} (${r.status})`);
+    }
+    for (const form of [videoForm(mp4), uploadForm(img)]) {
+      const r = await c.req("POST", `/api/drops/${d.id}/files`, { form });
+      eq(r.status, 400, "11th status"); eq((await r.json()).code, "too_many_files", "code");
+    }
+    eq(Number((await db.query("SELECT count(*) FROM drop_files WHERE drop_id=$1", [d.id])).rows[0].count), 10, "rows");
+    eq(walk(path.join(STORAGE_DIR, "originals", d.id)).length, 10, "originals on disk"); eq(walk(path.join(STORAGE_DIR, "previews", d.id)).length, 10, "previews on disk");
+    // atomicity with videos: 8 parallel mixed uploads into a fresh drop with 6 slots used
+    const d2 = await newDrop(c, "mix2", 500);
+    for (let i = 0; i < 6; i++) eq((await c.req("POST", `/api/drops/${d2.id}/files`, { form: uploadForm(img) })).status, 201, "seed");
+    const par = await Promise.all(Array.from({ length: 8 }, (_, i) => c.req("POST", `/api/drops/${d2.id}/files`, { form: i % 2 ? videoForm(mp4) : uploadForm(img) })));
+    eq(par.filter((r) => r.status === 201).length, 4, `parallel accepted (${par.map((r) => r.status)})`);
+    eq(Number((await db.query("SELECT count(*) FROM drop_files WHERE drop_id=$1", [d2.id])).rows[0].count), 10, "rows after burst");
+    eq(walk(path.join(STORAGE_DIR, "originals", d2.id)).length, 10, "no orphans after burst");
+  });
+
+  await check("[m2] 2 GB per-drop cap still atomic with videos (setting lowered to 2.5 videos): sequential 201,201,413 and parallel -> exactly 2 stored", async () => {
+    const c = await mkVerified("tot");
+    try {
+      await db.query("UPDATE platform_settings SET max_total_bytes_per_drop=$1 WHERE id=1", [mp4.length * 2 + 100]);
+      const a = await newDrop(c, "tot-a", 500);
+      const seq: number[] = [];
+      for (let i = 0; i < 3; i++) seq.push((await c.req("POST", `/api/drops/${a.id}/files`, { form: videoForm(mp4) })).status);
+      eq(seq.join(","), "201,201,413", "sequential");
+      const b = await newDrop(c, "tot-b", 500);
+      const par = await Promise.all(Array.from({ length: 5 }, () => c.req("POST", `/api/drops/${b.id}/files`, { form: videoForm(mp4) })));
+      eq(par.filter((r) => r.status === 201).length, 2, `parallel (${par.map((r) => r.status)})`);
+      eq(walk(path.join(STORAGE_DIR, "originals", b.id)).length, 2, "no orphans");
+    } finally { await db.query("UPDATE platform_settings SET max_total_bytes_per_drop=2147483648 WHERE id=1"); }
+  });
+
+  await check("[m2] per-file video cap from platform_settings.max_video_size_bytes (lowered -> 413, nothing stored; image cap independent; default 500 MiB; exposed in /api/settings)", async () => {
+    const def = (await db.query("SELECT max_video_size_bytes FROM platform_settings")).rows[0];
+    eq(Number(def.max_video_size_bytes), 524288000, "default 500 MiB");
+    const s = await (await anon.req("GET", "/api/settings")).json();
+    eq(s.maxVideoSizeBytes, 524288000, "/api/settings maxVideoSizeBytes");
+    const c = await mkVerified("cap");
+    const d = await newDrop(c, "cap", 500);
+    try {
+      await db.query("UPDATE platform_settings SET max_video_size_bytes=$1 WHERE id=1", [mp4.length - 1]);
+      const r = await c.req("POST", `/api/drops/${d.id}/files`, { form: videoForm(mp4) });
+      eq(r.status, 413, "over cap"); eq((await r.json()).code, "file_too_large", "code");
+      eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: uploadForm(await tinyPng("#112233")) })).status, 201, "image unaffected by video cap");
+      await db.query("UPDATE platform_settings SET max_video_size_bytes=$1 WHERE id=1", [mp4.length]);
+      eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: videoForm(mp4) })).status, 201, "exactly at cap OK");
+    } finally { await db.query("UPDATE platform_settings SET max_video_size_bytes=524288000 WHERE id=1"); }
+    // an oversize *image* cap still applies to non-video files even when the video cap is large
+    await db.query("UPDATE platform_settings SET max_image_size_bytes=100 WHERE id=1");
+    try {
+      const big = await sharp({ create: { width: 200, height: 200, channels: 3, background: "#abcdef" } }).png().toBuffer();
+      eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: uploadForm(big) })).status, 413, "image over image cap");
+    } finally { await db.query("UPDATE platform_settings SET max_image_size_bytes=15728640 WHERE id=1"); }
+    const left = fs.existsSync(os_tmpdir()) ? fs.readdirSync(os_tmpdir()).length : 0;
+    eq(left, 0, "no leftover temp parts after rejections");
+  });
+
+  await check("[m2] public page + API count videos correctly: '3 files: 2 images, 1 video' (and '2 videos'); previews flagged kind=video; no original refs", async () => {
+    const c = await mkVerified("pub");
+    const d = await newDrop(c, "Mixed pub", 800);
+    const img = await tinyPng("#cc7700");
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: uploadForm(img) })).status, 201, "img1");
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: uploadForm(await tinyPng("#00cc77")) })).status, 201, "img2");
+    const v1 = await c.req("POST", `/api/drops/${d.id}/files`, { form: videoForm(mp4) });
+    eq(v1.status, 201, "video");
+    const vid = (await v1.json()).file.id as string;
+    eq((await c.req("POST", `/api/drops/${d.id}/publish`, { json: { attestation: att } })).status, 200, "publish");
+    const html = stripComments(await (await anon.req("GET", `/u/${d.public_link_id}`)).text());
+    assert(html.includes("3 files: 2 images, 1 video"), "page label");
+    const api = await (await anon.req("GET", `/api/public/drops/${d.public_link_id}`)).json();
+    eq(api.summary.label, "3 files: 2 images, 1 video", "api label");
+    eq(api.summary.imageCount, 2, "imageCount"); eq(api.summary.videoCount, 1, "videoCount"); eq(api.summary.fileCount, 3, "fileCount");
+    eq(api.previews.filter((p: { kind: string }) => p.kind === "video").length, 1, "kind=video");
+    assert(!JSON.stringify(api).includes("storage") && !JSON.stringify(api).includes("original") && !html.includes("/original") && !html.includes(".mp4"), "no original references");
+    const pr = await anon.req("GET", `/api/files/${vid}/preview`);
+    eq(pr.status, 200, "public video preview"); eq(pr.headers.get("content-type"), "image/jpeg", "jpeg");
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: videoForm(mp4) })).status, 201, "2nd video");
+    eq((await (await anon.req("GET", `/api/public/drops/${d.public_link_id}`)).json()).summary.label, "4 files: 2 images, 2 videos", "after 2nd video");
+    return "3 files: 2 images, 1 video → 4 files: 2 images, 2 videos";
+  });
+
+  await check("[m2] ffmpeg-less server degrades clearly: video upload -> 503 video_unavailable, image upload still works (second app instance with FFMPEG_PATH=/nonexistent)", async () => {
+    let port = Number(new URL(BASE).port) + 31;
+    while (await fetch(`http://127.0.0.1:${port}/`).then(() => true, () => false)) port++;
+    const child = spawn("npx", ["next", "start", "-p", String(port)], {
+      detached: true, stdio: "ignore",
+      env: { ...process.env, NODE_ENV: "production", APP_URL: BASE, MOCK_PAYMENTS_ENABLED: "1", NEXT_DIST_DIR: ".next-e2e", FFMPEG_PATH: "/nonexistent/ffmpeg", FFPROBE_PATH: "/nonexistent/ffprobe" },
+    });
+    try {
+      const base = `http://127.0.0.1:${port}`;
+      for (let i = 0; i < 60; i++) { if (await fetch(base + "/api/settings").then((r) => r.ok, () => false)) break; await new Promise((r) => setTimeout(r, 500)); }
+      const c2 = new Client_();
+      const sess = vSeller.cookies.get("unveil_session")!;
+      c2.cookies.set("unveil_session", sess);
+      const d = await newDrop(vSeller, "noffmpeg", 500);
+      const post = (form: FormData) => fetch(`${base}/api/drops/${d.id}/files`, { method: "POST", headers: { cookie: `unveil_session=${sess}`, "x-forwarded-for": "10.88.0.1" }, body: form });
+      const rv = await post(videoForm(mp4));
+      eq(rv.status, 503, "video"); eq((await rv.json()).code, "video_unavailable", "code");
+      eq((await post(uploadForm(await tinyPng("#445566")))).status, 201, "image still fine");
+      eq(Number((await db.query("SELECT count(*) FROM drop_files WHERE drop_id=$1 AND mime='video/mp4'", [d.id])).rows[0].count), 0, "no video row");
+    } finally { try { process.kill(-child.pid!, "SIGTERM"); } catch { child.kill("SIGTERM"); } }
+  });
+
+  // ---- PATCH ----
+  let patchSeller!: Client_, pDrop!: { id: string; public_link_id: string };
+  await check("[m2] PATCH /api/drops/:id: owner edits title/description/price (200); response + DB + public page reflect it; updated_at moves; audit row written", async () => {
+    patchSeller = await mkVerified("patch");
+    pDrop = await newDrop(patchSeller, "Before", 1000, "old description");
+    const r = await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json: { title: "After title", priceCents: 2750, description: "new description" } });
+    eq(r.status, 200, `status (${r.status})`);
+    const { drop } = await r.json();
+    eq(drop.title, "After title", "title"); eq(drop.price_cents, 2750, "price"); eq(drop.description, "new description", "desc");
+    const row = (await db.query("SELECT title, price_cents, description, updated_at > created_at AS moved FROM drops WHERE id=$1", [pDrop.id])).rows[0];
+    eq(row.title, "After title", "db title"); eq(row.price_cents, 2750, "db price"); eq(row.moved, true, "updated_at");
+    // price_cents alias + partial + clear description
+    eq((await (await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json: { price_cents: 3000 } })).json()).drop.price_cents, 3000, "price_cents alias");
+    eq((await (await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json: { description: null } })).json()).drop.description, null, "clear description");
+    eq((await db.query("SELECT 1 FROM audit_log WHERE action='drop_edited' AND target LIKE $1", [`drop:${pDrop.id}%`])).rowCount, 3, "audit rows");
+  });
+
+  await check("[m2] PATCH validation: price outside platform_settings bounds (and non-integers), empty/too-long title, too-long description, unknown/forbidden fields (status, attestation, seller_id, public_link_id), empty body, bad JSON -> 400; nothing changed", async () => {
+    const before = (await db.query("SELECT title, price_cents, status FROM drops WHERE id=$1", [pDrop.id])).rows[0];
+    const bad: [string, unknown][] = [
+      ["price 99", { priceCents: 99 }], ["price 50001", { priceCents: 50001 }], ["price 12.5", { priceCents: 12.5 }], ["price string", { priceCents: "500" }], ["price -1", { price_cents: -1 }],
+      ["title ''", { title: "" }], ["title spaces", { title: "   " }], ["title 121", { title: "x".repeat(121) }], ["title number", { title: 5 }],
+      ["desc 2001", { description: "d".repeat(2001) }], ["status", { status: "published" }], ["attestation", { attestation: { over18: true } }], ["seller_id", { seller_id: "00000000-0000-4000-8000-000000000000" }],
+      ["public_link_id", { public_link_id: "AAAAAAAAAAAA" }], ["both prices", { priceCents: 500, price_cents: 600 }], ["empty", {}], ["NUL title", { title: "a\u0000b" }],
+    ];
+    for (const [label, json] of bad) {
+      const r = await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json });
+      assert(r.status === 400, `${label} -> ${r.status} ${await r.text()}`);
+    }
+    const raw = await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { headers: { "content-type": "application/json" }, form: undefined });
+    eq(raw.status, 400, "no body");
+    // tunable bounds from platform_settings are honoured
+    await db.query("UPDATE platform_settings SET price_min_cents=500, price_max_cents=2000 WHERE id=1");
+    try {
+      eq((await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json: { priceCents: 499 } })).status, 400, "below tuned min");
+      eq((await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json: { priceCents: 2001 } })).status, 400, "above tuned max");
+      eq((await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json: { priceCents: 2000 } })).status, 200, "at tuned max");
+    } finally { await db.query("UPDATE platform_settings SET price_min_cents=100, price_max_cents=50000 WHERE id=1"); }
+    const after = (await db.query("SELECT title, price_cents, status FROM drops WHERE id=$1", [pDrop.id])).rows[0];
+    eq(after.title, before.title, "title unchanged"); eq(after.status, before.status, "status unchanged");
+    return `${bad.length + 1} invalid patches rejected`;
+  });
+
+  await check("[m2] PATCH auth: unauthenticated 401; other seller 404 (nothing changes); foreign/null Origin 403; same-origin Origin OK; malformed id 404; GET/PATCH of someone else's drop never leaks it", async () => {
+    const mallory = await mkVerified("mal1");
+    const snap = (await db.query("SELECT title, price_cents, description FROM drops WHERE id=$1", [pDrop.id])).rows[0];
+    eq((await anon.req("PATCH", `/api/drops/${pDrop.id}`, { json: { title: "anon" } })).status, 401, "anon");
+    eq((await mallory.req("PATCH", `/api/drops/${pDrop.id}`, { json: { title: "hijack", priceCents: 100 } })).status, 404, "cross-seller");
+    eq((await patchSeller.req("PATCH", `/api/drops/not-a-uuid`, { json: { title: "x" } })).status, 404, "bad id");
+    eq((await patchSeller.req("PATCH", `/api/drops/00000000-0000-4000-8000-000000000000`, { json: { title: "x" } })).status, 404, "unknown id");
+    for (const origin of ["http://evil.example", "null", "garbage"]) {
+      const r = await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json: { title: "csrf" }, headers: { origin } });
+      eq(r.status, 403, `Origin ${origin}`); eq((await r.json()).code, "bad_origin", "code");
+    }
+    eq((await patchSeller.req("PATCH", `/api/drops/${pDrop.id}`, { json: { title: "same origin ok" }, headers: { origin: BASE } })).status, 200, "same-origin");
+    // restore + check the cross-seller attempts changed nothing
+    const now = (await db.query("SELECT title, price_cents FROM drops WHERE id=$1", [pDrop.id])).rows[0];
+    eq(now.title, "same origin ok", "only the owner's edit applied"); eq(now.price_cents, snap.price_cents, "price untouched");
+  });
+
+  await check("[m2] editing a PUBLISHED drop keeps attestation data (attestation, attested_at, history, published_at) and status; the new price shows publicly", async () => {
+    const c = await mkVerified("pubedit");
+    const d = await newDrop(c, "Published", 1500);
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: uploadForm(await tinyPng("#777700")) })).status, 201, "file");
+    eq((await c.req("POST", `/api/drops/${d.id}/publish`, { json: { attestation: att } })).status, 200, "publish");
+    const q = async () => (await db.query("SELECT status, attestation, attested_at, attestation_history, published_at, last_republished_at, public_link_id FROM drops WHERE id=$1", [d.id])).rows[0];
+    const b = await q();
+    assert(b.attested_at && b.attestation?.over18 === true, "has attestation");
+    const r = await c.req("PATCH", `/api/drops/${d.id}`, { json: { title: "Edited while live", priceCents: 4200, description: "now with text" } });
+    eq(r.status, 200, "patch");
+    const a = await q();
+    eq(a.status, "published", "still published");
+    for (const k of ["attestation", "attested_at", "attestation_history", "published_at", "last_republished_at", "public_link_id"] as const) {
+      eq(JSON.stringify(a[k]), JSON.stringify(b[k]), `${k} unchanged`);
+    }
+    const pub = await (await anon.req("GET", `/api/public/drops/${d.public_link_id}`)).json();
+    eq(pub.drop.priceCents, 4200, "public price"); eq(pub.drop.title, "Edited while live", "public title");
+    assert(stripComments(await (await anon.req("GET", `/u/${d.public_link_id}`)).text()).includes("$42.00"), "page shows $42.00");
+  });
+
+  // ---- DELETE ----
+  await check("[m2] DELETE auth: unauthenticated 401; foreign Origin 403; OTHER seller 404 and the drop, rows, original + preview all survive", async () => {
+    const owner = await mkVerified("del1"), mallory = await mkVerified("del2");
+    const d = await newDrop(owner, "keep me", 700);
+    const f = (await (await owner.req("POST", `/api/drops/${d.id}/files`, { form: videoForm(mp4) })).json()).file.id as string;
+    const row = await fileRow(f);
+    eq((await anon.req("DELETE", `/api/drops/${d.id}`)).status, 401, "anon");
+    eq((await mallory.req("DELETE", `/api/drops/${d.id}`)).status, 404, "cross-seller");
+    eq((await owner.req("DELETE", `/api/drops/${d.id}`, { headers: { origin: "http://evil.example" } })).status, 403, "csrf");
+    eq((await owner.req("DELETE", `/api/drops/${d.id}`, { headers: { origin: "null" } })).status, 403, "null origin");
+    eq((await owner.req("DELETE", `/api/drops/not-a-uuid`)).status, 404, "bad id");
+    eq((await db.query("SELECT 1 FROM drops WHERE id=$1", [d.id])).rowCount, 1, "drop row survives");
+    eq((await db.query("SELECT 1 FROM drop_files WHERE drop_id=$1", [d.id])).rowCount, 1, "file row survives");
+    assert(fexists(row.storage_key) && fexists(row.blurred_preview_key), "files survive");
+    eq((await owner.req("GET", `/api/drops/${d.id}`)).status, 200, "owner still reads it");
+  });
+
+  await check("[m2] DELETE by owner (draft with image + video + image): 200; drops + drop_files rows gone; originals AND blurred previews gone from disk (incl. per-drop dirs); audit row; signed URL/preview/page 404", async () => {
+    const c = await mkVerified("del3");
+    const d = await newDrop(c, "delete me", 700);
+    const ids: string[] = [];
+    for (const form of [uploadForm(await tinyPng("#aa0000")), videoForm(mp4), uploadForm(await tinyPng("#00aa00"))]) {
+      const r = await c.req("POST", `/api/drops/${d.id}/files`, { form }); eq(r.status, 201, "upload"); ids.push((await r.json()).file.id);
+    }
+    const rows = (await db.query("SELECT storage_key, blurred_preview_key FROM drop_files WHERE drop_id=$1", [d.id])).rows as { storage_key: string; blurred_preview_key: string }[];
+    eq(rows.length, 3, "3 rows before");
+    for (const r of rows) assert(fexists(r.storage_key) && fexists(r.blurred_preview_key), "on disk before");
+    const signed = (await (await c.req("POST", `/api/files/${ids[1]}/signed-url`)).json()).path as string;
+    eq((await anon.req("GET", signed, { headers: { range: "bytes=0-9" } })).status, 206, "signed url works before");
+    const r = await c.req("DELETE", `/api/drops/${d.id}`);
+    eq(r.status, 200, `delete (${r.status})`);
+    const body = await r.json();
+    eq(body.deleted, true, "deleted"); eq(body.deletedFiles, 3, "deletedFiles"); eq(body.storageErrors, 0, "storageErrors");
+    eq((await db.query("SELECT 1 FROM drops WHERE id=$1", [d.id])).rowCount, 0, "drops row gone");
+    eq((await db.query("SELECT 1 FROM drop_files WHERE drop_id=$1", [d.id])).rowCount, 0, "drop_files rows gone");
+    for (const row of rows) assert(!fexists(row.storage_key) && !fexists(row.blurred_preview_key), `still on disk: ${row.storage_key}`);
+    assert(!fs.existsSync(path.join(STORAGE_DIR, "originals", d.id)) && !fs.existsSync(path.join(STORAGE_DIR, "previews", d.id)), "per-drop dirs removed");
+    eq((await db.query("SELECT 1 FROM audit_log WHERE action='drop_deleted' AND target LIKE $1", [`drop:${d.id}%`])).rowCount, 1, "audit row");
+    eq((await c.req("GET", `/api/drops/${d.id}`)).status, 404, "owner GET -> 404");
+    eq((await c.req("DELETE", `/api/drops/${d.id}`)).status, 404, "second delete -> 404");
+    for (const id of ids) eq((await anon.req("GET", `/api/files/${id}/preview`)).status, 404, "preview 404");
+    eq((await anon.req("GET", signed)).status, 404, "previously minted signed URL -> 404 (file gone)");
+    return `3 rows + 6 stored objects removed`;
+  });
+
+  await check("[m2] DELETE of a PUBLISHED drop removes it from the public page/API too; DELETE refused (409 drop_has_sales) when a transaction references the drop, nothing removed", async () => {
+    const c = await mkVerified("del4");
+    const d = await newDrop(c, "published then deleted", 900);
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: videoForm(mp4) })).status, 201, "video");
+    eq((await c.req("POST", `/api/drops/${d.id}/publish`, { json: { attestation: att } })).status, 200, "publish");
+    eq((await anon.req("GET", `/u/${d.public_link_id}`)).status, 200, "page live");
+    eq((await c.req("DELETE", `/api/drops/${d.id}`)).status, 200, "delete");
+    eq((await anon.req("GET", `/u/${d.public_link_id}`)).status, 404, "page gone");
+    eq((await anon.req("GET", `/api/public/drops/${d.public_link_id}`)).status, 404, "api gone");
+    // with a sale on record (inserted directly: payments are not part of this check) the delete is refused
+    const d2 = await newDrop(c, "has sale", 900);
+    eq((await c.req("POST", `/api/drops/${d2.id}/files`, { form: uploadForm(await tinyPng("#5500aa")) })).status, 201, "file");
+    const sid = (await db.query("SELECT seller_id FROM drops WHERE id=$1", [d2.id])).rows[0].seller_id;
+    await db.query(`INSERT INTO transactions (drop_id, seller_id, buyer_email, amount_cents, platform_fee_cents, processing_fee_cents, seller_net_cents, processor_ref, status, provider)
+                    VALUES ($1,$2,'buyer@example.test',900,90,108,702,$3,'succeeded','mock')`, [d2.id, sid, `m2-sale-${d2.id}`]);
+    const r = await c.req("DELETE", `/api/drops/${d2.id}`);
+    eq(r.status, 409, "refused"); eq((await r.json()).code, "drop_has_sales", "code");
+    eq((await db.query("SELECT 1 FROM drop_files WHERE drop_id=$1", [d2.id])).rowCount, 1, "files untouched");
+    eq((await c.req("POST", `/api/drops/${d2.id}/unpublish`)).status, 200, "unpublish still possible");
+  });
+
+  await check("[m2] existing endpoints unaffected: image upload still 201 with image/* (JPEG with EXIF, PNG, WebP); GIF still 415; multipart without file -> 400; two files in one request -> 400", async () => {
+    const c = await mkVerified("regress");
+    const d = await newDrop(c, "regress", 500);
+    const jpg = await makePhoto(400, 300), png = await tinyPng("#010203"), webp = await sharp(png).webp().toBuffer();
+    const gif = await sharp({ create: { width: 10, height: 10, channels: 3, background: "#f00" } }).gif().toBuffer();
+    const mime: [Buffer, string, string][] = [[jpg, "image/jpeg", "a.jpg"], [png, "image/png", "b.png"], [webp, "image/webp", "c.webp"]];
+    for (const [b, t, n] of mime) { const f = new FormData(); f.append("file", new Blob([new Uint8Array(b)], { type: t }), n); const r = await c.req("POST", `/api/drops/${d.id}/files`, { form: f }); eq(r.status, 201, n); eq((await r.json()).file.mime, t, `${n} mime`); }
+    const g = new FormData(); g.append("file", new Blob([new Uint8Array(gif)], { type: "image/gif" }), "g.gif");
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: g })).status, 415, "gif");
+    const none = new FormData(); none.append("other", "x");
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: none })).status, 400, "no file");
+    const two = new FormData(); two.append("file", new Blob([new Uint8Array(png)]), "1.png"); two.append("file", new Blob([new Uint8Array(png)]), "2.png");
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { form: two })).status, 400, "two files");
+    eq((await c.req("POST", `/api/drops/${d.id}/files`, { json: { a: 1 } })).status, 400, "not multipart");
+    eq(Number((await db.query("SELECT count(*) FROM drop_files WHERE drop_id=$1", [d.id])).rows[0].count), 3, "only the 3 valid images stored");
   });
 
   await check("[pay] production guard: with the mock NOT allowed (prod, no local-build flag) checkout=503, webhook=503, simulator + hosted mock page 404", async () => {
