@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { api } from "@/server/http";
+import { ALLOWED_VIDEO_MIMES } from "@/server/services/video";
 import { getSettings } from "@/server/services/settings";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,8 @@ export const GET = api(async () => {
     priceMinCents: s.price_min_cents,
     priceMaxCents: s.price_max_cents,
     maxImageSizeBytes: s.max_image_size_bytes,
+    maxVideoSizeBytes: s.max_video_size_bytes,
+    allowedVideoMimes: ALLOWED_VIDEO_MIMES,
     maxFilesPerDrop: s.max_files_per_drop,
     maxTotalBytesPerDrop: s.max_total_bytes_per_drop,
     allowedImageMimes: s.allowed_image_mimes,

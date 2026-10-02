@@ -5,6 +5,9 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { createReadStream } from "node:fs";
+import fsp from "node:fs/promises";
+import type { Readable } from "node:stream";
 import type { Storage } from "./types";
 
 /**
@@ -51,5 +54,22 @@ export class S3Storage implements Storage {
   }
   async delete(key: string) {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+  }
+  async putFile(key: string, filePath: string, contentType: string) {
+    const { size } = await fsp.stat(filePath);
+    // Single PutObject streamed from disk (max object 500 MB by default, well below S3's 5 GB single-PUT limit).
+    await this.client.send(
+      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: createReadStream(filePath), ContentLength: size, ContentType: contentType }),
+    );
+  }
+  async size(key: string) {
+    const r = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }));
+    return Number(r.ContentLength ?? 0);
+  }
+  async getStream(key: string, range?: { start: number; end: number }) {
+    const r = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key, Range: range ? `bytes=${range.start}-${range.end}` : undefined }),
+    );
+    return r.Body as Readable;
   }
 }

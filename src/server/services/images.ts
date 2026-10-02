@@ -99,39 +99,50 @@ export async function addImageToDrop(
   await st.put(storageKey, file.data, mime);
   await st.put(previewKey, preview, "image/jpeg");
 
-  const safeName = file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 200) || `upload.${EXT[mime]}`;
+  const safeName = safeFilename(file.name, EXT[mime]);
   try {
-    // Serialise per drop: the row lock makes count + size check + insert atomic, so parallel
-    // uploads cannot overshoot the limits. NOTE: nothing in here may use the pool (only `c`),
-    // otherwise concurrent uploads could exhaust the pool while holding locks.
-    const out = await withTx(async (c) => {
-      await c.query("SELECT id FROM drops WHERE id = $1 FOR UPDATE", [drop.id]);
-      const cur = (
-        await c.query<{ n: number; total: number }>(
-          "SELECT count(*)::int AS n, COALESCE(sum(size_bytes),0)::float8 AS total FROM drop_files WHERE drop_id=$1",
-          [drop.id],
-        )
-      ).rows[0];
-      const live = (
-        await c.query<Pick<PlatformSettings, "max_files_per_drop" | "max_total_bytes_per_drop">>(
-          "SELECT max_files_per_drop, max_total_bytes_per_drop::float8 AS max_total_bytes_per_drop FROM platform_settings WHERE id = 1",
-        )
-      ).rows[0];
-      assertDropQuota({ count: cur.n, totalBytes: cur.total }, file.data.length, live);
-      const rows = await c.query<{ id: string }>(
-        `INSERT INTO drop_files (id, drop_id, storage_key, filename, mime, size_bytes, blurred_preview_key, sort_order)
-         VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE((SELECT max(sort_order)+1 FROM drop_files WHERE drop_id=$2),0))
-         RETURNING id`,
-        [id, drop.id, storageKey, safeName, mime, file.data.length, previewKey],
-      );
-      return rows.rows[0];
-    });
-    return { id: out.id, filename: safeName, mime, sizeBytes: file.data.length };
+    await insertFileLocked({ id, dropId: drop.id, storageKey, previewKey, filename: safeName, mime, sizeBytes: file.data.length });
+    return { id, filename: safeName, mime, sizeBytes: file.data.length };
   } catch (e) {
     await st.delete(storageKey);
     await st.delete(previewKey);
     throw e;
   }
+}
+
+export function safeFilename(name: string, ext: string): string {
+  return name.replace(/[^\w.\- ]+/g, "_").slice(0, 200) || `upload.${ext}`;
+}
+
+/**
+ * Serialise per drop: the row lock makes count + size check + insert atomic, so parallel uploads (images AND videos share this
+ * path) cannot overshoot the limits. NOTE: nothing in here may use the pool (only `c`), otherwise concurrent uploads could exhaust
+ * the pool while holding locks. If the drop was deleted meanwhile, the caller's storage cleanup runs and the client gets a 404.
+ */
+export async function insertFileLocked(f: {
+  id: string; dropId: string; storageKey: string; previewKey: string; filename: string; mime: string; sizeBytes: number;
+}): Promise<void> {
+  await withTx(async (c) => {
+    const locked = await c.query("SELECT id FROM drops WHERE id = $1 FOR UPDATE", [f.dropId]);
+    if (locked.rowCount === 0) throw new HttpError(404, "Drop not found");
+    const cur = (
+      await c.query<{ n: number; total: number }>(
+        "SELECT count(*)::int AS n, COALESCE(sum(size_bytes),0)::float8 AS total FROM drop_files WHERE drop_id=$1",
+        [f.dropId],
+      )
+    ).rows[0];
+    const live = (
+      await c.query<Pick<PlatformSettings, "max_files_per_drop" | "max_total_bytes_per_drop">>(
+        "SELECT max_files_per_drop, max_total_bytes_per_drop::float8 AS max_total_bytes_per_drop FROM platform_settings WHERE id = 1",
+      )
+    ).rows[0];
+    assertDropQuota({ count: cur.n, totalBytes: cur.total }, f.sizeBytes, live);
+    await c.query(
+      `INSERT INTO drop_files (id, drop_id, storage_key, filename, mime, size_bytes, blurred_preview_key, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE((SELECT max(sort_order)+1 FROM drop_files WHERE drop_id=$2),0))`,
+      [f.id, f.dropId, f.storageKey, f.filename, f.mime, f.sizeBytes, f.previewKey],
+    );
+  });
 }
 
 export async function getFileRow(fileId: string) {

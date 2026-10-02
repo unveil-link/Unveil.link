@@ -68,12 +68,12 @@ export default function DropEditor({ drop, files, verificationStatus }: Props) {
       </div>
 
       <Card>
-        <CardTitle className="mb-3">Upload image</CardTitle>
+        <CardTitle className="mb-3">Upload image or video</CardTitle>
         <form onSubmit={upload} className="flex flex-wrap items-center gap-3">
-          <input name="file" type="file" accept="image/jpeg,image/png,image/webp" required className="text-sm" />
+          <input name="file" type="file" accept="image/jpeg,image/png,image/webp,video/mp4" required className="text-sm" />
           <Button type="submit" loading={busy}>Upload</Button>
         </form>
-        <p className="mt-2 text-sm text-muted">JPG, PNG or WebP. Originals are stored privately; buyers only see a blurred preview until they pay.</p>
+        <p className="mt-2 text-sm text-muted">JPG, PNG, WebP or MP4 (video up to 500 MB). Originals are stored privately; buyers only see a blurred preview until they pay.</p>
       </Card>
 
       <section>
