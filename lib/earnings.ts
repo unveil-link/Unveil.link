@@ -1,61 +1,115 @@
 import { usd } from "./format";
 
-/** Lifetime figures, in cents. Same names/semantics as `lifetime` in GET /api/earnings (payments layer):
- *  fee totals are NET of the fee shares handed back on refunds / chargebacks, refunded and chargeback amounts are the
- *  gross handed back to buyers, kept apart. Because of that, refunds are subtracted exactly once (from gross) and never
- *  again from the fees. */
-export type EarningsTotals = {
+/**
+ * Display layer for the seller's earnings. NO money rules live here: every figure comes from the payments layer
+ * (`GET /api/earnings` = `getEarningsSummary()`: ledger balance incl. the payout hold, lifetime ledger sums, payouts).
+ * This file only (a) maps that summary to the names the UI uses and (b) derives the few "how do these add up" figures
+ * that exist purely for display (percentages, the reconciliation line, a residual for chargeback fees).
+ *
+ * Field mapping (EarningsSummary -> EarningsView):
+ *   lifetime.grossCents          -> grossCents          (sum of sale_credit; refunded/charged-back sales still counted here)
+ *   lifetime.platformFeeCents    -> platformFeeCents    (ledger platform_fee, NET of fee shares returned on refunds/chargebacks)
+ *   lifetime.processingFeeCents  -> processingFeeCents  (same, processing)
+ *   lifetime.refundedCents       -> refundedCents       (gross handed back by refunds, partial refunds included)
+ *   lifetime.chargebackCents     -> chargebackCents     (gross handed back by chargebacks)
+ *   lifetime.salesCount          -> salesCount
+ *   lifetime.paidOutCents        -> paidOutCents        (payouts with status paid)
+ *   lifetime.requestedPayoutCents-> inPayoutCents       (payouts requested/approved, funds already reserved)
+ *   balance.availableCents       -> availableCents      (ledger entries past the hold; MAY BE NEGATIVE)
+ *   balance.pendingCents         -> pendingCents        (ledger entries still inside the hold period)
+ *   balance.totalCents           -> (used for netCents below)
+ *   holdDays / minPayoutCents / payoutEligible -> same names
+ * Derived for display only:
+ *   netCents          = balance.totalCents + paidOutCents + inPayoutCents   (everything ever credited net of fees, reversals and
+ *                       chargeback fees, before payouts; payouts only move money out of the balance, so we add them back)
+ *   chargebackFeesCents = gross − refunded − chargebacks − platform − processing − net   (the ledger's chargeback_fee lines,
+ *                       which the summary does not list separately; 0 when there are none)
+ */
+export type EarningsSummaryLike = {
+  balance: { pendingCents: number; availableCents: number; totalCents: number };
+  minPayoutCents: number;
+  holdDays: number;
+  payoutEligible: boolean;
+  lifetime: {
+    salesCount: number;
+    grossCents: number;
+    platformFeeCents: number;
+    processingFeeCents: number;
+    refundedCents: number;
+    chargebackCents: number;
+    paidOutCents: number;
+    requestedPayoutCents: number;
+  };
+};
+
+export type EarningsView = {
+  salesCount: number;
   grossCents: number;
   platformFeeCents: number;
   processingFeeCents: number;
   refundedCents: number;
   chargebackCents: number;
-  paidOutCents: number;
-  /** Payouts requested / approved but not yet paid. */
-  pendingPayoutCents: number;
-};
-
-export type EarningsBreakdown = EarningsTotals & {
-  /** gross − refunded − charged back − platform fee − processing fees */
+  chargebackFeesCents: number;
   netCents: number;
-  /** net − paid out − pending payouts (can be < 0 if a reversal lands after a payout). */
   availableCents: number;
-  /** Gross of the sales that were not refunded / charged back (fees are only kept on these). */
+  pendingCents: number;
+  inPayoutCents: number;
+  paidOutCents: number;
+  holdDays: number;
+  minPayoutCents: number;
+  payoutEligible: boolean;
+  /** Gross of sales that were not (fully) given back; the base for the percentages. */
   keptGrossCents: number;
-  /** Platform fee as a % of keptGross (1 decimal), null when there is nothing kept. */
   platformFeePct: number | null;
-  /** Processing fees as a % of keptGross (1 decimal). */
   processingFeePct: number | null;
-  /** Share of keptGross the seller keeps (1 decimal). */
   keepPct: number | null;
 };
 
 const pct = (part: number, whole: number): number | null => (whole > 0 ? Math.round((part / whole) * 1000) / 10 : null);
 
-export function earningsBreakdown(t: EarningsTotals): EarningsBreakdown {
-  const netCents = t.grossCents - t.refundedCents - t.chargebackCents - t.platformFeeCents - t.processingFeeCents;
-  const keptGrossCents = t.grossCents - t.refundedCents - t.chargebackCents;
+export function toEarningsView(s: EarningsSummaryLike): EarningsView {
+  const l = s.lifetime;
+  const netCents = s.balance.totalCents + l.paidOutCents + l.requestedPayoutCents;
+  const keptGrossCents = l.grossCents - l.refundedCents - l.chargebackCents;
   return {
-    ...t,
+    salesCount: l.salesCount,
+    grossCents: l.grossCents,
+    platformFeeCents: l.platformFeeCents,
+    processingFeeCents: l.processingFeeCents,
+    refundedCents: l.refundedCents,
+    chargebackCents: l.chargebackCents,
+    chargebackFeesCents: keptGrossCents - l.platformFeeCents - l.processingFeeCents - netCents,
     netCents,
-    availableCents: netCents - t.paidOutCents - t.pendingPayoutCents,
+    availableCents: s.balance.availableCents,
+    pendingCents: s.balance.pendingCents,
+    inPayoutCents: l.requestedPayoutCents,
+    paidOutCents: l.paidOutCents,
+    holdDays: s.holdDays,
+    minPayoutCents: s.minPayoutCents,
+    payoutEligible: s.payoutEligible,
     keptGrossCents,
-    platformFeePct: pct(t.platformFeeCents, keptGrossCents),
-    processingFeePct: pct(t.processingFeeCents, keptGrossCents),
+    platformFeePct: pct(l.platformFeeCents, keptGrossCents),
+    processingFeePct: pct(l.processingFeeCents, keptGrossCents),
     keepPct: pct(netCents, keptGrossCents),
   };
 }
 
-/** "$431.00 gross − $43.10 platform fee − $21.56 processing fees = $366.34" (refund / chargeback terms only when non-zero). */
-export function breakdownLine(b: EarningsBreakdown): string {
+/** "$431.00 gross − $43.10 platform fee − $21.56 processing fees = $366.34" (refund / chargeback / chargeback-fee terms only when non-zero). */
+export function breakdownLine(b: EarningsView): string {
   const parts = [`${usd(b.grossCents)} gross`, `− ${usd(b.platformFeeCents)} platform fee`, `− ${usd(b.processingFeeCents)} processing fees`];
   if (b.refundedCents) parts.push(`− ${usd(b.refundedCents)} refunded`);
   if (b.chargebackCents) parts.push(`− ${usd(b.chargebackCents)} charged back`);
+  if (b.chargebackFeesCents) parts.push(`− ${usd(b.chargebackFeesCents)} chargeback fees`);
   return `${parts.join(" ")} = ${usd(b.netCents)}`;
 }
 
 /** Status line for reversed sales; refunds and chargebacks are always named separately. */
-export function reversalsLabel(b: Pick<EarningsBreakdown, "refundedCents" | "chargebackCents">): string | null {
+export function reversalsLabel(b: Pick<EarningsView, "refundedCents" | "chargebackCents">): string | null {
   const parts = [b.refundedCents && `${usd(b.refundedCents)} refunded`, b.chargebackCents && `${usd(b.chargebackCents)} charged back`].filter(Boolean);
   return parts.length ? parts.join(" · ") : null;
+}
+
+/** Honest wording for a balance below zero (refund / chargeback / fee after the money was paid out). */
+export function owedLabel(availableCents: number): string | null {
+  return availableCents < 0 ? `You owe ${usd(-availableCents)}` : null;
 }

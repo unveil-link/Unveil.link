@@ -61,7 +61,7 @@ export default async function DashboardOverview() {
         <h2 id="earn-h" className="sr-only">Earnings</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4" data-testid="earnings-breakdown">
           <StatCard label="Gross sales" value={usd(e.grossCents)} icon={<ChartIcon />} tone="primary"
-            hint={`${e.salesCount} sale${e.salesCount === 1 ? "" : "s"}${e.reversedCount ? ` · ${e.reversedCount} reversed` : ""}`} />
+            hint={`${e.salesCount} sale${e.salesCount === 1 ? "" : "s"}`} />
           <StatCard label="Platform fee" value={usd(e.platformFeeCents)} icon={<CoinIcon />}
             hint={e.platformFeePct === null ? "Charged on each sale" : `${e.platformFeePct}% of completed sales`} />
           <StatCard label="Processing fees" value={usd(e.processingFeeCents)} icon={<CardIcon />}
@@ -77,16 +77,36 @@ export default async function DashboardOverview() {
             Reversed sales: {reversals}. Fees on reversed sales are returned, so they are not counted above.
           </p>
         )}
-        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-          <StatCard label="Available" value={usd(e.availableCents)} icon={<WalletIcon />}
-            hint={e.availableCents > 0 ? "Net earnings not yet in a payout" : "Nothing to pay out yet"} />
-          <StatCard label="Pending payouts" value={usd(e.pendingPayoutCents)} icon={<ClockIcon />}
-            hint={e.pendingPayoutCents ? "Requested, not yet paid" : "None in progress"} />
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4" data-testid="balance-cards">
+          <StatCard
+            label={e.availableCents < 0 ? "Balance owed" : "Available"}
+            value={usd(e.availableCents)}
+            icon={<WalletIcon />}
+            tone={e.availableCents < 0 ? "danger" : "default"}
+            hint={
+              e.availableCents < 0
+                ? "A refund, chargeback or fee came in after a payout."
+                : e.availableCents === 0
+                  ? "Nothing to pay out yet"
+                  : e.payoutEligible
+                    ? "Ready for a payout"
+                    : `Payouts start at ${usd(e.minPayoutCents)}`
+            }
+          />
+          <StatCard label="Pending" value={usd(e.pendingCents)} icon={<ClockIcon />}
+            hint={e.holdDays > 0 ? `Becomes available ${e.holdDays} day${e.holdDays === 1 ? "" : "s"} after each sale` : "Becomes available right away"} />
+          <StatCard label="In payout" value={usd(e.inPayoutCents)} icon={<WalletIcon />}
+            hint={e.inPayoutCents ? "Requested or approved, not yet paid" : "None in progress"} />
           <StatCard label="Paid out" value={usd(e.paidOutCents)} icon={<WalletIcon />}
-            hint={e.paidOutCents ? "Sent to you so far" : "No payouts yet"} className="col-span-2 lg:col-span-1" />
+            hint={e.paidOutCents ? "Sent to you so far" : "No payouts yet"} />
         </div>
+        {e.availableCents < 0 && (
+          <Alert tone="warning" title={`You owe ${usd(-e.availableCents)}`} className="mt-4" data-testid="negative-balance">
+            Your available balance is negative because money was returned to a buyer (refund or chargeback) or a chargeback fee was applied after earlier sales had already been paid out. It will be deducted from your future earnings before the next payout.
+          </Alert>
+        )}
         <p className="mt-3 text-xs text-muted">
-          Net earnings = gross sales − platform fee − card-processing fees. Payouts are not enabled yet — balances will appear here as sales come in.
+          Net earnings = gross sales − platform fee − card-processing fees − refunds, chargebacks and chargeback fees. Available + pending + in payout + paid out add up to your net earnings.
         </p>
       </section>
 
