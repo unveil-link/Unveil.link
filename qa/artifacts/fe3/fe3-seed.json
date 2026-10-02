@@ -1,0 +1,29 @@
+{
+  "base": "http://localhost:4331",
+  "password": "Sunrise-Harbor-4821",
+  "maya": {
+    "email": "maya+muqb1uyi@example.test",
+    "links": {
+      "spring": "iDVWQlel5zJz",
+      "studio": "CNVx8H_4lEmw",
+      "travel": "bOQanlw60Qo2",
+      "unpublished": "6NmBKqNTaWfM",
+      "draft": "BYaWBAPocvAx"
+    },
+    "dropIds": {
+      "spring": "79b281ad-333e-4aa1-a8b6-96d1cbf58e74",
+      "draft": "42f1da6b-f936-4735-9509-f7837bbe0520",
+      "flagged": "30374584-d2da-4ed0-920d-2b5218f9675b"
+    }
+  },
+  "sam": {
+    "email": "sam+muqb1uyi@example.test"
+  },
+  "jo": {
+    "email": "jo+muqb1uyi@example.test",
+    "dropId": "4aeb1203-cad9-4b8e-8caf-006bc129e59e"
+  },
+  "ned": {
+    "email": "ned+muqb1uyi@example.test"
+  }
+}

@@ -1,0 +1,15 @@
+ next.config.ts | 2 ++
+ 1 file changed, 2 insertions(+)
+diff --git a/next.config.ts b/next.config.ts
+index 636065c..0c323d5 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -63,6 +63,8 @@ const nextConfig: NextConfig = {
+       { source: "/:path*", headers: securityHeaders },
+       // Link pages and anything that renders a drop publicly: never index.
+       { source: "/u/:path*", headers: noindex },
++      // Placeholder legal/contact pages (until real copy exists): header + <meta robots>.
++      { source: "/:page(terms|privacy|dmca|contact)", headers: noindex },
+       { source: "/d/:path*", headers: noindex },
+       { source: "/api/public/:path*", headers: noindex },
+       { source: "/api/files/:path*", headers: noindex },

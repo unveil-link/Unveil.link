@@ -1,0 +1,1 @@
+app lint (excluding qa/ scripts): 0 problems; the 15 problems come only from QA scripts under qa/

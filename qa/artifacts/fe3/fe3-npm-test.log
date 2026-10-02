@@ -1,0 +1,13 @@
+
+> unveil@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.3 /workspace/qa-fe3
+
+
+ Test Files  13 passed (13)
+      Tests  239 passed (239)
+   Start at  21:47:38
+   Duration  54.83s (tests 92%, import 4%, transform 3%)
+
