@@ -4,7 +4,7 @@ import { ShareIcon, TagIcon, UploadIcon } from "./Icons";
 
 const steps = [
   { icon: UploadIcon, title: "Upload your files", body: `Drag in ${SELLABLE} from your phone or computer. We store them privately and generate a blurred preview.` },
-  { icon: TagIcon, title: "Set a price & get a link", body: "Choose what each link costs and get a shareable payment link in seconds." },
+  { icon: TagIcon, title: "Set a price & get a link", body: "Choose what each link costs and get a shareable payment link." },
   { icon: ShareIcon, title: "Share anywhere and get paid", body: "Post your link in a message, bio, or email. Buyers pay by card, with no account needed. Access to the files is shared once payment is confirmed." },
 ];
 

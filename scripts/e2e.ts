@@ -1807,7 +1807,16 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     const metas = (h: string) => [...h.matchAll(/<meta[^>]+(?:name|property)="(?:description|og:[a-z:]+|twitter:[a-z:]+)"[^>]*>/g)].map((m) => m[0]).join(" ") + " " + (/<title>([^<]*)<\/title>/.exec(h)?.[1] ?? "");
     const attrs = (h: string) => [...h.matchAll(/(?:aria-label|title|alt|placeholder)="([^"]*)"/g)].map((m) => m[1]).join(" | ");
     const strings = (v: unknown, out: string[] = []): string[] => { if (typeof v === "string") out.push(v); else if (v && typeof v === "object") for (const x of Object.values(v)) strings(x, out); return out; };
-    const checkHtml = (name: string, h: string) => { const hit = bad.exec(visible(h)) ?? bad.exec(clean(metas(h))) ?? bad.exec(clean(attrs(h))); assert(!hit, `${name}: promise wording "${hit?.[0]}"`); };
+    // mp4/video claims are banned while VIDEO_UPLOAD (lib/features.ts) is false; the one allowed wording is "Video upload is coming soon." / "(video is coming soon)"
+    const VIDEO_LIVE = /export const VIDEO_UPLOAD\s*=\s*true\b/.test(fs.readFileSync(path.join(process.cwd(), "lib/features.ts"), "utf8"));
+    const videoBad = /\bmp4\b|\.mp4|video\/|\bvideos?\b/i;
+    const videoLegit = [/Video upload is coming soon\./g, /\(video is coming soon\)/g];
+    const noVideo = (t: string) => videoLegit.reduce((x, re) => x.replace(re, " "), t);
+    const checkHtml = (name: string, h: string) => {
+      const hit = bad.exec(visible(h)) ?? bad.exec(clean(metas(h))) ?? bad.exec(clean(attrs(h)));
+      assert(!hit, `${name}: promise wording "${hit?.[0]}"`);
+      if (!VIDEO_LIVE) { const v = videoBad.exec(noVideo(visible(h) + " " + metas(h) + " " + attrs(h))); assert(!v, `${name}: video/mp4 claim "${v?.[0]}" while VIDEO_UPLOAD=false`); }
+    };
     const checkJson = (name: string, body: unknown) => { const hit = bad.exec(clean(strings(body).filter((x) => !/^(https?:\/|\/|[a-z0-9_-]{20,}$)/i.test(x)).join(" | "))); assert(!hit, `${name}: API string promises "${hit?.[0]}"`); };
     // anonymous pages
     for (const pg of ["/", "/login", "/signup", "/forgot-password", "/reset-password?token=x", "/terms", "/privacy", "/dmca", "/contact", `/u/${p2Link}`, `/u/${payLink}`, "/u/doesnotexist1", "/nope"]) checkHtml(pg, await (await anon.req("GET", pg)).text());
@@ -1827,6 +1836,72 @@ const sha = (b: Buffer) => crypto.createHash("sha256").update(b).digest("hex");
     assert(/Access after payment/.test(home) && /payment is confirmed/.test(home), "landing states access is shared once payment is confirmed");
     assert(/Payout requests and processing are coming soon/.test(home) && /Pending/.test(home), "FAQ 'How do I get paid?' says what is true today");
     assert(!/photos and videos/i.test(home) && !/identity- and age-verified/i.test(home) && !/payouts straight/i.test(home), "no video / identity-verified / bank-payout claims on the landing page");
+  });
+  await check("[copy-sweep] FE-20/21/22: dropzone text + accept follow VIDEO_UPLOAD; verification messages match reality (pending/failed/manual_review/verified); signup/landing do not over-promise", async () => {
+    const VIDEO_LIVE = /export const VIDEO_UPLOAD\s*=\s*true\b/.test(fs.readFileSync(path.join(process.cwd(), "lib/features.ts"), "utf8"));
+    const txt = (h: string) => stripComments(h).replace(/<script[\s\S]*?<\/script>/g, " ").replace(/<style[\s\S]*?<\/style>/g, " ").replace(/<!-- -->/g, "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#x27;|&#39;/g, "'").replace(/\s+/g, " ");
+    const fmtBytes = (n: number) => (n >= 1024 ** 3 ? `${+(n / 1024 ** 3).toFixed(1)} GB` : `${+(n / 1024 ** 2).toFixed(n >= 100 * 1024 ** 2 ? 0 : 1)} MB`);
+    const st = await (await sellerC.req("GET", "/api/settings")).json();
+    const lim = st;
+    // --- FE-20: new-drop + drop-detail dropzones
+    const newHtml = await (await sellerC.req("GET", "/dashboard/drops/new")).text();
+    const dropRow = (await db.query("SELECT d.id FROM drops d JOIN sellers s ON s.id=d.seller_id WHERE s.email=$1 LIMIT 1", [sellerEmail])).rows[0];
+    const detHtml = await (await sellerC.req("GET", `/dashboard/drops/${dropRow.id}`)).text();
+    for (const [name, h] of [["new-drop", newHtml], ["drop detail", detHtml]] as const) {
+      const t = txt(h);
+      const accept = /<input[^>]*type="file"[^>]*>/.exec(h)?.[0] ?? "";
+      assert(accept, `${name}: has a file input`);
+      const acc = /accept="([^"]*)"/.exec(accept)?.[1] ?? "";
+      assert(acc.includes("image/jpeg") && acc.includes("image/png") && acc.includes("image/webp"), `${name}: accept lists the image types (${acc})`);
+      const hint = /(JPG, PNG(?:,| or) WebP(?: or MP4)?) · up to (\d+) files · ([\d.]+ (?:MB|GB)) per drop/.exec(t);
+      assert(hint, `${name}: dropzone hint 'JPG, PNG or WebP · up to N files · X per drop' present`);
+      eq(Number(hint![2]), lim.maxFilesPerDrop, `${name}: N files is the real limit`);
+      eq(hint![3], fmtBytes(lim.maxTotalBytesPerDrop), `${name}: per-drop size is the real limit`);
+      if (!VIDEO_LIVE) {
+        eq(hint![1], "JPG, PNG or WebP", `${name}: hint names images only`);
+        assert(!/mp4|video\//i.test(acc), `${name}: accept has no video/mp4 or .mp4 (${acc})`);
+        const rest = t.replace(/Video upload is coming soon\./g, " ");
+        assert(!/mp4|video/i.test(rest), `${name}: no MP4/video wording besides the single 'Video upload is coming soon.' note`);
+      } else {
+        assert(/video\/mp4/.test(acc) && /\.mp4/.test(acc) && hint![1].endsWith("MP4"), `${name}: flag on -> MP4 offered`);
+      }
+    }
+    if (!VIDEO_LIVE) assert((txt(newHtml).match(/Video upload is coming soon\./g) ?? []).length === 1, "new-drop: exactly one 'Video upload is coming soon.' note (no contradictory MP4 line)");
+    // --- FE-21: seed one seller per state and read what the seller is told
+    const msgs: Record<string, { banner: RegExp; label: RegExp; forbid: RegExp }> = {
+      pending: { banner: /You can create drafts and upload files now\. Publishing stays off until your account is verified/, label: /Pending/, forbid: /contact|support|a person|our team|reviewing/i },
+      failed: { banner: /Verification wasn’t completed\. You can keep drafting drops; publishing stays off until your account is verified\. We’ll share next steps here when they’re available\./, label: /Not completed/, forbid: /contact support|support|a person|our team|reviewing/i },
+      manual_review: { banner: /Your verification is marked for review\. You can keep drafting drops; publishing stays off until it’s cleared\./, label: /Marked for review/, forbid: /a person|reviewing|our team|someone|human|within|hours|days/i },
+    };
+    for (const [status, m] of Object.entries(msgs)) {
+      const { c, email } = await signupClient(`fe21${status.replace("_", "")}`);
+      await db.query("UPDATE sellers SET verification_status=$2 WHERE email=$1", [email, status]);
+      const d = (await (await c.req("POST", "/api/drops", { json: { title: `Draft ${status}`, priceCents: 1500 } })).json()).drop;
+      const dash = txt(await (await c.req("GET", "/dashboard")).text());
+      assert(m.banner.test(dash), `${status}: dashboard banner wording`);
+      assert(m.label.test(dash), `${status}: dashboard label`);
+      assert(!m.forbid.test(dash.slice(dash.indexOf("Verification:"), dash.indexOf("Verification:") + 400)), `${status}: banner promises no support contact / human review`);
+      const det = txt(await (await c.req("GET", `/dashboard/drops/${d.id}`)).text());
+      assert(det.includes("Publishing is off") && m.banner.test(det), `${status}: drop detail says publishing is off with the same wording`);
+      const nd = txt(await (await c.req("GET", "/dashboard/drops/new")).text());
+      assert(m.banner.test(nd), `${status}: new-drop notice wording`);
+      // behaviour matches the words: publishing is refused, drafting works
+      eq((await c.req("POST", `/api/drops/${d.id}/publish`, { json: { attestation: att } })).status, 403, `${status}: publish refused`);
+    }
+    const ver = await signupClient("fe21verified");
+    await db.query("UPDATE sellers SET verification_status='verified' WHERE email=$1", [ver.email]);
+    const vdash = txt(await (await ver.c.req("GET", "/dashboard")).text());
+    assert(!/Verification:/.test(vdash), "verified: no verification banner");
+    // --- FE-22: sign-up subtitle + landing CTAs
+    const sup = txt(await (await anon.req("GET", "/signup")).text());
+    assert(sup.includes("Create your account and start drafting drops. Publishing opens once your account is verified."), "signup subtitle is the accurate one");
+    assert(!/Start sharing paid links today|Start selling/.test(sup), "signup: no 'Start sharing paid links today'");
+    const land = txt(await (await anon.req("GET", "/")).text());
+    assert(/Create your account/.test(land) && !/Start selling/.test(land), "landing CTA says 'Create your account'");
+    assert(!/in seconds/i.test(land), "landing: no 'in seconds'");
+    for (const pg of ["/login", "/signup"]) { const t = txt(await (await anon.req("GET", pg)).text()); assert(!/in seconds|friction/i.test(t), `${pg}: no speed claim`); assert(t.includes("Buyers pay by card — no account needed."), `${pg}: side panel says buyers pay by card, no account needed`); }
+    assert(/Sign up/.test(land) && /Create your account/.test(land), "landing header has the short 'Sign up' label (small screens) and the full CTA labels");
+    return `hint ok on 2 dropzones; verification states ${Object.keys(msgs).join("/")}/verified checked`;
   });
   await check("[FE-07/08] dashboard earnings == GET /api/earnings (ledger): fees separate, pending vs available, in-payout; no divergent math", async () => {
     const api = await (await sellerC.req("GET", "/api/earnings")).json();

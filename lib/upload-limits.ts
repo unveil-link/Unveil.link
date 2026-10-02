@@ -1,4 +1,5 @@
 import { VIDEO_UPLOAD } from "./features";
+import { formatBytes } from "./format";
 
 /**
  * Client-side upload rules. Source of truth is the backend: `GET /api/settings` supplies the live numbers
@@ -28,7 +29,27 @@ export const DEFAULT_LIMITS: UploadLimits = {
   videoUploadEnabled: VIDEO_UPLOAD,
 };
 
-const EXT_MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", mp4: "video/mp4" };
+const MP4_MIME = "video/mp4";
+const MP4_EXT = ".mp4";
+const EXT_MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", mp4: MP4_MIME };
+
+/** `accept` attribute of the file picker. Video types are offered ONLY when video upload is live (lib/features.ts VIDEO_UPLOAD). */
+export function acceptAttr(l: UploadLimits): string {
+  return [...l.allowedImageMimes, ".jpg", ".jpeg", ".png", ".webp", ...(l.videoUploadEnabled ? [MP4_MIME, MP4_EXT] : [])].join(",");
+}
+/** File types the dropzone accepts, as words ("JPG, PNG or WebP"; MP4 only when video upload is live). */
+export function fileTypesLabel(l: UploadLimits): string {
+  return l.videoUploadEnabled ? "JPG, PNG, WebP or MP4" : "JPG, PNG or WebP";
+}
+/** Dropzone hint, from the real limits: "JPG, PNG or WebP · up to 10 files · 2 GB per drop" (MP4 is added only when video upload is live). */
+export function dropzoneHint(l: UploadLimits): string {
+  const types = fileTypesLabel(l);
+  return `${types} · up to ${l.maxFilesPerDrop} files · ${formatBytes(l.maxTotalBytesPerDrop)} per drop`;
+}
+/** The single note about video under the dropzone. */
+export function videoNote(l: UploadLimits): string {
+  return l.videoUploadEnabled ? `MP4 video up to ${formatBytes(l.maxVideoSizeBytes)} each.` : "Video upload is coming soon.";
+}
 
 export function mimeOf(f: { name: string; type: string }): string {
   if (f.type) return f.type;
@@ -39,8 +60,8 @@ export function mimeOf(f: { name: string; type: string }): string {
 export function validateFile(f: { name: string; type: string; size: number }, l: UploadLimits): string | null {
   const mime = mimeOf(f);
   if (f.size === 0) return "This file is empty.";
-  if (mime === "video/mp4") {
-    if (!l.videoUploadEnabled) return "MP4 video uploads are coming soon — for now, add JPG, PNG or WebP images.";
+  if (mime === MP4_MIME) {
+    if (!l.videoUploadEnabled) return "Video upload is coming soon — for now, add JPG, PNG or WebP images.";
     if (f.size > l.maxVideoSizeBytes) return `Videos can be up to ${Math.round(l.maxVideoSizeBytes / 1024 ** 2)} MB.`;
     return null;
   }

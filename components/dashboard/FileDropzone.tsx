@@ -4,7 +4,7 @@ import { Button, FileIcon, ImageIcon, Progress, UploadIcon, VideoIcon, XIcon } f
 import { CheckIcon } from "@/components/landing/Icons";
 import { cn } from "@/lib/cn";
 import { formatBytes } from "@/lib/format";
-import { mimeOf, validateFile, type UploadLimits } from "@/lib/upload-limits";
+import { acceptAttr, dropzoneHint, mimeOf, validateFile, type UploadLimits } from "@/lib/upload-limits";
 
 export type QueuedFile = {
   key: string;
@@ -61,7 +61,7 @@ export function FileDropzone({
   const accepted = queue.filter((q) => q.status !== "invalid");
   const totalBytes = existing.bytes + accepted.reduce((n, q) => n + q.file.size, 0);
   const totalCount = existing.count + accepted.length;
-  const accept = ["image/jpeg", "image/png", "image/webp", "video/mp4", ".jpg", ".jpeg", ".png", ".webp", ".mp4"].join(",");
+  const accept = acceptAttr(limits);
 
   return (
     <div>
@@ -85,7 +85,7 @@ export function FileDropzone({
           <label htmlFor={id ?? inputId} className="cursor-pointer text-primary underline underline-offset-2 focus-within:outline-2">choose files</label>
         </p>
         <p className="mt-1 text-sm text-muted">
-          JPG, PNG, WebP or MP4 · {limits.maxFilesPerDrop} files · {formatBytes(limits.maxTotalBytesPerDrop)} per drop
+          {dropzoneHint(limits)}
         </p>
         <input
           ref={inputRef}

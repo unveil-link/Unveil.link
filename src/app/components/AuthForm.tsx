@@ -129,7 +129,7 @@ export default function AuthForm({ mode, googleEnabled }: { mode: Mode; googleEn
   return (
     <AuthShell
       title={isSignup ? "Create your seller account" : "Welcome back"}
-      subtitle={isSignup ? "Set up in a minute. Start sharing paid links today." : "Sign in to manage your drops and earnings."}
+      subtitle={isSignup ? "Create your account and start drafting drops. Publishing opens once your account is verified." : "Sign in to manage your drops and earnings."}
       footer={
         isSignup ? (
           <>Already have an account? <Link className="font-semibold text-primary" href="/login">Sign in</Link></>

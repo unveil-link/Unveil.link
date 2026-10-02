@@ -3,14 +3,14 @@ import { useState } from "react";
 import { Alert, Button, Modal } from "@/components/ui";
 import { api } from "@/lib/api";
 import { AttestationFields, EMPTY_ATTESTATION, allAttested, type Attestation } from "./AttestationFields";
-import type { VerificationStatus } from "./types";
+import { VERIFICATION_META, type VerificationStatus } from "./types";
 
 export function publishErrorMessage(code: string | undefined, fallback: string): string {
   switch (code) {
     case "verification_required": return "A verified account status is required before you can publish. Your drop is saved as a draft.";
     case "no_files": return "Add at least one file before publishing.";
     case "attestation_required": return "Please confirm all three statements to publish.";
-    case "flagged": return "This drop is under review and can’t be changed right now.";
+    case "flagged": return "This drop is under review and can’t be changed for now.";
     default: return fallback;
   }
 }
@@ -52,8 +52,8 @@ export function PublishDialog({
       }
     >
       {blocked && (
-        <Alert tone="warning" title="Verification needed">
-          Your verification status is <b>{verification.replace("_", " ")}</b>. You can’t publish until you’re verified — this drop stays a draft.
+        <Alert tone="warning" title={`Verification: ${VERIFICATION_META[verification].label}`}>
+          {VERIFICATION_META[verification].hint} This drop stays a draft.
         </Alert>
       )}
       <AttestationFields value={att} onChange={setAtt} idPrefix={`pub-${dropId}`} error={!!error && !allAttested(att)} />

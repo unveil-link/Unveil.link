@@ -38,7 +38,9 @@ export function SiteHeader() {
             Sign in
           </ButtonLink>
           <ButtonLink href="/signup" size="sm">
-            Start selling
+            {/* Short label below 640px so the header never overflows at 320-375px; the Hero / SellerCta buttons keep the full wording. */}
+            <span className="sm:hidden">Sign up</span>
+            <span className="hidden sm:inline">Create your account</span>
           </ButtonLink>
         </div>
       </Container>

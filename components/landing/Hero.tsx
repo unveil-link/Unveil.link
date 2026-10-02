@@ -24,7 +24,7 @@ export function Hero() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/signup" size="lg">
-              Start selling
+              Create your account
             </ButtonLink>
             <ButtonLink href="#how-it-works" variant="secondary" size="lg">
               See how it works

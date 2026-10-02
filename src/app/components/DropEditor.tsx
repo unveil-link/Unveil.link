@@ -6,12 +6,12 @@ import { StatusBadge } from "@/components/dashboard/DropList";
 import { CopyLinkButton } from "@/components/dashboard/CopyLinkButton";
 import { PublishDialog } from "@/components/dashboard/PublishDialog";
 import { addFilesToQueue, FileDropzone, type QueuedFile } from "@/components/dashboard/FileDropzone";
-import { STATUS_META, type DropStatus, type VerificationStatus } from "@/components/dashboard/types";
+import { STATUS_META, VERIFICATION_META, type DropStatus, type VerificationStatus } from "@/components/dashboard/types";
 import { api } from "@/lib/api";
 import { formatBytes, usd } from "@/lib/format";
 import { shareLabel } from "@/lib/share";
 import { uploadErrorMessage, uploadFile } from "@/lib/upload";
-import type { UploadLimits } from "@/lib/upload-limits";
+import { fileTypesLabel, type UploadLimits } from "@/lib/upload-limits";
 
 type FileItem = { id: string; filename: string; sizeBytes: number; mime: string };
 type Props = {
@@ -108,9 +108,9 @@ export default function DropEditor({ drop, files, verificationStatus, limits, un
           <div><dt className="text-muted">Revenue (kept)</dt><dd className="mt-0.5 text-base font-semibold tabular-nums">{usd(revenueCents)}</dd></div>
         </dl>
         {verificationStatus !== "verified" && drop.status !== "published" && (
-          <Alert tone="warning" title="Publishing locked">Your verification status is <b>{verificationStatus.replace("_", " ")}</b>. This stays a draft until you’re verified.</Alert>
+          <Alert tone="warning" title="Publishing is off">{VERIFICATION_META[verificationStatus].hint} This drop stays a draft.</Alert>
         )}
-        {drop.status === "flagged" && <Alert tone="danger" title="Under review">This drop is paused while our team reviews it. You can’t edit or publish it right now.</Alert>}
+        {drop.status === "flagged" && <Alert tone="danger" title="Under review">This drop is paused and under review. You can’t edit or publish it for now.</Alert>}
       </Card>
 
       <section aria-labelledby="files-h">
@@ -139,7 +139,7 @@ export default function DropEditor({ drop, files, verificationStatus, limits, un
 
       {canEdit && (
         <Card className="flex flex-col gap-4">
-          <div><CardTitle>Add files</CardTitle><CardDescription>JPG, PNG or WebP. They’re added to this drop right away.</CardDescription></div>
+          <div><CardTitle>Add files</CardTitle><CardDescription>{fileTypesLabel(limits)}. They’re added to this drop right away.</CardDescription></div>
           <FileDropzone id="more-files" queue={queue} limits={limits} existing={existing} disabled={uploading}
             onPick={(f) => setQueue((q) => addFilesToQueue(q, f, limits, existing))}
             onRemove={(k) => setQueue((q) => q.filter((x) => x.key !== k))}

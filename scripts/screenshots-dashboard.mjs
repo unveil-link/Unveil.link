@@ -41,8 +41,9 @@ async function snap(page, name, vp, opts = {}) {
 // NB: not "networkidle": prod CSP upgrade-insecure-requests + prefetches of not-yet-existing /terms,/privacy keep the network busy on http://localhost.
 const go = async (page, path) => { await page.goto(base + path, { waitUntil: "load" }); await page.waitForTimeout(500); };
 
+const OVERFLOW_WIDTHS = [320, 360, 375, 390, 1280];
 async function measureOverflow(path, who) {
-  for (const w of [360, 390, 1280]) {
+  for (const w of OVERFLOW_WIDTHS) {
     const ctx = await browser.newContext({ viewport: { width: w, height: 800 }, extraHTTPHeaders: { "x-forwarded-for": rnd() } });
     if (who) await ctx.request.post(base + "/api/auth/login", { data: { email: seed[who].email, password: seed.password } });
     const p = await ctx.newPage();
@@ -285,6 +286,29 @@ const phases = {
     await snap(page, "new-drop-success-published", vp);
     await ctx.close();
   },
+  // FE-23: the landing header at the narrowest widths (360 / 320) - run once (mobile pass only)
+  async narrow(vp) {
+    if (!vp.mobile) return;
+    for (const w of [360, 320]) {
+      const v = { ...vp, name: `mobile-${w}x800`, viewport: { width: w, height: 800 } };
+      const ctx = await ctxFor(v); const page = await ctx.newPage();
+      await go(page, "/"); await snap(page, "landing-header", v, { fullPage: false });
+      await ctx.close();
+    }
+  },
+  // FE-21: what a seller sees in each verification state. Flips jo's status via SQL (DATABASE_URL), restores 'pending' afterwards.
+  async verif(vp) {
+    const pg = (await import("pg")).default;
+    const db = new pg.Client({ connectionString: process.env.DATABASE_URL }); await db.connect();
+    const ctx = await ctxFor(vp, "jo"); const page = await ctx.newPage();
+    try {
+      for (const [status, slug] of [["failed", "failed"], ["manual_review", "manual-review"]]) {
+        await db.query("UPDATE sellers SET verification_status=$2 WHERE email=$1", [seed.jo.email, status]);
+        await go(page, "/dashboard"); await snap(page, `dashboard-verification-${slug}`, vp);
+        await go(page, `/dashboard/drops/${seed.jo.dropId}`); await snap(page, `drop-detail-verification-${slug}`, vp);
+      }
+    } finally { await db.query("UPDATE sellers SET verification_status='pending' WHERE email=$1", [seed.jo.email]); await db.end(); await ctx.close(); }
+  },
 };
 
 const only = process.env.ONLY ? process.env.ONLY.split(",").filter((x) => phases[x]) : Object.keys(phases);
@@ -294,8 +318,13 @@ for (const phase of only) {
   }
 }
 if (!process.env.ONLY || process.env.ONLY === "overflow") {
-  for (const [p, who] of [["/", null], ["/design", null], ["/signup", null], ["/login", null], ["/forgot-password", null], ["/dashboard", "maya"], ["/dashboard/drops", "maya"], ["/dashboard/drops/new", "maya"], [`/u/${seed.maya.links.spring}`, null], ["/u/doesnotexist1", null]]) await measureOverflow(p, who);
+  // FE-23: scrollWidth <= innerWidth at 320/360/375/390/1280 on every public page + the main seller pages. Fails the run (exit 1) if anything overflows.
+  const PAGES = [["/", null], ["/design", null], ["/signup", null], ["/login", null], ["/forgot-password", null], ["/reset-password?token=x", null], ["/terms", null], ["/privacy", null], ["/dmca", null], ["/contact", null],
+    ["/dashboard", "maya"], ["/dashboard/drops", "maya"], ["/dashboard/drops/new", "maya"], [`/dashboard/drops/${seed.maya.dropIds.spring}`, "maya"], [`/u/${seed.maya.links.spring}`, null], ["/u/doesnotexist1", null]];
+  for (const [p, who] of PAGES) await measureOverflow(p, who);
   writeFileSync(out + "overflow-report.json", JSON.stringify(overflow, null, 2));
-  console.log("overflow >0:", overflow.filter((o) => o.overflowPx > 0));
+  const over = overflow.filter((o) => o.overflowPx > 0);
+  console.log(`overflow check: ${overflow.length} measurements (${OVERFLOW_WIDTHS.join("/")} px x ${PAGES.length} pages), >0px:`, over);
+  if (over.length) process.exitCode = 1;
 }
 await browser.close();

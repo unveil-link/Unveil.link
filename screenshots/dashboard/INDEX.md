@@ -16,6 +16,8 @@ Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. F
 - dashboard-overview
 - dashboard-overview-negative-balance
 - dashboard-pending-verification
+- dashboard-verification-failed
+- dashboard-verification-manual-review
 - design
 - download-page-panel
 - drop-detail-draft
@@ -23,6 +25,8 @@ Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. F
 - drop-detail-not-found
 - drop-detail-pending-verification
 - drop-detail-published
+- drop-detail-verification-failed
+- drop-detail-verification-manual-review
 - drop-list
 - drop-list-empty
 - drop-list-filter-drafts
@@ -34,6 +38,7 @@ Pairs: `<name>-mobile-390x844.png` (2x DPR) and `<name>-desktop-1280x800.png`. F
 - forgot-password-validation
 - landing
 - landing-faq-expanded
+- landing-header
 - new-drop-empty
 - new-drop-file-and-price-validation
 - new-drop-filled

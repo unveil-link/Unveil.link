@@ -17,7 +17,7 @@ export function BuyerTrust() {
           id="buyers-title"
           eyebrow="For buyers"
           title="Checkout you can trust"
-          description="Buying from a creator should be quick and safe. Here is what you can expect every time."
+          description="Buying from a creator should be clear and safe. Here is what you can expect every time."
         />
         <ul className="mt-10 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           {points.map((p) => (
