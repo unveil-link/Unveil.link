@@ -38,7 +38,7 @@ export function SiteHeader() {
             Sign in
           </ButtonLink>
           <ButtonLink href="/signup" size="sm">
-            Start selling
+            Create your account
           </ButtonLink>
         </div>
       </Container>

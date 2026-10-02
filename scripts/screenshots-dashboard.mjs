@@ -285,6 +285,19 @@ const phases = {
     await snap(page, "new-drop-success-published", vp);
     await ctx.close();
   },
+  // FE-21: what a seller sees in each verification state. Flips jo's status via SQL (DATABASE_URL), restores 'pending' afterwards.
+  async verif(vp) {
+    const pg = (await import("pg")).default;
+    const db = new pg.Client({ connectionString: process.env.DATABASE_URL }); await db.connect();
+    const ctx = await ctxFor(vp, "jo"); const page = await ctx.newPage();
+    try {
+      for (const [status, slug] of [["failed", "failed"], ["manual_review", "manual-review"]]) {
+        await db.query("UPDATE sellers SET verification_status=$2 WHERE email=$1", [seed.jo.email, status]);
+        await go(page, "/dashboard"); await snap(page, `dashboard-verification-${slug}`, vp);
+        await go(page, `/dashboard/drops/${seed.jo.dropId}`); await snap(page, `drop-detail-verification-${slug}`, vp);
+      }
+    } finally { await db.query("UPDATE sellers SET verification_status='pending' WHERE email=$1", [seed.jo.email]); await db.end(); await ctx.close(); }
+  },
 };
 
 const only = process.env.ONLY ? process.env.ONLY.split(",").filter((x) => phases[x]) : Object.keys(phases);

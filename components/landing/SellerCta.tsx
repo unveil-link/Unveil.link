@@ -17,7 +17,7 @@ export function SellerCta() {
           />
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/signup" size="lg" className="bg-white !text-ink hover:bg-white/90">
-              Start selling
+              Create your account
             </ButtonLink>
             <ButtonLink href="#faq" size="lg" variant="ghost" className="border border-white/30 text-white hover:bg-white/10">
               Read the FAQ

@@ -7,11 +7,11 @@ import { api } from "@/lib/api";
 import { formatBytes, formatDurationLong, usd } from "@/lib/format";
 import { copyText, shareLabel, shareUrl } from "@/lib/share";
 import { uploadErrorMessage, uploadFile } from "@/lib/upload";
-import { validatePrice, type UploadLimits } from "@/lib/upload-limits";
+import { validatePrice, videoNote, type UploadLimits } from "@/lib/upload-limits";
 import { AttestationFields, EMPTY_ATTESTATION, allAttested, type Attestation } from "./AttestationFields";
 import { addFilesToQueue, FileDropzone, type QueuedFile } from "./FileDropzone";
 import { publishErrorMessage } from "./PublishDialog";
-import type { VerificationStatus } from "./types";
+import { VERIFICATION_META, type VerificationStatus } from "./types";
 
 type Phase = "form" | "working" | "done";
 type Errors = Partial<Record<"title" | "price" | "description" | "files" | "attest", string>>;
@@ -235,7 +235,7 @@ export default function NewDropFlow({ limits, verification }: { limits: UploadLi
           onRemove={(k) => setQueue((q) => q.filter((x) => x.key !== k))}
           onRetry={retry} />
         <p className="text-xs text-muted">
-          Images (JPG, PNG, WebP) up to {formatBytes(limits.maxImageSizeBytes)} each. MP4 video up to {formatBytes(limits.maxVideoSizeBytes)} is coming soon.
+          Images (JPG, PNG, WebP) up to {formatBytes(limits.maxImageSizeBytes)} each. {videoNote(limits)}
         </p>
       </Card>
 
@@ -245,8 +245,8 @@ export default function NewDropFlow({ limits, verification }: { limits: UploadLi
           <CardDescription>Save as a draft, or switch the link on as soon as the upload finishes.</CardDescription>
         </div>
         {!verified && (
-          <Alert tone="warning" title="Verification pending">
-            You can create drafts and upload files now. Publishing requires a verified account status (yours: <b>{verification.replace("_", " ")}</b>).
+          <Alert tone="warning" title={`Verification: ${VERIFICATION_META[verification].label}`}>
+            {VERIFICATION_META[verification].hint}
           </Alert>
         )}
         <label className="flex items-start gap-3 py-1 text-sm">
